@@ -28,7 +28,6 @@ readonly DOCKER_EXEC='docker exec -it'
 # Variables
 #=======================================================================================================================
 detached='false'
-env_file='build.env'
 terminal='false'
 command=''
 services=''
@@ -122,7 +121,6 @@ log() {
 # Globals:
 #   - command
 #   - detached
-#   - env_file
 #   - services
 #   - subcommand
 #   - terminal
@@ -133,13 +131,11 @@ log() {
 #=======================================================================================================================
 parse_args() {
     subcommand=''
-    env_file="${docker_working_dir}/build.env"
 
     # Process and validate command-line arguments
     while [ -n "$1" ]; do
         case "$1" in
             -d | --detached )                  detached='true';;
-            -e | --env )                       shift; env_file="$1";;
             -t | --terminal )                  terminal='true';;
             dev | prod)                        command="$1";;
             version)                           command="$1";;
@@ -174,8 +170,6 @@ parse_args() {
         warning="Ignoring detached mode argument"
     # Requirement 6 - Services do not start with '-' character
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
-    # Warning 2 - Provided '.env' file is available
-    elif [ ! -f "${env_file}" ]; then env_file='' && warning="env file not found"
     fi
     
     # Inform user and terminate on fatal error
@@ -489,8 +483,6 @@ main() {
     # Parse arguments and initialize environment variables
     parse_args "$@"
     [ "${command}" = 'version' ] && execute_show_version && exit
-    # shellcheck source=/dev/null
-    [ -n "${env_file}" ] && set -a && . "${env_file}"
     [ "${command}" = 'dev' ] && export IMAGE_SUFFIX='-debug' 
 
     # Display environment and targeted images
