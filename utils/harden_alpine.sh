@@ -387,6 +387,18 @@ main() {
     # Parse arguments
     parse_args "$@"
 
+    # Display configuration settings
+    display_dirs=$(echo "['${user_dirs}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
+    display_bins=$(echo "['${remove_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | sed 's/;//g')
+    print_status 'Hardening image with the following settings:'
+    log "  User:         ${user}"
+    log "  UID:          ${uid}"
+    log "  GID:          ${gid}"
+    log "  User dirs:    ${display_dirs}"
+    log "  Shell:        ${add_shell}"
+    log "  User home:    ${create_home}"
+    log "  Removed bins: ${display_bins}"
+
     # Execute workflows
     case "${command}" in
         harden)  
