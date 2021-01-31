@@ -38,6 +38,7 @@ gid=1001
 user_dirs=''
 add_shell='false'
 create_home='false'
+remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
 
 
 #=======================================================================================================================
@@ -65,6 +66,7 @@ usage() {
     echo '  -u, --uid ID           Assigns ID to user'
     echo '  -g, --gid ID           Assigns ID to group'
     echo '  -d, --dir PATH         Assigns ownership of PATH to user'
+    echo '  -k, --keep BINARY      Binary to keep'
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
     echo '                         (not recommended for production)'
@@ -133,6 +135,8 @@ parse_args() {
             -u | --uid  ) shift; uid="$1"; id_set='true';;
             -g | --gid  ) shift; gid="$1"; id_set='true';;
             -d | --dir  ) shift; user_dirs="${user_dirs} $1";;
+            -k | --keep ) shift; remove_binaries=$(echo "${remove_binaries}" | sed "s/ $1;//g");;
+            --add-shell ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
             --create-home ) create_home='true';;
             harden      ) command="$1";;
             *           ) usage; terminate "Unrecognized parameter ($1)"
@@ -337,27 +341,9 @@ execute_clean_files() {
     eval "find ${SYSDIRS} -xdev -type f -a -perm +4000 -delete"
 
     # Remove other programs that could be dangerous
-    log 'Removing dangerous binaries' 
-    eval "find ${SYSDIRS} -xdev \( \
-        -name hexdump -o \
-        -name chgrp -o \
-        -name chmod -o \
-        -name chown -o \
-        -name ln -o \
-        -name od -o \
-        -name strings -o \
-        -name su \
-        \) -delete"
-
-    # Remove shell if flagged to do so
-    if [ "${add_shell}" != 'true' ]; then
-        log 'Removing shell capability'
-        eval "find ${SYSDIRS} -xdev \( \
-            -name sh -o \
-            \) -delete"
-    else
-        log 'Removing shell capability (skipped)'
-    fi
+    log 'Removing unsafe binaries' 
+    remove_binaries=$(echo "${remove_binaries}" | sed 's/ / -name /g' | sed 's/;/ -o/g')
+    eval "find ${SYSDIRS} -xdev \( ${remove_binaries} \) -delete"
 
     # Remove init scripts since we do not use them
     log 'Removing init scripts'
