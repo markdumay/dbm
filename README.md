@@ -37,7 +37,7 @@
 
 
 ## About
-Docker Compose is a popular tool to deploy Docker images. This repository uses Docker Compose to further simplify the development of custom Docker images. It includes versioning support, definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image.
+Docker Compose is a popular tool to deploy Docker images. This repository uses Docker Compose to further simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image.
 
 <!-- TODO: add tutorial deep-link 
 Detailed background information is available on the author's [personal blog][blog].
@@ -50,19 +50,19 @@ The project uses the following core software components:
 
 ## Prerequisites
 ### Host Requirements
-The Docker Build Manager (*dbm*) can run on any Docker-capable host that supports execution of POSIX-shell scripts. Docker Compose needs to be installed too. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
+The Docker Build Manager (*dbm*) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
 
 ### Repository Requirements
-*dbm* assumes your respository defines three Docker Compose configurations. The production configuration amends or modifies the base image, and, in similar fashion, the development configuration adjusts the production configuration. See the [nginx-certbot][nginx-cerbot] repository for an example.
-1. `docker-compose.yml` -  Base configuration of the Docker image using Docker Compose notation
+*dbm* assumes your repository defines three Docker Compose configurations. The production configuration amends or modifies the base image, and, similarly, the development configuration adjusts the production configuration. See the [nginx-certbot][nginx-cerbot] repository for an example.
+1. `docker-compose.yml` - The base configuration of the Docker image using Docker Compose notation
 2. `docker-compose.prod.yml` - Production modifications to the base configuration
 3. `docker-compose.dev.yml`  - Development modifications to the production configuration
 
-For proper versioning support, the file `VERSION` needs to be present in the root of your repository. It is recommended to use [semantic versioning][semver_url].
+For proper versioning support, the file `VERSION` needs to be present at the root of your repository. It is recommended to use [semantic versioning][semver_url].
 
 
 ## Deployment
-Docker Build Manager works best if integrated as a submodule in your own repository. Run the following command from within your repository directory to add *dbm* as submodule.
+Docker Build Manager works best if integrated as a submodule in your repository. Run the following command from within your repository directory to add *dbm* as a submodule.
 
 ```console
 git submodule add https://github.com/markdumay/dbm dbm
@@ -102,7 +102,7 @@ The commands `prod` and `dev` support the following subcommands.
 | **`stop`**   | `prod`, `dev` | Stop a running container |
 
 
-In addition, the following options are available.
+The following options are available also.
 
 | Option | Alias        | Description |
 |--------|--------------|-------------|
@@ -112,7 +112,7 @@ In addition, the following options are available.
 Lastly, adding the name of one or more services restricts the operation to the specified services only. If omitted, *dbm* processes all services defined by the Docker Compose configuration.
 
 ### Configuration
-*dbm* supports several advanced settings through an `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository].
+*dbm* supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository].
 
 
 | Variable              | Required | Example                   | Description |
