@@ -37,6 +37,7 @@ uid=1001
 gid=1001
 user_dirs=''
 add_shell='false'
+create_home='false'
 
 
 #=======================================================================================================================
@@ -65,6 +66,7 @@ usage() {
     echo '  -g, --gid ID           Assigns ID to group'
     echo '  -d, --dir PATH         Assigns ownership of PATH to user'
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
+    echo '  --create-home          Creates a home directory for the specified user'
     echo '                         (not recommended for production)'
     echo
 }
@@ -131,7 +133,7 @@ parse_args() {
             -u | --uid  ) shift; uid="$1"; id_set='true';;
             -g | --gid  ) shift; gid="$1"; id_set='true';;
             -d | --dir  ) shift; user_dirs="${user_dirs} $1";;
-            --add-shell ) shift; add_shell='true';;
+            --create-home ) create_home='true';;
             harden      ) command="$1";;
             *           ) usage; terminate "Unrecognized parameter ($1)"
         esac
@@ -190,7 +192,11 @@ execute_add_user() {
     print_status 'Adding user'
     if [ -n "${user}" ]; then
         /usr/sbin/groupadd -g "${gid}" "${user}"
-        /usr/sbin/useradd -s /bin/sh -g "${gid}" -u "${uid}" "${user}"
+        if [ "${create_home}" = 'true' ]; then
+            /usr/sbin/useradd -m -s /bin/sh -g "${gid}" -u "${uid}" -d "/home/${user}" "${user}"
+        else
+            /usr/sbin/useradd -s /bin/sh -g "${gid}" -u "${uid}" "${user}"
+        fi
         sed -i -r "s/^${user}:!:/${user}:x:/" /etc/shadow
     else
         log 'Skipped, no user name specified'
