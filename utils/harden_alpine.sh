@@ -219,7 +219,7 @@ execute_add_user() {
 execute_assign_ownership() {
     print_status 'Assigning ownership of folders and files'
     if [ -n "$2" ]; then
-        eval "find $1 -xdev -type d -exec chown $2:$2 {} \; -exec chmod 0755 {} \;"
+        eval "find $1 -xdev -type d -exec chown -R $2:$2 {} \; -exec chmod -R 0755 {} \;"
     else
         log 'Skipped, no user name specified'
     fi
