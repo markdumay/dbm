@@ -69,9 +69,10 @@ usage() {
     echo "  up                     Run a Docker image as container"
     echo "  stop                   Stop a running container"
     echo
-    echo "Options:"
-    echo "  -e, --env FILE         Use FILE for environment variables, defaults to 'build.env'"
-    echo
+    # TODO: decide wether to support optional .env file
+    # echo "Options:"
+    # echo "  -e, --env FILE         Use FILE for environment variables, defaults to 'build.env'"
+    # echo
     echo "Options (up only):"
     echo "  -d, --detached         Run in detached mode"
     echo "  -t, --terminal         Run in detached mode and start terminal (if supported by image)"
