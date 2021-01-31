@@ -9,7 +9,7 @@
 
 <!-- Badges -->
 <p align="center">
-    <a href="https://github.com/markdumay/dbm/commits/master" alt="Last commit">
+    <a href="https://github.com/markdumay/dbm/commits/main" alt="Last commit">
         <img src="https://img.shields.io/github/last-commit/markdumay/dbm.svg" />
     </a>
     <a href="https://github.com/markdumay/dbm/issues" alt="Issues">
@@ -18,7 +18,7 @@
     <a href="https://github.com/markdumay/dbm/pulls" alt="Pulls">
         <img src="https://img.shields.io/github/issues-pr-raw/markdumay/dbm.svg" />
     </a>
-    <a href="https://github.com/markdumay/dbm/blob/master/LICENSE" alt="License">
+    <a href="https://github.com/markdumay/dbm/blob/main/LICENSE" alt="License">
         <img src="https://img.shields.io/github/license/markdumay/dbm.svg" />
     </a>
 </p>
@@ -137,7 +137,7 @@ Lastly, adding the name of one or more services restricts the operation to the s
 <a href="https://www.buymeacoffee.com/markdumay" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;"></a>
 
 ## License
-<a href="https://github.com/markdumay/dbm/blob/master/LICENSE" alt="License">
+<a href="https://github.com/markdumay/dbm/blob/main/LICENSE" alt="License">
     <img src="https://img.shields.io/github/license/markdumay/dbm.svg" />
 </a>
 
