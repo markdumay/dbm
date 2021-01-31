@@ -404,7 +404,7 @@ main() {
         harden)  
             validate_prerequisites
             execute_add_user
-            execute_assign_ownership "${SYSDIRS}" 'root'
+            execute_assign_ownership "${SYSDIRS}" root
             execute_assign_ownership "${user_dirs}" "${user}"
             execute_update_mod
             execute_improve_encryption
