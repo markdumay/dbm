@@ -69,7 +69,7 @@ git submodule add https://github.com/markdumay/dbm dbm
 ```
 
 Setup an `alias` to simplify the execution of *dbm*.
-```
+```console
 alias dbm="dbm/dbm.sh"  
 ```
 
@@ -79,7 +79,7 @@ Add the same line to your shell settings (e.g. `~/.zshrc` on macOS or `~/.bashrc
 ## Usage
 Use the following command to invoke *dbm* from the command line.
 
-```console
+```
 dbm COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]
 ```
 
