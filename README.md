@@ -19,7 +19,7 @@
         <img src="https://img.shields.io/github/issues-pr-raw/markdumay/dbm.svg" />
     </a>
     <a href="https://github.com/markdumay/dbm/blob/main/LICENSE" alt="License">
-        <img src="https://img.shields.io/github/license/markdumay/dbm.svg" />
+        <img src="https://img.shields.io/github/license/markdumay/dbm" />
     </a>
 </p>
 
@@ -138,7 +138,7 @@ Lastly, adding the name of one or more services restricts the operation to the s
 
 ## License
 <a href="https://github.com/markdumay/dbm/blob/main/LICENSE" alt="License">
-    <img src="https://img.shields.io/github/license/markdumay/dbm.svg" />
+    <img src="https://img.shields.io/github/license/markdumay/dbm" />
 </a>
 
 Copyright © [Mark Dumay][blog]
