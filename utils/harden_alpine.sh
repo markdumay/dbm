@@ -40,6 +40,7 @@ user_files=''
 add_shell='false'
 create_home='false'
 remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
+allowed_binaries=' nologin; setup-proxy; sshd; start.sh;'
 
 
 #=======================================================================================================================
@@ -139,6 +140,10 @@ parse_args() {
             -g | --gid    ) shift; gid="$1"; id_set='true';;
             -d | --dir    ) shift; user_dirs="${user_dirs} $1";;
             -f | --file   ) shift; user_files="${user_files} $1";;
+            -k | --keep   ) shift
+                            remove_binaries=$(echo "${remove_binaries}" | sed "s/ $1;//g")
+                            allowed_binaries=$(echo "${allowed_binaries} $1;")
+                            ;;
             --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
             --create-home ) create_home='true';;
             harden        ) command="$1";;
@@ -284,12 +289,8 @@ execute_remove_crontabs() {
 #=======================================================================================================================
 execute_remove_admin_commands() {
     print_status 'Removing admin commands'
-    find /sbin /usr/sbin ! -type d \
-        -a ! -name nologin \
-        -a ! -name setup-proxy \
-        -a ! -name sshd \
-        -a ! -name start.sh \
-        -delete
+    bins=$(echo "${allowed_binaries}" | sed 's/ / -a ! -name /g' | sed 's/;//g')
+    eval "find /sbin /usr/sbin ! -type d ${bins} -delete"
 }
 
 #=======================================================================================================================
@@ -396,6 +397,8 @@ main() {
     display_dirs=$(echo "['${user_dirs}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_files=$(echo "['${user_files}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_bins=$(echo "['${remove_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | sed 's/;//g')
+    display_user_bins=$(echo "['${allowed_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | \
+                        sed 's/;//g')
     print_status 'Hardening image with the following settings:'
     log "  Main user name:      ${user}"
     log "  Main user UID:       ${uid}"
@@ -405,6 +408,7 @@ main() {
     log "  Create user home:    ${create_home}"
     log "  Shell:               ${add_shell}"
     log "  Removed system bins: ${display_bins}"
+    log "  Allowed user bins:   ${display_user_bins}"
 
     # Execute workflows
     case "${command}" in
