@@ -36,6 +36,7 @@ user=''
 uid=1001
 gid=1001
 user_dirs=''
+user_files=''
 add_shell='false'
 create_home='false'
 remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
@@ -66,6 +67,7 @@ usage() {
     echo '  -u, --uid ID           Assigns ID to user'
     echo '  -g, --gid ID           Assigns ID to group'
     echo '  -d, --dir PATH         Assigns ownership of PATH to user'
+    echo '  -f, --file FILE        Assigns ownership of FILE to user'
     echo '  -k, --keep BINARY      Binary to keep'
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
@@ -119,6 +121,7 @@ log() {
 #   - uid
 #   - gid
 #   - user_dirs
+#   - user_files
 #   - add_shell
 # Arguments:
 #   $@ - All available command-line arguments.
@@ -131,15 +134,15 @@ parse_args() {
     # Process and validate command-line arguments
     while [ -n "$1" ]; do
         case "$1" in
-            -n | --name ) shift; user="$1";;
-            -u | --uid  ) shift; uid="$1"; id_set='true';;
-            -g | --gid  ) shift; gid="$1"; id_set='true';;
-            -d | --dir  ) shift; user_dirs="${user_dirs} $1";;
-            -k | --keep ) shift; remove_binaries=$(echo "${remove_binaries}" | sed "s/ $1;//g");;
-            --add-shell ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
+            -n | --name   ) shift; user="$1"; allowed_users="${allowed_users}|$1";;
+            -u | --uid    ) shift; uid="$1"; id_set='true';;
+            -g | --gid    ) shift; gid="$1"; id_set='true';;
+            -d | --dir    ) shift; user_dirs="${user_dirs} $1";;
+            -f | --file   ) shift; user_files="${user_files} $1";;
+            --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
             --create-home ) create_home='true';;
-            harden      ) command="$1";;
-            *           ) usage; terminate "Unrecognized parameter ($1)"
+            harden        ) command="$1";;
+            *             ) usage; terminate "Unrecognized parameter ($1)"
         esac
         shift
     done
@@ -212,14 +215,16 @@ execute_add_user() {
 #=======================================================================================================================
 # Arguments:
 #   $1 - Folders
-#   $2 - User name
+#   $2 - Files
+#   $3 - User name
 # Outputs:
 #   Reassigned ownership of folders and files.
 #=======================================================================================================================
 execute_assign_ownership() {
     print_status 'Assigning ownership of folders and files'
-    if [ -n "$2" ]; then
-        eval "find $1 -xdev -type d -exec chown -R $2:$2 {} \; -exec chmod -R 0755 {} \;"
+    if [ -n "$3" ]; then
+        [ -n "$1" ] && eval "find $1 -xdev -type d -exec chown -R $3:$3 {} \; -exec chmod -R 0755 {} \;"
+        [ -n "$2" ] && eval "find $2 -xdev -type f -exec chown -R $3:$3 {} \; -exec chmod -R 0755 {} \;"
     else
         log 'Skipped, no user name specified'
     fi
@@ -389,23 +394,25 @@ main() {
 
     # Display configuration settings
     display_dirs=$(echo "['${user_dirs}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
+    display_files=$(echo "['${user_files}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_bins=$(echo "['${remove_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | sed 's/;//g')
     print_status 'Hardening image with the following settings:'
-    log "  User:         ${user}"
-    log "  UID:          ${uid}"
-    log "  GID:          ${gid}"
-    log "  User dirs:    ${display_dirs}"
-    log "  Shell:        ${add_shell}"
-    log "  User home:    ${create_home}"
-    log "  Removed bins: ${display_bins}"
+    log "  Main user name:      ${user}"
+    log "  Main user UID:       ${uid}"
+    log "  Main user GID:       ${gid}"
+    log "  Main user dirs:      ${display_dirs}"
+    log "  Main user files:     ${display_files}"
+    log "  Create user home:    ${create_home}"
+    log "  Shell:               ${add_shell}"
+    log "  Removed system bins: ${display_bins}"
 
     # Execute workflows
     case "${command}" in
         harden)  
             validate_prerequisites
             execute_add_user
-            execute_assign_ownership "${SYSDIRS}" root
-            execute_assign_ownership "${user_dirs}" "${user}"
+            execute_assign_ownership "${SYSDIRS}" '' root
+            execute_assign_ownership "${user_dirs}" "${user_files}" "${user}"
             execute_update_mod
             execute_improve_encryption
             execute_remove_crontabs
