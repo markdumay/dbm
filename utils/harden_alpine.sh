@@ -4,8 +4,8 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : January 31st, 2021
-# Version       : 0.1.0
+# Date          : February 2nd, 2021
+# Version       : 0.2.0
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -41,6 +41,7 @@ add_shell='false'
 create_home='false'
 remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
 allowed_binaries=' nologin; setup-proxy; sshd; start.sh;'
+allowed_users="root|sshd"
 
 
 #=======================================================================================================================
@@ -70,6 +71,7 @@ usage() {
     echo '  -d, --dir PATH         Assigns ownership of PATH to user'
     echo '  -f, --file FILE        Assigns ownership of FILE to user'
     echo '  -k, --keep BINARY      Binary to keep'
+    echo '  -U, --user NAME        User to keep'
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
     echo '                         (not recommended for production)'
@@ -144,6 +146,7 @@ parse_args() {
                             remove_binaries=$(echo "${remove_binaries}" | sed "s/ $1;//g")
                             allowed_binaries=$(echo "${allowed_binaries} $1;")
                             ;;
+            -U | --user   ) shift; allowed_users="${allowed_users}|$1";;
             --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
             --create-home ) create_home='true';;
             harden        ) command="$1";;
@@ -315,8 +318,8 @@ execute_remove_accounts_and_logins() {
     print_status 'Removing unnecessary user accounts and interactive login shells'
 
     # Remove unnecessary user accounts
-    sed -i -r "/^(${user}|root|sshd)/!d" /etc/group
-    sed -i -r "/^(${user}|root|sshd)/!d" /etc/passwd
+    sed -i -r "/^(${allowed_users})/!d" /etc/group
+    sed -i -r "/^(${allowed_users})/!d" /etc/passwd
 
     # Remove interactive login shell for everybody but user
     sed -i -r "/^${user}:/! s#^(.*):[^:]*\$#\1:/sbin/nologin#" /etc/passwd
@@ -397,6 +400,7 @@ main() {
     display_dirs=$(echo "['${user_dirs}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_files=$(echo "['${user_files}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_bins=$(echo "['${remove_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | sed 's/;//g')
+    display_users=$(echo "['${allowed_users}']" | sed 's/|/'\'', '\''/g')
     display_user_bins=$(echo "['${allowed_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | \
                         sed 's/;//g')
     print_status 'Hardening image with the following settings:'
@@ -406,6 +410,7 @@ main() {
     log "  Main user dirs:      ${display_dirs}"
     log "  Main user files:     ${display_files}"
     log "  Create user home:    ${create_home}"
+    log "  Enabled users:       ${display_users}"
     log "  Shell:               ${add_shell}"
     log "  Removed system bins: ${display_bins}"
     log "  Allowed user bins:   ${display_user_bins}"
