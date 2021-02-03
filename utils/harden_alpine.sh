@@ -4,8 +4,8 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 2nd, 2021
-# Version       : 0.2.0
+# Date          : February 3rd, 2021
+# Version       : 0.3.0
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -22,7 +22,7 @@
 readonly RED='\e[31m'                           # Red color
 readonly NC='\e[m'                              # No color / reset
 readonly BOLD='\e[1m'                           # Bold font
-readonly MAXID=2147483647                       # Maximum ID supported for GID/UID (shadow package, newer versions 
+readonly MAXID=2147483647                       # Maximum ID supported for GID/UID (shadow package, newer versions
                                                 # support 4,294,967,296)
 readonly MODULI='/etc/ssh/moduli'               # Moduli file for SSH
 readonly SYSDIRS='/bin /etc /lib /sbin /usr'    # Pseudo array of system dirs, separated by spaces
@@ -56,10 +56,10 @@ allowed_users="root|sshd"
 # Outputs:
 #   Writes message to stdout.
 #=======================================================================================================================
-usage() { 
+usage() {
     echo 'Script to harden a Linux Alpine instance'
-    echo 
-    echo "Usage: $0 COMMAND [OPTIONS]" 
+    echo
+    echo "Usage: $0 COMMAND [OPTIONS]"
     echo
     echo 'Commands:'
     echo '  harden                 Harden the current Linux Alpine instance'
@@ -210,6 +210,7 @@ validate_prerequisites() {
     mkdir -p /tmp
 }
 
+
 #=======================================================================================================================
 # Workflow Functions
 #=======================================================================================================================
@@ -273,7 +274,7 @@ execute_update_mod() {
 }
 
 #=======================================================================================================================
-# Improves encryption strength of SSH moduli to custom DH with SHA2. 
+# Improves encryption strength of SSH moduli to custom DH with SHA2.
 # See https://stribika.github.io/2015/01/04/secure-secure-shell.html
 #=======================================================================================================================
 # Outputs:
@@ -373,7 +374,7 @@ execute_clean_files() {
     eval "find ${SYSDIRS} -xdev -type f -a -perm +4000 -delete"
 
     # Remove other programs that could be dangerous
-    log 'Removing unsafe binaries' 
+    log 'Removing unsafe binaries'
     remove_binaries=$(echo "${remove_binaries}" | sed 's/ / -name /g' | sed 's/;/ -o/g')
     eval "find ${SYSDIRS} -xdev \( ${remove_binaries} \) -delete"
 
@@ -440,7 +441,7 @@ main() {
 
     # Execute workflows
     case "${command}" in
-        harden)  
+        harden)
             validate_prerequisites
             execute_add_user
             execute_assign_ownership "${SYSDIRS}" '' root
@@ -453,7 +454,7 @@ main() {
             execute_remove_accounts_and_logins
             execute_clean_files
             ;;
-        *)       
+        *)
             terminate 'Invalid command'
     esac
 
