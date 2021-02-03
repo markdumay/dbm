@@ -66,8 +66,8 @@ usage() {
     echo
     echo 'Options:'
     echo '  -n, --name NAME        Creates a user and group with specified name'
-    echo '  -u, --uid ID           Assigns ID to user'
-    echo '  -g, --gid ID           Assigns ID to group'
+    echo '  -u, --uid ID           Assigns ID to user (defaults to 1001)'
+    echo '  -g, --gid ID           Assigns ID to group (defaults to 1001)'
     echo '  -d, --dir PATH         Assigns ownership of PATH to user'
     echo '  -f, --file FILE        Assigns ownership of FILE to user'
     echo '  -k, --keep BINARY      Binary to keep'
@@ -116,6 +116,18 @@ log() {
 }
 
 #=======================================================================================================================
+# Validates if a variable is a valid positive integer.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Variable to test.
+# Outputs:
+#   Return 0 if valid and returns 1 if not valid.
+#=======================================================================================================================
+is_number() {
+    [ -n "$1" ] && [ -z "${1##[0-9]*}" ] && return 0 || return 1
+}
+
+#=======================================================================================================================
 # Parse and validate the command-line arguments.
 #=======================================================================================================================
 # Globals:
@@ -158,14 +170,19 @@ parse_args() {
     # Validate arguments
     fatal_error=''
     warning=''
+
     # Requirement 1 - a single value command is provided
-    if [ -z "${command}" ]; then fatal_error="Expected command"
-    # Requirement 2 - UID should be in range
+    if [ -z "${command}" ]; then fatal_error='Expected command'
+    # Requirement 2 - UID should be a positive number
+    elif ! is_number "${uid}"; then fatal_error='UID is not a valid number'
+    # Requirement 3 - GID should be a positive number
+    elif ! is_number "${gid}"; then fatal_error='GID is not a valid number'
+    # Requirement 3 - UID should be in range
     elif [ "${uid}" -lt 100 ] || [ "${uid}" -gt "${MAXID}" ]; then fatal_error="UID not in range 100 - ${MAXID}"
-    # Requirement 3 - GID should be in range
+    # Requirement 4 - GID should be in range
     elif [ "${gid}" -lt 100 ] || [ "${gid}" -gt "${MAXID}" ]; then fatal_error="GID not in range 100 - ${MAXID}"
     # Warning 1 - user name not specified
-    elif [ "${id_set}" = 'true' ] && [ "${user}" = '' ]; then warning='User name not specified, ugnoring UID/GID'
+    elif [ "${id_set}" = 'true' ] && [ "${user}" = '' ]; then warning='User name not specified, ignoring UID/GID'
     fi
 
     # Inform user and terminate on fatal error
