@@ -4,7 +4,7 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 1st, 2021
+# Date          : February 3rd, 2021
 # Version       : 0.1.0
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
@@ -409,9 +409,9 @@ execute_validate_and_show_env() {
     # Show environment information
     os=$(uname -s)
     arch=$(uname -m | sed 's/x86_64/amd64/')
-    log "  Docker Engine: v${docker_version}"
+    log "  Docker Engine:  v${docker_version}"
     log "  Docker Compose: v${compose_version}"
-    log "  Host: ${os}/${arch}"
+    log "  Host:           ${os}/${arch}"
     echo
 }
 
