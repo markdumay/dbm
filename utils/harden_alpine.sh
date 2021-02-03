@@ -223,6 +223,12 @@ validate_prerequisites() {
 execute_add_user() {
     print_status 'Adding user'
     if [ -n "${user}" ]; then
+        # do not create mail spool
+        if ! grep -q 'CREATE_MAIL_SPOOL=no' /etc/default/useradd; then
+            sed '/^CREATE_MAIL_SPOOL/d' /etc/default/useradd
+        fi
+
+        # create group and user
         /usr/sbin/groupadd -g "${gid}" "${user}"
         if [ "${create_home}" = 'true' ]; then
             /usr/sbin/useradd -m -s /bin/sh -g "${gid}" -u "${uid}" -d "/home/${user}" "${user}"
