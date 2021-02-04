@@ -254,12 +254,11 @@ execute_add_user() {
 #=======================================================================================================================
 execute_assign_ownership() {
     print_status 'Assigning ownership of folders and files'
-    if [ -n "$3" ]; then
-        [ -n "$1" ] && eval "find $1 -xdev -type d -exec chown -R $3:$3 {} \; -exec chmod -R 0755 {} \;"
-        [ -n "$2" ] && eval "find $2 -xdev -type f -exec chown -R $3:$3 {} \; -exec chmod -R 0755 {} \;"
-    else
-        log 'Skipped, no user name specified'
-    fi
+    [ -n "$1" ] && [ -n "$3" ] && \
+        eval "find $1 -xdev -type d \( ! -wholename /etc/mtab \) -exec chown $3:$3 {} \; -exec chmod 0755 {} \;"
+    [ -n "$2" ] && [ -n "$3" ] && \
+        eval "find $2 -xdev -type f -exec chown $3:$3 {} \; -exec chmod 0755 {} \;"
+    [ -z "$3" ] && log 'Skipped, no user name specified'
 }
 
 #=======================================================================================================================
