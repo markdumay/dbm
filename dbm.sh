@@ -4,7 +4,7 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 3rd, 2021
+# Date          : February 4th, 2021
 # Version       : 0.2.0
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
@@ -28,7 +28,6 @@ readonly DOCKER_EXEC='docker exec -it'
 # Variables
 #=======================================================================================================================
 detached='false'
-remap='false'
 terminal='false'
 command=''
 services=''
@@ -39,8 +38,6 @@ docker_dev=''
 docker_stack=''
 docker_service=''
 script_version=''
-uid=''
-gid=''
 
 
 #=======================================================================================================================
@@ -76,9 +73,6 @@ usage() {
     # echo "Options:"
     # echo "  -e, --env FILE         Use FILE for environment variables, defaults to 'build.env'"
     # echo
-    echo "Options (build only):"
-    echo "  -r, --remap            Stage UID/GID from Docker user namespace"
-    echo
     echo "Options (up only):"
     echo "  -d, --detached         Run in detached mode"
     echo "  -t, --terminal         Run in detached mode and start terminal (if supported by image)"
@@ -143,8 +137,6 @@ is_number() {
 #   - services
 #   - subcommand
 #   - terminal
-#   - uid
-#   - gid
 # Arguments:
 #   $@ - All available command-line arguments.
 # Outputs:
@@ -157,7 +149,6 @@ parse_args() {
     while [ -n "$1" ]; do
         case "$1" in
             -d | --detached )                  detached='true';;
-            -r | --remap )                     remap='true';;
             -t | --terminal )                  terminal='true';;
             dev | prod)                        command="$1";;
             version)                           command="$1";;
@@ -190,27 +181,7 @@ parse_args() {
     elif [ "${detached}" = 'true' ] && \
          [ "${terminal}" = 'true' ]; then
         warning="Ignoring detached mode argument"
-    # Warning 2 - Remap only supported in build mode
-    elif [ "${remap}" = 'true' ] && \
-         [ "${subcommand}" != 'build' ]; then
-        warning="Ignoring remap argument"
-        remap='false'
-    # Requirement 6 - User remapping is enabled if remap is specified
-    elif [ "${remap}" = 'true' ]; then
-        if docker info 2> /dev/null | grep -q userns; then
-            uid=$(grep 'dockremap' /etc/subuid 2> /dev/null | awk -F':' '{print $2}')
-            gid=$(grep 'dockremap' /etc/subgid 2> /dev/null | awk -F':' '{print $2}')
-            # validate UID/GID
-            if ! is_number "${uid}"; then fatal_error='UID is not a valid number'
-            elif ! is_number "${gid}"; then fatal_error='GID is not a valid number'
-            else
-                export UID="${uid}"
-                export GID="${gid}"
-            fi
-        else
-            fatal_error="User remapping is not enabled"
-        fi
-    # Requirement 7 - Services do not start with '-' character
+    # Requirement 6 - Services do not start with '-' character
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
     fi
     
@@ -453,7 +424,6 @@ execute_validate_and_show_env() {
     log "  Docker Engine:  v${docker_version}"
     log "  Docker Compose: v${compose_version}"
     log "  Host:           ${os}/${arch}"
-    [ "${remap}" = 'true' ] && log "  Remapped user:  ${UID}:${GID}"
     echo
 }
 
