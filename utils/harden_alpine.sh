@@ -4,7 +4,7 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 3rd, 2021
+# Date          : February 4th, 2021
 # Version       : 0.3.0
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
@@ -243,7 +243,7 @@ execute_add_user() {
 }
 
 #=======================================================================================================================
-# Assign ownership of specified folders and files to a specific user.
+# Assign ownership of specified folders and files to a specific user. The ownership of folders is recursive.
 #=======================================================================================================================
 # Arguments:
 #   $1 - Folders
@@ -331,6 +331,7 @@ execute_remove_world_writable_permissions() {
     find / -xdev -type f -perm +0002 -exec chmod o-w {} +
 }
 
+# TODO: add flag to set nologin for all users
 #=======================================================================================================================
 # Remove unnecessary user accounts and interactive login shells.
 #=======================================================================================================================
