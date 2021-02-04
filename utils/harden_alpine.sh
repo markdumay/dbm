@@ -226,7 +226,7 @@ execute_add_user() {
     if [ -n "${user}" ]; then
         # do not create mail spool
         if ! grep -q 'CREATE_MAIL_SPOOL=no' /etc/default/useradd; then
-            sed '/^CREATE_MAIL_SPOOL/d' /etc/default/useradd
+            sed -i -r '/^CREATE_MAIL_SPOOL/d' /etc/default/useradd
         fi
 
         # create group and user
