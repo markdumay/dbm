@@ -4,7 +4,7 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 4th, 2021
+# Date          : February 7th, 2021
 # Version       : 0.3.0
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
@@ -38,6 +38,7 @@ gid=1001
 user_dirs=''
 user_files=''
 add_shell='false'
+enable_tmpfs='true'
 create_home='false'
 remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
 allowed_binaries=' nologin; setup-proxy; sshd; start.sh;'
@@ -74,6 +75,7 @@ usage() {
     echo '  -U, --user NAME        User to keep'
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
+    echo '  --tmpfs                Support read-only filesystem and tmpfs mounts'
     echo '                         (not recommended for production)'
     echo
 }
@@ -161,6 +163,7 @@ parse_args() {
             -U | --user   ) shift; allowed_users="${allowed_users}|$1";;
             --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
             --create-home ) create_home='true';;
+            --tmpfs       ) enable_tmpfs='true';;
             harden        ) command="$1";;
             *             ) usage; terminate "Unrecognized parameter ($1)"
         esac
@@ -254,7 +257,9 @@ execute_add_user() {
 #=======================================================================================================================
 execute_assign_ownership() {
     print_status 'Assigning ownership of folders and files'
-    [ -n "$1" ] && [ -n "$3" ] && \
+    [ -n "$1" ] && [ -n "$3" ] && [ "${enable_tmpfs}" = 'true' ] && \
+        log 'INFO: ''tempfs'' mode enabled, skipping assigning ownership of directories'
+    [ -n "$1" ] && [ -n "$3" ] && [ "${enable_tmpfs}" != 'true' ] && \
         eval "find $1 -xdev -type d \( ! -wholename /etc/mtab \) -exec chown $3:$3 {} \; -exec chmod 0755 {} \;"
     [ -n "$2" ] && [ -n "$3" ] && \
         eval "find $2 -xdev -type f -exec chown $3:$3 {} \; -exec chmod 0755 {} \;"
@@ -327,8 +332,12 @@ execute_remove_admin_commands() {
 #=======================================================================================================================
 execute_remove_world_writable_permissions() {
     print_status 'Removing world-writable permissions'
-    find / -xdev -type d -perm +0002 -exec chmod o-w {} +
-    find / -xdev -type f -perm +0002 -exec chmod o-w {} +
+    if [ "${enable_tmpfs}" = 'true' ]; then
+        find / -xdev -type d -perm +0002 -exec chmod o-w {} +
+        find / -xdev -type f -perm +0002 -exec chmod o-w {} +
+    else
+        log 'Skipped, image has enabled tmpfs mounts'
+    fi
 }
 
 # TODO: add flag to set nologin for all users
@@ -434,6 +443,7 @@ main() {
     log "  Main user dirs:      ${display_dirs}"
     log "  Main user files:     ${display_files}"
     log "  Create user home:    ${create_home}"
+    log "  Enable tmpfs:        ${enable_tmpfs}"
     log "  Enabled users:       ${display_users}"
     log "  Shell:               ${add_shell}"
     log "  Removed system bins: ${display_bins}"
