@@ -53,10 +53,10 @@ The project uses the following core software components:
 The Docker Build Manager (*dbm*) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
 
 ### Repository Requirements
-*dbm* assumes your repository defines three Docker Compose configurations. The production configuration amends or modifies the base image, and, similarly, the development configuration adjusts the production configuration. See the [nginx-certbot][nginx-cerbot] repository for an example.
+*dbm* assumes your repository defines three Docker Compose configurations. Both the production and development configuration are relative to the base image. See the [nginx-certbot][nginx-cerbot] repository for an example.
 1. `docker-compose.yml` - The base configuration of the Docker image using Docker Compose notation
 2. `docker-compose.prod.yml` - Production modifications to the base configuration
-3. `docker-compose.dev.yml`  - Development modifications to the production configuration
+3. `docker-compose.dev.yml` - Development modifications to the base configuration
 
 For proper versioning support, the file `VERSION` needs to be present at the root of your repository. It is recommended to use [semantic versioning][semver_url].
 
@@ -120,7 +120,7 @@ Lastly, adding the name of one or more services restricts the operation to the s
 | `DOCKER_WORKING_DIR`  | `No`     | `./`                      | Working directory for building Docker images |
 | `DOCKER_BASE_YML`     | `No`     | `docker-compose.yml`      | Base configuration of the Docker image using Docker Compose notation |
 | `DOCKER_PROD_YML`     | `No`     | `docker-compose.prod.yml` | Production modifications to the base configuration |
-| `DOCKER_DEV_YML`      | `No`     | `docker-compose.dev.yml`  | Development modifications to the production configuration |
+| `DOCKER_DEV_YML`      | `No`     | `docker-compose.dev.yml`  | Development modifications to the base configuration |
 | `DOCKER_SERVICE_NAME` | `No`     | `example`                 | Prefix to use when deploying images as containers |
 
 

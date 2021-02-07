@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 4th, 2021
-# Version       : 0.2.0
+# Date          : February 7th, 2021
+# Version       : 0.3.0
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -303,7 +303,7 @@ init_config() {
     # set the Docker command arguments
     docker_base="-f ${docker_base_yml}"
     docker_prod="${docker_base} -f ${docker_prod_yml}"
-    docker_dev="${docker_prod} -f ${docker_dev_yml}"
+    docker_dev="${docker_base} -f ${docker_dev_yml}"
     docker_stack="docker stack deploy -c - ${docker_service}"
 
     # init script version info
