@@ -4,8 +4,8 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 7th, 2021
-# Version       : 0.3.0
+# Date          : February 10th, 2021
+# Version       : 0.4.0
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -69,6 +69,7 @@ usage() {
     echo '  -n, --name NAME        Creates a user and group with specified name'
     echo '  -u, --uid ID           Assigns ID to user (defaults to 1001)'
     echo '  -g, --gid ID           Assigns ID to group (defaults to 1001)'
+    echo '  -v, --volume PATH      Prepares PATH to be volume mounted'
     echo '  -d, --dir PATH         Assigns ownership of PATH to user'
     echo '  -f, --file FILE        Assigns ownership of FILE to user'
     echo '  -k, --keep BINARY      Binary to keep'
@@ -133,14 +134,19 @@ is_number() {
 # Parse and validate the command-line arguments.
 #=======================================================================================================================
 # Globals:
-#   - command
 #   - user
 #   - uid
 #   - gid
+#   - volume_dirs
 #   - user_dirs
 #   - user_files
+#   - remove_binaries
+#   - allowed_binaries
+#   - allowed_users
 #   - add_shell
+#   - create_home
 #   - enable_read_only
+#   - command
 # Arguments:
 #   $@ - All available command-line arguments.
 # Outputs:
@@ -149,20 +155,21 @@ is_number() {
 parse_args() {
     id_set='false'
 
-    # Process and validate command-line arguments
+    # Process and validate command-line arguments (note: $1 is split using spaces if applicable)
     while [ -n "$1" ]; do
         case "$1" in
             -n | --name   ) shift; user="$1"; allowed_users="${allowed_users}|$1";;
             -u | --uid    ) shift; uid="$1"; id_set='true';;
             -g | --gid    ) shift; gid="$1"; id_set='true';;
+            -v | --volume ) shift; volume_dirs="${volume_dirs} $1";;
             -d | --dir    ) shift; user_dirs="${user_dirs} $1";;
             -f | --file   ) shift; user_files="${user_files} $1";;
             -k | --keep   ) shift
                             remove_binaries=$(echo "${remove_binaries}" | sed "s/ $1;//g")
-                            allowed_binaries=$(echo "${allowed_binaries} $1;")
+                            allowed_binaries="${allowed_binaries} $1;"
                             ;;
             -U | --user   ) shift; allowed_users="${allowed_users}|$1";;
-            --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
+            --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");;
             --create-home ) create_home='true';;
             --read-only   ) enable_read_only='true';;
             harden        ) command="$1";;
@@ -247,24 +254,75 @@ execute_add_user() {
 }
 
 #=======================================================================================================================
-# Assign ownership of specified folders and files to a specific user. The ownership of folders is recursive.
+# Assign ownership of specified folders and files to a specific user. The ownership of folders is recursive. The 
+# following scenarios are considered.
+#  - Volume mounts: Docker adapts the privileges and ownership of existing volumes. To ensure the data is accessible to 
+#    the container, the UID and GID of the owner need to be consistent. The execute_assign_ownership() function creates
+#    the local directory if needed, and assigns the specified user as owner. This ensures the volume mount is
+#    initialized correctly at first use. Please note the ownership of volume mounts cannot be modified. The volume needs
+#    to be recreated if the ownership needs to change.
+#  - Tmpfs mounts: Tmpfs mounts can be used in a read-only filesystem to enable in-memory read/write access for specific
+#    folders. In contrast to volume mounts, existing privileges and ownership are not adapted. The specified folder 
+#    should not exist for tmpfs mounts to work correctly. Docker dynamically assigns ownership to the current user at
+#    run time.
 #=======================================================================================================================
 # Arguments:
-#   $1 - Folders
-#   $2 - Files
-#   $3 - User name
+#   $1 - Volumes
+#   $2 - Folders
+#   $3 - Files
+#   $4 - User name
 # Outputs:
 #   Reassigned ownership of folders and files.
 #=======================================================================================================================
 execute_assign_ownership() {
     print_status 'Assigning ownership of folders and files'
-    [ -n "$1" ] && [ -n "$3" ] && [ "${enable_tmpfs}" = 'true' ] && \
-        log 'INFO: ''tempfs'' mode enabled, skipping assigning ownership of directories'
-    [ -n "$1" ] && [ -n "$3" ] && [ "${enable_tmpfs}" != 'true' ] && \
-        eval "find $1 -xdev -type d \( ! -wholename /etc/mtab \) -exec chown $3:$3 {} \; -exec chmod 0755 {} \;"
-    [ -n "$2" ] && [ -n "$3" ] && \
-        eval "find $2 -xdev -type f -exec chown $3:$3 {} \; -exec chmod 0755 {} \;"
-    [ -z "$3" ] && log 'Skipped, no user name specified'
+
+    # remove leading and trailing spaces
+    volumes=$(echo "$1" | awk '{$1=$1};1')
+    folders=$(echo "$2" | awk '{$1=$1};1')
+    files=$(echo "$3" | awk '{$1=$1};1')
+    username=$(echo "$4" | awk '{$1=$1};1')
+
+    # display current settings
+    display_volumes=$(echo "['${volumes}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
+    display_folders=$(echo "['${folders}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
+    display_files=$(echo "['${files}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
+    [ -n "${volumes}" ]  && log "Volumes:               ${display_volumes}"
+    [ -n "${folders}" ]  && log "Folders:               ${display_folders}"
+    [ -n "${files}" ]    && log "Files:                 ${display_files}"
+    [ -n "${username}" ] && log "Username:              '${username}'"
+
+    # create volume directories if needed and assign ownership recursively
+    [ -n "${volumes}" ] && [ -n "${username}" ] && \
+        log "Initalizing volume directories" && \
+        eval "mkdir -p ${volumes}" && \
+        eval "find ${volumes} -xdev -type d -exec chown ${username}:${username} {} \; -exec chmod 0755 {} \;"
+
+    # create regular directories if needed and assign ownership recursively
+    if [ -n "${folders}" ] && [ -n "${username}" ]; then
+        # if read only, warn if specified folders exist already and the user is not root
+        if [ "${enable_read_only}" = 'true' ] && [ "${username}" != 'root' ]; then
+            folders=$(eval "find ${folders} -xdev -type d 2> /dev/null")
+            [ -n "${folders}" ] && warn "Found existing folders that might interfere with tmpfs mounts: ${folders}"
+            [ -z "${folders}" ] && log 'Skipping initializing of regular directories, read-only mode'
+        fi 
+
+        # if not read-only or root, create specified folders and assign ownership recursively (excluding /etc/mtab)
+        if [ "${enable_read_only}" != 'true' ] || [ "${username}" = 'root' ]; then
+            log "Initalizing regular directories"
+            eval "mkdir -p ${folders}" && \
+            eval "find ${folders} -xdev -type d \( ! -wholename /etc/mtab \) -exec chown ${username}:${username} {} \; \
+                -exec chmod 0755 {} \;"
+        fi
+    fi
+
+    # assign ownership of files to specified user
+    [ -n "${files}" ] && [ -n "${username}" ] && \
+        log "Assigning ownership to files" && \
+        eval "find ${files} -xdev -type f -exec chown ${username}:${username} {} \; -exec chmod 0755 {} \;"
+
+    # warn if no user is specified
+    [ -z "${username}" ] && warn 'No user name specified'
 }
 
 #=======================================================================================================================
@@ -432,32 +490,37 @@ main() {
     parse_args "$@"
 
     # Display configuration settings
+    display_volumes=$(echo "['${volume_dirs}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_dirs=$(echo "['${user_dirs}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_files=$(echo "['${user_files}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g')
     display_bins=$(echo "['${remove_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | sed 's/;//g')
-    display_users=$(echo "['${allowed_users}']" | sed 's/|/'\'', '\''/g')
     display_user_bins=$(echo "['${allowed_binaries}']" | sed 's/^\['\'' */\['\''/g' | sed 's/ /'\'', '\''/g' | \
                         sed 's/;//g')
+    display_users=$(echo "['${allowed_users}']" | sed 's/|/'\'', '\''/g')
     print_status 'Hardening image with the following settings:'
-    log "  Main user name:      ${user}"
-    log "  Main user UID:       ${uid}"
-    log "  Main user GID:       ${gid}"
-    log "  Main user dirs:      ${display_dirs}"
-    log "  Main user files:     ${display_files}"
-    log "  Create user home:    ${create_home}"
-    log "  Enable tmpfs:        ${enable_tmpfs}"
-    log "  Enabled users:       ${display_users}"
-    log "  Shell:               ${add_shell}"
-    log "  Removed system bins: ${display_bins}"
-    log "  Allowed user bins:   ${display_user_bins}"
+    log "[User]"
+    log "Main user name:        ${user}"
+    log "Main user UID:         ${uid}"
+    log "Main user GID:         ${gid}"
+    log "Create user home:      ${create_home}"
+    log "[File system]"
+    log "Docker volumes:        ${display_volumes}"
+    log "Main user dirs:        ${display_dirs}"
+    log "Main user files:       ${display_files}"
+    log "[Binaries]"
+    log "Removed system bins:   ${display_bins}"
+    log "Allowed user bins:     ${display_user_bins}"
+    log "[Settings]"
+    log "Read-only file system: ${enable_read_only}"
+    log "Enabled users:         ${display_users}"
+    log "Shell:                 ${add_shell}"
 
     # Execute workflows
     case "${command}" in
         harden)
-            validate_prerequisites
             execute_add_user
-            execute_assign_ownership "${SYSDIRS}" '' root
-            execute_assign_ownership "${user_dirs}" "${user_files}" "${user}"
+            execute_assign_ownership '' "${SYSDIRS}" '' root
+            execute_assign_ownership "${volume_dirs}" "${user_dirs}" "${user_files}" "${user}"
             execute_update_mod
             execute_improve_encryption
             execute_remove_crontabs
