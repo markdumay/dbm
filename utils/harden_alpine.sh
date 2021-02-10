@@ -95,6 +95,18 @@ terminate() {
 }
 
 #=======================================================================================================================
+# Displays a warning on console.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Warning to display.
+# Outputs:
+#   Writes  warning to stderr.
+#=======================================================================================================================
+warn() {
+    printf "${RED}${BOLD}%s${NC}\n" "WARN: $1"
+}
+
+#=======================================================================================================================
 # Print current progress on console.
 #=======================================================================================================================
 # Arguments:
@@ -198,27 +210,7 @@ parse_args() {
 
     # Inform user and terminate on fatal error
     [ -n "${fatal_error}" ] && usage && terminate "${fatal_error}"
-    [ -n "${warning}" ] && log "WARN: ${warning}"
-}
-
-#=======================================================================================================================
-# Validates prerequisites; shadow package needs to be installed to support Docker namespaces. The directory /tmp is
-# created if needed.
-#=======================================================================================================================
-# Outputs:
-#   Terminates with non-zero exit code on fatal error.
-#=======================================================================================================================
-validate_prerequisites() {
-    # Check shadow package is installed
-    if ! apk info -a shadow >/dev/null 2>&1; then
-        log 'The shadow package is required to support Docker''s user namespaces'
-        log 'For example, add below instruction to your Dockerfile:'
-        log '    RUN apk update -f && apk --no-cache add -f shadow && rm -rf /var/cache/apk/*'
-        terminate 'Could not satisfy prerequisites'
-    fi
-
-    # Ensure /tmp is available
-    mkdir -p /tmp
+    [ -n "${warning}" ] && warn "${warning}"
 }
 
 
@@ -249,7 +241,7 @@ execute_add_user() {
         fi
         sed -i -r "s/^${user}:!:/${user}:x:/" /etc/shadow
     else
-        log 'Skipped, no user name specified'
+        warn 'No user name specified'
     fi
 }
 
