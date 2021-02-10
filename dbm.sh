@@ -343,7 +343,8 @@ execute_deploy() {
     print_status "Deploying Docker Stack services"
     [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" || 
         base_cmd="${DOCKER_RUN} ${docker_prod}"
-    eval "${base_cmd} config | ${docker_stack}"
+    # note: uses a workaround to fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
+    eval "${base_cmd} config | sed -E \"s/cpus: ([0-9\\.]+)/cpus: '\\1'/\" | ${docker_stack}"
 }
 
 #=======================================================================================================================
