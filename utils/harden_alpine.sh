@@ -38,7 +38,7 @@ gid=1001
 user_dirs=''
 user_files=''
 add_shell='false'
-enable_tmpfs='true'
+enable_read_only='true'
 create_home='false'
 remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
 allowed_binaries=' nologin; setup-proxy; sshd; start.sh;'
@@ -75,7 +75,7 @@ usage() {
     echo '  -U, --user NAME        User to keep'
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
-    echo '  --tmpfs                Support read-only filesystem and tmpfs mounts'
+    echo '  --read-only            Support read-only filesystem and tmpfs mounts'
     echo '                         (not recommended for production)'
     echo
 }
@@ -140,6 +140,7 @@ is_number() {
 #   - user_dirs
 #   - user_files
 #   - add_shell
+#   - enable_read_only
 # Arguments:
 #   $@ - All available command-line arguments.
 # Outputs:
@@ -163,7 +164,7 @@ parse_args() {
             -U | --user   ) shift; allowed_users="${allowed_users}|$1";;
             --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");; # keep 'sh'
             --create-home ) create_home='true';;
-            --tmpfs       ) enable_tmpfs='true';;
+            --read-only   ) enable_read_only='true';;
             harden        ) command="$1";;
             *             ) usage; terminate "Unrecognized parameter ($1)"
         esac
@@ -332,11 +333,11 @@ execute_remove_admin_commands() {
 #=======================================================================================================================
 execute_remove_world_writable_permissions() {
     print_status 'Removing world-writable permissions'
-    if [ "${enable_tmpfs}" = 'true' ]; then
+    if [ "${enable_read_only}" = 'true' ]; then
         find / -xdev -type d -perm +0002 -exec chmod o-w {} +
         find / -xdev -type f -perm +0002 -exec chmod o-w {} +
     else
-        log 'Skipped, image has enabled tmpfs mounts'
+        log 'Skipped, image has enabled read-only file system'
     fi
 }
 
