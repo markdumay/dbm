@@ -428,6 +428,7 @@ execute_clean_files() {
 #=======================================================================================================================
 main() {
     # Parse arguments
+    eval set -- "$@" # unquote arguments
     parse_args "$@"
 
     # Display configuration settings
