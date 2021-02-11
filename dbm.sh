@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 7th, 2021
-# Version       : 0.3.0
+# Date          : February 11th, 2021
+# Version       : 0.4.0
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -69,10 +69,6 @@ usage() {
     echo "  up                     Run a Docker image as container"
     echo "  stop                   Stop a running container"
     echo
-    # TODO: decide wether to support optional .env file
-    # echo "Options:"
-    # echo "  -e, --env FILE         Use FILE for environment variables, defaults to 'build.env'"
-    # echo
     echo "Options (up only):"
     echo "  -d, --detached         Run in detached mode"
     echo "  -t, --terminal         Run in detached mode and start terminal (if supported by image)"
@@ -222,7 +218,6 @@ parse_yaml() {
     }' | sed 's/_=/+=/g'
 }
 
-
 #=======================================================================================================================
 # Display time elapsed in a user-friendly way. For example:
 #   $ display_time 11617: 3 hours 13 minutes and 37 seconds
@@ -245,6 +240,17 @@ display_time() {
     [ "${m}" -gt 0 ] && printf '%d minutes ' "${m}"
     [ "${d}" -gt 0 ] || [ $h -gt 0 ] || [ $m -gt 0 ] && printf 'and '
     [ "${s}" = 1 ] && printf '%d second' "${s}" || printf '%d seconds' "${s}"
+}
+
+#=======================================================================================================================
+# Reads all key/value pairs beginning with 'DBM_*' from the default config file. The output is written to stdout with
+# the prefix 'export ' for each line.
+#=======================================================================================================================
+# Outputs:
+#   Writes matching key/value pairs to stdout.
+#=======================================================================================================================
+export_env_values() {
+    grep '^DBM_.*=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_/export /g'
 }
 
 #=======================================================================================================================
@@ -278,7 +284,6 @@ init_config_value() {
     printf "%s" "${value}"
 }
 
-
 #=======================================================================================================================
 # Initializes the global settings.
 #=======================================================================================================================
@@ -311,6 +316,7 @@ init_config() {
     script_version=$(cat "${script_dir}/VERSION" 2> /dev/null)
     script_version="${script_version:-unknown}"
 }
+
 
 #=======================================================================================================================
 # Workflow Functions
@@ -493,15 +499,20 @@ main() {
     # Initialize build version and change to working directory
     BUILD_VERSION=$(cat 'VERSION' 2> /dev/null)
     export BUILD_VERSION
+    cd "${docker_working_dir}" 2> /dev/null || terminate "Cannot find working directory: ${docker_working_dir}"
 
     # Parse arguments and initialize environment variables
     parse_args "$@"
     [ "${command}" = 'version' ] && execute_show_version && exit
     [ "${command}" = 'dev' ] && export IMAGE_SUFFIX='-debug' 
+    staged=$(export_env_values)
+    eval "${staged}"
 
     # Display environment and targeted images
-    cd "${docker_working_dir}" 2> /dev/null || terminate "Cannot find working directory: ${docker_working_dir}"
     execute_validate_and_show_env
+    print_status "Exporting environment variables"
+    echo "${staged}" | sed 's/^export /  /g'
+    echo
     execute_validate_and_show_images
 
     # Execute workflows
