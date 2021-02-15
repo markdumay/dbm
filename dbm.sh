@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 11th, 2021
-# Version       : 0.4.0
+# Date          : February 15th, 2021
+# Version       : 0.4.1
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -28,6 +28,7 @@ readonly DOCKER_EXEC='docker exec -it'
 # Variables
 #=======================================================================================================================
 detached='false'
+no_cache='false'
 terminal='false'
 command=''
 services=''
@@ -72,6 +73,9 @@ usage() {
     echo "Options (up only):"
     echo "  -d, --detached         Run in detached mode"
     echo "  -t, --terminal         Run in detached mode and start terminal (if supported by image)"
+    echo
+    echo "Options (build only):"
+    echo "  --no-cache             Do not use cache when building the image"
     echo
 }
 
@@ -144,8 +148,9 @@ parse_args() {
     # Process and validate command-line arguments
     while [ -n "$1" ]; do
         case "$1" in
-            -d | --detached )                  detached='true';;
-            -t | --terminal )                  terminal='true';;
+            -d | --detached)                   detached='true';;
+            --no-cache)                        no_cache='true';;
+            -t | --terminal)                   terminal='true';;
             dev | prod)                        command="$1";;
             version)                           command="$1";;
             build | deploy | down | stop | up) subcommand="$1";;
@@ -173,10 +178,14 @@ parse_args() {
     elif [ "${terminal}" = 'true' ] && \
          [ "${service_count}" -gt 1 ]; then 
          fatal_error="Terminal mode supports one service only"
-    # Warning 1 - Detached mode is not specified in terminal mode
+    # Warning 1 - Detached mode is not supported in terminal mode
     elif [ "${detached}" = 'true' ] && \
          [ "${terminal}" = 'true' ]; then
         warning="Ignoring detached mode argument"
+    # Warning 2 - No-cache mode is not supported for subcommands other than build
+    elif [ "${no_cache}" = 'true' ] && \
+         [ "${subcommand}" != 'build' ]; then
+        warning="Ignoring no-cache build argument"
     # Requirement 6 - Services do not start with '-' character
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
     fi
@@ -333,6 +342,7 @@ execute_build() {
     [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} build" || 
         base_cmd="${DOCKER_RUN} ${docker_prod} build"
     t1=$(date +%s)
+    [ "${no_cache}" = 'true' ] && base_cmd="${base_cmd} --no-cache"
     eval "${base_cmd} ${services}"
     t2=$(date +%s)
     elapsed_string=$(display_time $((t2 - t1)))
