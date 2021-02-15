@@ -114,7 +114,6 @@ Lastly, adding the name of one or more services restricts the operation to the s
 ### Configuration
 *dbm* supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository].
 
-
 | Variable              | Required | Example                   | Description |
 |-----------------------|----------|---------------------------|-------------|
 | `DOCKER_WORKING_DIR`  | `No`     | `./`                      | Working directory for building Docker images |
@@ -123,6 +122,50 @@ Lastly, adding the name of one or more services restricts the operation to the s
 | `DOCKER_DEV_YML`      | `No`     | `docker-compose.dev.yml`  | Development modifications to the base configuration |
 | `DOCKER_SERVICE_NAME` | `No`     | `example`                 | Prefix to use when deploying images as containers |
 
+### Defining Custom Variables
+*Dbm* supports custom variables in addition to the predefined variables described in the previous section. Any variable starting with the prefix `DBM_` within the `dbm.ini` file is exported to be used by any of the *dbm* commands `build`, `deploy`, `down`, `up`, and `stop`.
+
+For example, the following pseudo code uses the variables `UID` and `GID` to add a non-root user to the Docker image.
+
+1. Use the prefix `DBM_` to define custom variables in **dbm.ini**
+```
+[...]
+DBM_BUILD_UID=1234
+DBM_BUILD_GID=1234
+DBM_BUILD_USER=myuser
+```
+
+2. Expose the custom variables as build arguments in **docker-compose.yml** (removing the `DBM_` prefix)
+```
+version: "3.7"
+
+services:
+  <service-name>:
+    image: <image-name>
+    build:
+      dockerfile: Dockerfile
+      context: .
+      args:
+        BUILD_UID:  "${BUILD_UID}"
+        BUILD_GID:  "${BUILD_GID}"
+        BUILD_USER: "${BUILD_USER}"
+```
+
+3. Define the build arguments with default values in **Dockerfile**
+```
+ARG BUILD_UID=1001
+ARG BUILD_GID=1001
+ARG BUILD_USER=user
+FROM <base-image>
+
+RUN set -eu; \
+    apk update -f; \
+    apk --no-cache add -f shadow; \
+    rm -rf /var/cache/apk/*; \
+    /usr/sbin/groupadd -g "${BUILD_GID}" "${BUILD_USER}"; \
+    /usr/sbin/useradd -s /bin/sh -g "${BUILD_GID}" -u "${BUILD_UID}" "${BUILD_USER}"; \
+[...]
+```
 
 ## Contributing
 1. Clone the repository and create a new branch 
