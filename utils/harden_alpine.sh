@@ -4,8 +4,8 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 10th, 2021
-# Version       : 0.4.0
+# Date          : February 15th, 2021
+# Version       : 0.4.1
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -77,7 +77,6 @@ usage() {
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
     echo '  --read-only            Support read-only filesystem and tmpfs mounts'
-    echo '                         (not recommended for production)'
     echo
 }
 
@@ -246,8 +245,8 @@ execute_add_user() {
 }
 
 #=======================================================================================================================
-# Assign ownership of specified folders and files to a specific user. The ownership of folders is recursive. The 
-# following scenarios are considered.
+# Assign ownership of specified folders and files to a specific user. The ownership of folders is recursive and includes
+# their files. The following scenarios are considered.
 #  - Volume mounts: Docker adapts the privileges and ownership of existing volumes. To ensure the data is accessible to 
 #    the container, the UID and GID of the owner need to be consistent. The execute_assign_ownership() function creates
 #    the local directory if needed, and assigns the specified user as owner. This ensures the volume mount is
@@ -288,7 +287,8 @@ execute_assign_ownership() {
     [ -n "${volumes}" ] && [ -n "${username}" ] && \
         log "Initalizing volume directories" && \
         eval "mkdir -p ${volumes}" && \
-        eval "find ${volumes} -xdev -type d -exec chown ${username}:${username} {} \; -exec chmod 0755 {} \;"
+        eval "find ${volumes} -xdev -type d -exec chown ${username}:${username} {} \;" && \
+        eval "find ${volumes} -xdev -type f -exec chown ${username}:${username} {} \;"
 
     # create regular directories if needed and assign ownership recursively
     if [ -n "${folders}" ] && [ -n "${username}" ]; then
@@ -303,15 +303,15 @@ execute_assign_ownership() {
         if [ "${enable_read_only}" != 'true' ] || [ "${username}" = 'root' ]; then
             log "Initalizing regular directories"
             eval "mkdir -p ${folders}" && \
-            eval "find ${folders} -xdev -type d \( ! -wholename /etc/mtab \) -exec chown ${username}:${username} {} \; \
-                -exec chmod 0755 {} \;"
+            eval "find ${folders} -xdev -type d \( ! -wholename /etc/mtab \) -exec chown ${username}:${username} {} \;"
+            eval "find ${folders} -xdev -type f \( ! -wholename /etc/mtab \) -exec chown ${username}:${username} {} \;"
         fi
     fi
 
     # assign ownership of files to specified user
     [ -n "${files}" ] && [ -n "${username}" ] && \
         log "Assigning ownership to files" && \
-        eval "find ${files} -xdev -type f -exec chown ${username}:${username} {} \; -exec chmod 0755 {} \;"
+        eval "find ${files} -xdev -type f -exec chown ${username}:${username} {} \;"
 
     # warn if no user is specified
     [ -z "${username}" ] && warn 'No user name specified'
