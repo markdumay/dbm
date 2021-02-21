@@ -90,6 +90,7 @@ dbm COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]
 |---------------|-------------|
 | **`prod`**    | Target a production image |
 | **`dev`**     | Target a development image |
+| **`check`**     | Check for dependency upgrades |
 | **`version`** | Show version information |
 
 The commands `prod` and `dev` support the following subcommands.
@@ -166,6 +167,41 @@ RUN set -eu; \
     /usr/sbin/useradd -s /bin/sh -g "${BUILD_GID}" -u "${BUILD_UID}" "${BUILD_USER}"; \
 [...]
 ```
+
+### Defining Dependencies
+*Dbm* supports versioning of dependencies. Dependencies are identified by the pattern `DBM_*_VERSION` as a variant to a custom variable. Invoking the command `check` scans all dependencies and verifies if a newer version is available in a repository. Currently supported repository providers are `github.com` and `hub.docker.com`. The algorithm expects a semantic versioning pattern, following the pattern `MAJOR.MINOR.PATCH` with a potential extension. The matching is not strict, as version strings consisting of only `MAJOR` or `MAJOR.MINOR` are also considered valid. A `v` or `V` prefix is optional.
+
+#### Input Definitions
+The format of a dependency takes the following form:
+```
+DBM_<IDENTIFIER>_VERSION=<MAJOR>[.MINOR][.PATCH][EXTENSION]
+DBM_<IDENTIFIER>_VERSION=[{http|https}]<PROVIDER>[/r]/<OWNER>/<REPO> [{v|V}]<MAJOR>[.MINOR][.PATCH][EXTENSION]
+```
+
+The following dependency definitions are all valid examples.
+```
+DBM_GOLANG_VERSION=https://hub.docker.com/_/golang 1.16-buster
+DBM_ALPINE_GIT_VERSION=https://hub.docker.com/r/alpine/git v2.30
+DBM_RESTIC_VERSION=github.com/restic/restic 0.12.0 # this is a comment
+DBM_ALPINE_VERSION=3.12
+```
+
+The following *version strings* are examples of valid or invalid inputs:
+| Version string           | Format  | Comments |
+|--------------------------|---------|----------|
+| `1.14-buster`            | Valid   | `MAJOR='1'`, `MINOR='14'`, `EXTENSION='-buster'` |
+| `1.14.15`                | Valid   | `MAJOR='1'`, `MINOR='14'`, `PATCH='15'` |
+| `alpine3.13`             | Invalid | Starts with `EXTENSION='alpine'` instead of `MAJOR` |
+| `windowsservercore-1809` | Invalid | Starts with `EXTENSION='windowsservercore'` instead of `MAJOR` |
+
+#### Potential Check Results
+Invoking the command `check` scans all dependencies for potential version updates. The outcome for each dependency can be one of the following:
+
+* **No repository link, skipping** - The dependency does not specify a repository, e.g. `DBM_ALPINE_VERSION=3.12`.
+* **Malformed, skipping** - At least one of the mandatory arguments `PROVIDER`, `OWNER`, `REPO`, or `MAJOR` is missing. For example, in the dependency `DBM_RESTIC_VERSION=github.com/restic 0.12.0` the `REPO` is missing.
+* **Provider not supported, skipping** - The specified provider is not supported, currently only `github.com` and `hub.docker.com` are supported. For example. `DBM_YAML_VERSION=gopkg.in/yaml.v2 v2.4.0` refers to the unsupported provider `gopkg.in`.
+* **No tags found, skipping** - The repository did not return any tags matching the (optional) extension. Ensure the `OWNER` and `REPO` are correct.
+* **Different version found** - The repository returned a different version as latest (which might be newer). It is recommended to verify the available release and to update the dependency version as required.
 
 ## Contributing
 1. Clone the repository and create a new branch 

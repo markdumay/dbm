@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 15th, 2021
-# Version       : 0.4.1
+# Date          : February 21st, 2021
+# Version       : 0.5.0
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -22,6 +22,10 @@ readonly BOLD='\e[1m' # Bold font
 readonly DBM_CONFIG_FILE='dbm.ini'
 readonly DOCKER_RUN='docker-compose'
 readonly DOCKER_EXEC='docker exec -it'
+readonly DOCKER_API='https://hub.docker.com/v2'
+readonly GITHUB_API="https://api.github.com"
+readonly DOCKER_API_PAGE_SIZE=100 # Limit Docker API results to the first 100 only
+readonly VERSION_REGEX='([vV])?[0-9]+(.[0-9]+)?(.[0-9]+)?' #  MAJOR required, 'v', MINOR and PATCH are optional
 
 
 #=======================================================================================================================
@@ -61,6 +65,7 @@ usage() {
     echo "Commands:"
     echo "  prod                   Target a production image"
     echo "  dev                    Target a development image"
+    echo "  check                  Check for dependency upgrades"
     echo "  version                Show version information"
     echo
     echo "Subcommands (prod and dev):"
@@ -151,8 +156,7 @@ parse_args() {
             -d | --detached)                   detached='true';;
             --no-cache)                        no_cache='true';;
             -t | --terminal)                   terminal='true';;
-            dev | prod)                        command="$1";;
-            version)                           command="$1";;
+            dev | prod | check | version)      command="$1";;
             build | deploy | down | stop | up) subcommand="$1";;
             * )                                services="${services} $1"
         esac
@@ -166,14 +170,15 @@ parse_args() {
     service_count=$(echo "${services}" | wc -w)
     # Requirement 1 - A single value command is provided
     if [ -z "${command}" ]; then fatal_error="Expected command"
-    # Requirement 2 - No subcommand, flags, or services is defined for the command 'version'
-    elif [ "${command}" = 'version' ] && 
+    # Requirement 2 - No subcommand, flags, or services is defined for the command 'version' or 'check'
+    elif { [ "${command}" = 'version' ] || [ "${command}" = 'check' ]; } && 
          [ -n "${subcommand}" ] && \
          [ -n "${services}" ] && \
          [ "${detached}" != 'false' ] && \
          [ "${terminal}" != 'false' ]; then fatal_error="Invalid arguments"
-    # Requirement 3 - A subcommand is provided for all commands except 'version'
-    elif [ "${command}" != 'version' ] && [ -z "${subcommand}" ]; then fatal_error="Expected subcommand"
+    # Requirement 3 - A subcommand is provided for all commands except 'version' or 'check'
+    elif [ "${command}" != 'version' ] && [ "${command}" != 'check' ] && [ -z "${subcommand}" ]
+        then fatal_error="Expected subcommand"
     # Requirement 4 - At most one service is defined in terminal mode
     elif [ "${terminal}" = 'true' ] && \
          [ "${service_count}" -gt 1 ]; then 
@@ -258,8 +263,30 @@ display_time() {
 # Outputs:
 #   Writes matching key/value pairs to stdout.
 #=======================================================================================================================
+# shellcheck disable=SC2059
 export_env_values() {
-    grep '^DBM_.*=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_/export /g'
+    # retrieve all custom variables from the DBM config file
+    # remove all comments and trailing spaces; separate each dependency by a ';'
+    vars=$(grep '^DBM_.*=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_//g')
+    vars=$(printf "${vars}\n\n" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/;/g')
+    vars=$(printf "${vars}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
+    results=''
+
+    # remove the second argument if the line contains three arguments (such as the url for a dependency)
+    IFS=';' # initialize vars separator
+    for item in $vars; do
+        count=$(echo "${item}" | wc -w) # identify number of parsed arguments (should be 2 or 3)
+        if [ "${count}" -eq 1 ]; then
+            results="${results}export ${item}\n"
+        elif [ "${count}" -eq 2 ]; then
+            entry=$(echo "${item}" | sed 's/=/ /g' | awk  '{print $1, $3}' | sed 's/ /=/g')
+            results="${results}export ${entry}\n"
+        else
+            terminate "Invalid entry in '${DBM_CONFIG_FILE}': ${item}"
+        fi
+    done
+
+    printf "${results}"
 }
 
 #=======================================================================================================================
@@ -326,6 +353,79 @@ init_config() {
     script_version="${script_version:-unknown}"
 }
 
+#======================================================================================================================
+# Escapes a string considering special characters.
+#======================================================================================================================
+# Arguments:
+#   $1 - String.
+# Outputs:
+#   Escaped string.
+#======================================================================================================================
+escape_string() {
+    echo "$1" | sed 's/[^^\\]/[&]/g; s/\^/\\^/g; s/\\/\\\\/g'
+}
+
+#======================================================================================================================
+# Retrieves the latest available tag from a GitHub repository. Release candidates are excluded by default.
+#======================================================================================================================
+# Arguments:
+#   $1 - Repository owner.
+#   $2 - Repository name.
+#   $3 - Optional release extension.
+# Outputs:
+#   Latest available tag if found, empty string otherwise.
+#======================================================================================================================
+get_latest_github_tag() {
+    owner="$1"
+    repo="$2"
+    extension=$(escape_string "$3")
+
+    tag=$(curl -s "${GITHUB_API}/repos/${owner}/${repo}/releases/latest" | grep "tag_name" | awk -F'"' '{print $4}')
+    echo "${tag}" | grep -Eo "^${VERSION_REGEX}${extension}$"
+}
+
+#======================================================================================================================
+# Retrieves the latest available tag from the Docker Hub. Official Docker repositoriy links are converted to input
+# supported by the Docker registry API.
+#======================================================================================================================
+# Arguments:
+#   $1 - Repository owner.
+#   $2 - Repository name.
+#   $3 - Optional release extension.
+# Outputs:
+#   Latest available tag if found, empty string otherwise.
+#======================================================================================================================
+get_latest_docker_tag() {
+    [ "$1" = "_" ] && owner='library' || owner="$1" # Update owner of official Docker repositories
+    repo="$2"
+    extension=$(escape_string "$3")
+
+    url="${DOCKER_API}/repositories/${owner}/${repo}/tags/?page_size=${DOCKER_API_PAGE_SIZE}"
+    tags=$(curl -s "${url}")
+    tags=$(echo "${tags}" | jq -r '.results|.[]|.name' | grep -E "^${VERSION_REGEX}${extension}$")    
+    echo "${tags}" | sort --version-sort | tail -n1
+}
+
+#======================================================================================================================
+# Expands a version string if MINOR or PATCH are omitted. The version string should start with MAJOR, 'v' or 'V' 
+# prefixes are not supported. For example, the input '1.1' is converted to '1.1.0'.
+#======================================================================================================================
+# Arguments:
+#   $1 - Repository owner.
+#   $2 - Optional extension.
+# Outputs:
+#   A version string conforming to <MAJOR>.<MINOR>.<PATCH><EXTENSION>.
+#======================================================================================================================
+expand_version() {
+    if echo "$1" | grep -qEo "^[0-9]+$"; then
+        echo "$1.0.0$2"
+    elif echo "$1" | grep -qEo "^[0-9]+.[0-9]+$"; then
+        echo "$1.0$2"
+    else
+        echo "$1$2"
+    fi
+}
+
 
 #=======================================================================================================================
 # Workflow Functions
@@ -347,6 +447,121 @@ execute_build() {
     t2=$(date +%s)
     elapsed_string=$(display_time $((t2 - t1)))
     [ "${t2}" -gt "${t1}" ] && log "Total build time ${elapsed_string}"
+}
+
+#=======================================================================================================================
+# Scans all dependencies identified by 'DBM_*_VERSION' in the default config file. The current version is compared to 
+# the latest version available in the repository, if specified. The algorithm expects a semantic versioning pattern,
+# following the pattern 'MAJOR.MINOR.PATCH' with a potential extension. The matching is not strict, as version strings
+# consisting of only 'MAJOR' or 'MAJOR.MINOR' are also considered valid. A 'v' or 'V' prefix is optional.
+#
+# The format of a dependency takes the following form:
+# 1) DBM_<IDENTIFIER>_VERSION=<MAJOR>[.MINOR][.PATCH][EXTENSION]
+# 2) DBM_<IDENTIFIER>_VERSION=[{http|https}]<PROVIDER>[/r]/<OWNER>/<REPO> [{v|V}]<MAJOR>[.MINOR][.PATCH][EXTENSION]
+#
+# The following dependencies are some examples:
+# - DBM_GOLANG_VERSION=https://hub.docker.com/_/golang 1.16-buster
+# - DBM_ALPINE_GIT_VERSION=https://hub.docker.com/r/alpine/git v2.30
+# - DBM_RESTIC_VERSION=github.com/restic/restic 0.12.0 # this is a comment
+# - DBM_ALPINE_VERSION=3.12
+#
+# The following version strings are valid:
+# - 1.14-buster            MAJOR='1', MINOR='14', EXTENSION='-buster'
+# - 1.14.15                MAJOR='1', MINOR='14', PATCH='15'
+# The following version strings are invalid:
+# - alpine3.13             Starts with EXTENSION='alpine' instead of MAJOR
+# - windowsservercore-1809 Starts with EXTENSION='windowsservercore' instead of MAJOR
+#
+# The outcome for each dependency can be one of the following:
+# - No repository link, skipping
+#   The dependency does not specify a repository, e.g. DBM_ALPINE_VERSION=3.12.
+# - Malformed, skipping
+#   At least one of the mandatory arguments PROVIDER, OWNER, REPO, or MAJOR is missing.
+#   e.g. DBM_RESTIC_VERSION=github.com/restic 0.12.0
+# - Provider not supported, skipping
+#   The specified provider is not supported, currently only 'github.com' and 'hub.docker.com' are supported.
+#   e.g. DBM_YAML_VERSION=gopkg.in/yaml.v2 v2.4.0
+# - No tags found, skipping
+#   The repository did not return any tags matching the (optional) extension.
+# - Up to date
+#   The current version is the latest.
+# - Different version found
+#   The repository returned a different version as latest (which might be newer).
+#=======================================================================================================================
+# Outputs:
+#   Writes matching key/value pairs to stdout.
+#=======================================================================================================================
+# shellcheck disable=SC2059
+execute_check_upgrades() {
+    logs=''
+    # retrieve all dependendencies from the DBM config file
+    # remove all comments, trailing spaces, and protocols; separate each dependency by a ';'
+    dependencies=$(grep '^DBM_.*VERSION=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_//g;')
+    dependencies=$(echo "${dependencies}" | sed 's/hub.docker.com\/r\//hub.docker.com\//g')
+    dependencies=$(echo "${dependencies}" | sed 's/_VERSION=/ /g;s/\// /g;')
+    dependencies=$(echo "${dependencies}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
+    dependencies=$(echo "${dependencies}" | sed -e 's/http:  //g;s/https:  //g;')
+    dependencies=$(printf "${dependencies}\n\n" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/;/g')
+
+    IFS=';' # initialize dependency separator
+    width=0 # initialize tab width of first output column
+    for item in $dependencies; do
+        # initialize dependency provider, owner, repo, version, and extension
+        # version information is always expanded to 'MAJOR.MINOR.PATCH', setting MINOR and PATCH to '0' if omitted
+        name=$(echo "${item}" | awk -F' ' '{print $1}')
+        provider=$(echo "${item}" | awk -F' ' '{print $2}' | tr '[:upper:]' '[:lower:]') # make case insensitive
+        owner=$(echo "${item}" | awk -F' ' '{print $3}')
+        repo=$(echo "${item}" | awk -F' ' '{print $4}')
+        extension=$(echo "${item}" | awk -F' ' '{print $5}')
+        version=$(echo "${extension}" | grep -Eo "^${VERSION_REGEX}")
+        esc_version=$(escape_string "${version}")
+        [ -n "${esc_version}" ] && extension=$(echo "${extension}" | sed "s/${esc_version}//g") # strip version information
+        version=$(echo "${version}" | sed 's/^v//g;s/^V//g;')
+        version=$(expand_version "${version}") # expand version info if needed with minor and patch
+        count=$(echo "${item}" | wc -w) # identify number of parsed arguments (should be 2 or 5)
+        [ "${count}" -eq 2 ] && version="${provider}" && extension=''
+        dependency="[${name} v${version}${extension}]"
+        curr_width=$(echo "${dependency}" | awk '{print length}') # set current tab width
+        [ "${curr_width}" -gt "${width}" ] && width="${curr_width}" # update tab width if needed
+
+        # validate number of arguments
+        if [ "${count}" -eq 2 ]; then
+            logs="${logs}${dependency}\t No repository link, skipping\n"
+            continue
+        elif [ "${count}" -ne 5 ]; then
+            logs="${logs}[${name}]\t Malformed, skipping\n"
+            continue
+        fi
+        
+        # obtain latest tag from supported providers
+        case "${provider}" in
+            hub.docker.com )
+                latest=$(get_latest_docker_tag "${owner}" "${repo}" "${extension}")
+                ;;
+            github.com )
+                latest=$(get_latest_github_tag "${owner}" "${repo}" "${extension}")
+                ;;
+            * )
+                logs="${logs}${dependency}\t Provider '${provider}' not supported, skipping\n"
+                continue
+        esac
+
+        # compare latest tag to current tag
+        latest_base=$(echo "${latest}" | sed "s/${extension}$//g;s/^v//g;s/^V//g;")
+        latest_expanded=$(expand_version "${latest_base}" "${extension}")
+        if [ -z "${latest}" ]; then
+            logs="${logs}${dependency}\t No tags found, skipping\n"
+        elif [ "${version}${extension}" = "${latest_expanded}" ]; then
+            logs="${logs}${dependency}\t Up to date\n"
+        else
+            logs="${logs}${dependency}\t Different version found: '${latest}'\n"
+        fi
+    done
+
+    # format and display findings
+    width=$((width + 2))
+    tabs "${width}"
+    printf "${logs}"
 }
 
 #=======================================================================================================================
@@ -481,7 +696,7 @@ execute_validate_and_show_images() {
 }
 
 #=======================================================================================================================
-# Display script version information
+# Display script version information.
 #=======================================================================================================================
 # Globals:
 #   - script_version
@@ -514,7 +729,9 @@ main() {
     # Parse arguments and initialize environment variables
     parse_args "$@"
     [ "${command}" = 'version' ] && execute_show_version && exit
+    [ "${command}" = 'check' ] && execute_check_upgrades && exit
     [ "${command}" = 'dev' ] && export IMAGE_SUFFIX='-debug' 
+    
     staged=$(export_env_values)
     eval "${staged}"
 
