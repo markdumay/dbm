@@ -169,7 +169,7 @@ RUN set -eu; \
 ```
 
 ### Defining Dependencies
-*Dbm* supports versioning of dependencies. Dependencies are identified by the pattern `DBM_*_VERSION` as a variant to a custom variable. Invoking the command `check` scans all dependencies and verifies if a newer version is available in a repository. Currently supported repository providers are `github.com` and `hub.docker.com`. The algorithm expects a semantic versioning pattern, following the pattern `MAJOR.MINOR.PATCH` with a potential extension. The matching is not strict, as version strings consisting of only `MAJOR` or `MAJOR.MINOR` are also considered valid. A `v` or `V` prefix is optional.
+*Dbm* supports versioning of dependencies. Dependencies are identified by the pattern `DBM_*_VERSION` as a variant to a custom variable. Invoking the command `check` scans all dependencies and verifies if a newer version is available in a repository. Currently supported repository providers are `github.com` and `hub.docker.com`. The algorithm expects a semantic versioning pattern, following the pattern `MAJOR.MINOR.PATCH` with a potential extension. The matching is not strict, as version strings consisting of only `MAJOR` or `MAJOR.MINOR` are also considered valid. A `v` or `V` prefix is optional. Dependencies are exported as environment variables in similar fashion to custom variables. The provider url is removed in this case.
 
 #### Input Definitions
 The format of a dependency takes the following form:
@@ -194,7 +194,7 @@ The following *version strings* are examples of valid or invalid inputs:
 | `alpine3.13`             | Invalid | Starts with `EXTENSION='alpine'` instead of `MAJOR` |
 | `windowsservercore-1809` | Invalid | Starts with `EXTENSION='windowsservercore'` instead of `MAJOR` |
 
-#### Potential Check Results
+#### Potential Outcomes of Check Command
 Invoking the command `check` scans all dependencies for potential version updates. The outcome for each dependency can be one of the following:
 
 * **No repository link, skipping** - The dependency does not specify a repository, e.g. `DBM_ALPINE_VERSION=3.12`.
