@@ -246,7 +246,7 @@ parse_args() {
          [ "${detached}" != 'false' ] && \
          [ "${terminal}" != 'false' ]; then fatal_error="Invalid arguments"
     # Requirement 3 - A subcommand is provided for 'prod' and 'dev'
-    elif { [ "${command}" = 'prod' ] || [ "${command}" != 'dev' ]; } && [ -z "${subcommand}" ]
+    elif { [ "${command}" = 'prod' ] || [ "${command}" = 'dev' ]; } && [ -z "${subcommand}" ]
         then fatal_error="Expected subcommand"
     # Requirement 4 - At most one service is defined in terminal mode
     elif [ "${terminal}" = 'true' ] && \
