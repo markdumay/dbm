@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : February 21st, 2021
-# Version       : 0.5.0
+# Date          : March 3rd, 2021
+# Version       : 0.6.0
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -21,6 +21,8 @@ readonly NC='\e[m'    # No color / reset
 readonly BOLD='\e[1m' # Bold font
 readonly DBM_CONFIG_FILE='dbm.ini'
 readonly DOCKER_RUN='docker-compose'
+readonly DOCKER_BUILDX='docker buildx'
+readonly DBM_BUILDX_BUILDER='dbm_buildx'
 readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_API='https://hub.docker.com/v2'
 readonly GITHUB_API="https://api.github.com"
@@ -33,13 +35,18 @@ readonly VERSION_REGEX='([vV])?[0-9]+(.[0-9]+)?(.[0-9]+)?' #  MAJOR required, 'v
 #=======================================================================================================================
 detached='false'
 no_cache='false'
+push='false'
+config_file=''
 terminal='false'
+multi_architecture='false'
+images=''
 command=''
 services=''
 subcommand=''
 docker_base=''
 docker_prod=''
 docker_dev=''
+docker_platforms=''
 docker_stack=''
 docker_service=''
 script_version=''
@@ -63,24 +70,27 @@ usage() {
     echo "Usage: $0 COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]" 
     echo
     echo "Commands:"
-    echo "  prod                   Target a production image"
-    echo "  dev                    Target a development image"
-    echo "  check                  Check for dependency upgrades"
-    echo "  version                Show version information"
+    echo "  prod                        Target a production image"
+    echo "  dev                         Target a development image"
+    echo "  check                       Check for dependency upgrades"
+    echo "  version                     Show version information"
     echo
     echo "Subcommands (prod and dev):"
-    echo "  build                  Build a Docker image"
-    echo "  deploy                 Deploy the container as Docker Stack service"
-    echo "  down                   Stop a running container and remove defined containers/networks"
-    echo "  up                     Run a Docker image as container"
-    echo "  stop                   Stop a running container"
+    echo "  build                       Build a Docker image"
+    echo "  config <OUTPUT>             Generate a merged Docker Compose file"
+    echo "  deploy                      Deploy the container as Docker Stack service"
+    echo "  down                        Stop a running container and remove defined containers/networks"
+    echo "  up                          Run a Docker image as container"
+    echo "  stop                        Stop a running container"
     echo
     echo "Options (up only):"
-    echo "  -d, --detached         Run in detached mode"
-    echo "  -t, --terminal         Run in detached mode and start terminal (if supported by image)"
+    echo "  -d, --detached              Run in detached mode"
+    echo "  -t, --terminal              Run in detached mode and start terminal (if supported by image)"
     echo
     echo "Options (build only):"
-    echo "  --no-cache             Do not use cache when building the image"
+    echo "  --no-cache                  Do not use cache when building the image"
+    echo "  --push                      Push image to Docker Registry"
+    echo "  --platforms <PLATFORMS...>  Enabled multi-architecture platforms (comma separated)"
     echo
 }
 
@@ -121,16 +131,72 @@ log() {
     echo "$1"
 }
 
+#======================================================================================================================
+# Asks the user to confirm the operation.
+#======================================================================================================================
+# Outputs:
+#   Exits with a zero error code if the user does not confirm the operation.
+#======================================================================================================================
+confirm_operation() {
+    while true; do
+        printf "Are you sure you want to continue? [y/N] "
+        read -r yn
+        yn=$(echo "${yn}" | tr '[:upper:]' '[:lower:]')
+
+        case "${yn}" in
+            y | yes )     break;;
+            n | no | "" ) exit;;
+            * )           echo "Please answer y(es) or n(o)";;
+        esac
+    done
+}
+
 #=======================================================================================================================
 # Validates if a variable is a valid positive integer.
 #=======================================================================================================================
 # Arguments:
 #   $1 - Variable to test.
 # Outputs:
-#   Return 0 if valid and returns 1 if not valid.
+#   Returns 0 if valid and returns 1 if not valid.
 #=======================================================================================================================
 is_number() {
     [ -n "$1" ] && [ -z "${1##[0-9]*}" ] && return 0 || return 1
+}
+
+#=======================================================================================================================
+# Validates if all target platforms are supported by buildx. It also checks if the Docker Buildx plugin itself is
+# present.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Target platforms to test, comma separated.
+# Outputs:
+#   Returns 0 if valid and returns 1 if not valid and writes an error to stdout if applicable.
+#=======================================================================================================================
+validate_platforms() {
+    # validate Docker Buildx plugin is present
+    if ! docker info | grep -q buildx; then
+        echo "Docker Buildx plugin required"
+        return 1
+    fi
+
+    # validate if all platforms are supported
+    platforms="$1,"
+    supported=$(eval "${DOCKER_BUILDX} inspect default | grep 'Platforms:' | sed 's/^Platforms: //g'")
+    missing=''
+    IFS=',' # initialize platforms separator
+    for item in $platforms; do
+        if ! echo "${supported}," | grep -q "${item},"; then
+            missing="${missing}${item}, "
+        fi
+    done
+
+    # return missing platforms, if any
+    if [ -n "${missing}" ]; then
+        echo "One or more target platforms not supported: ${missing}" | sed 's/, $//g' # remove trailing ', '
+        return 1
+    else
+        return 0
+    fi
 }
 
 #=======================================================================================================================
@@ -155,9 +221,12 @@ parse_args() {
         case "$1" in
             -d | --detached)                   detached='true';;
             --no-cache)                        no_cache='true';;
+            --push)                            push='true';;
+            --platforms)                       shift; docker_platforms="$1";;
             -t | --terminal)                   terminal='true';;
             dev | prod | check | version)      command="$1";;
             build | deploy | down | stop | up) subcommand="$1";;
+            config )                           subcommand="$1"; shift; config_file="$1";;
             * )                                services="${services} $1"
         esac
         shift
@@ -170,14 +239,14 @@ parse_args() {
     service_count=$(echo "${services}" | wc -w)
     # Requirement 1 - A single value command is provided
     if [ -z "${command}" ]; then fatal_error="Expected command"
-    # Requirement 2 - No subcommand, flags, or services is defined for the command 'version' or 'check'
-    elif { [ "${command}" = 'version' ] || [ "${command}" = 'check' ]; } && 
+    # Requirement 2 - No subcommand, flags, or services is defined for the command 'version', 'check', or 'config'
+    elif { [ "${command}" = 'version' ] || [ "${command}" = 'check' ] || [ "${command}" = 'config' ]; } && 
          [ -n "${subcommand}" ] && \
          [ -n "${services}" ] && \
          [ "${detached}" != 'false' ] && \
          [ "${terminal}" != 'false' ]; then fatal_error="Invalid arguments"
-    # Requirement 3 - A subcommand is provided for all commands except 'version' or 'check'
-    elif [ "${command}" != 'version' ] && [ "${command}" != 'check' ] && [ -z "${subcommand}" ]
+    # Requirement 3 - A subcommand is provided for 'prod' and 'dev'
+    elif { [ "${command}" = 'prod' ] || [ "${command}" != 'dev' ]; } && [ -z "${subcommand}" ]
         then fatal_error="Expected subcommand"
     # Requirement 4 - At most one service is defined in terminal mode
     elif [ "${terminal}" = 'true' ] && \
@@ -187,20 +256,33 @@ parse_args() {
     elif [ "${detached}" = 'true' ] && \
          [ "${terminal}" = 'true' ]; then
         warning="Ignoring detached mode argument"
-    # Warning 2 - No-cache mode is not supported for subcommands other than build
-    elif [ "${no_cache}" = 'true' ] && \
+    # Warning 2 - No-cache, push, and platforms not supported for subcommands other than build
+    elif { [ "${no_cache}" = 'true' ] || [ "${push}" = 'true' ] || [ -n "${docker_platforms}" ]; } && \
          [ "${subcommand}" != 'build' ]; then
-        warning="Ignoring no-cache build argument"
-    # Requirement 6 - Services do not start with '-' character
+        warning="Ignoring build arguments"
+    # Warning 3 - Platforms not supported without push
+    elif { [ "${push}" = 'false' ] && [ -n "${docker_platforms}" ]; }; then
+        warning="Ignoring platforms argument"
+        docker_platforms=''
+    # Requirement 6 - Output file is required for config command
+    elif [ "${command}" = 'config' ] && [ -z "${config_file}" ]; then 
+        fatal_error="Output file required"
+    # Requirement 7 - Services do not start with '-' character
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
     fi
     
+    # Validate buildx support for targeted platforms
+    if [ -z "${fatal_error}" ] && [ -n "${docker_platforms}" ]; then
+        fatal_error=$(validate_platforms "${docker_platforms}")
+    fi
+
     # Inform user and terminate on fatal error
     [ -n "${fatal_error}" ] && usage && terminate "${fatal_error}"
     [ -n "${warning}" ] && log "WARN: ${warning}"
 
     # Standardize arguments
     [ "${terminal}" = 'true' ] && detached='true'
+    [ "${push}" = 'true' ] && [ -n "${docker_platforms}" ] && multi_architecture='true'
     services=$(echo "${services}" | awk '{gsub(/^ +| +$/,"")} {print $0}') # remove spaces
 }
 
@@ -340,7 +422,8 @@ init_config() {
     docker_prod_yml=$(init_config_value 'DOCKER_PROD_YML' 'docker-compose.prod.yml')
     docker_dev_yml=$(init_config_value 'DOCKER_DEV_YML' 'docker-compose.dev.yml')
     docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}")
-
+    docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '')
+    
     # set the Docker command arguments
     docker_base="-f ${docker_base_yml}"
     docker_prod="${docker_base} -f ${docker_prod_yml}"
@@ -363,6 +446,25 @@ init_config() {
 #======================================================================================================================
 escape_string() {
     echo "$1" | sed 's/[^^\\]/[&]/g; s/\^/\\^/g; s/\\/\\\\/g'
+}
+
+#=======================================================================================================================
+# Defines the command to generate a Docker compose file. The generated file merges all input files and substitutes all
+# variables.
+#=======================================================================================================================
+# Globals:
+#   - base_cmd
+#   - command
+#   - docker_prod
+#   - docker_dev
+# Outputs:
+#   New Docker Stack service(s).
+#=======================================================================================================================
+generate_config() {
+    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" || 
+        base_cmd="${DOCKER_RUN} ${docker_prod}"
+    # note: uses a workaround to fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
+    echo "${base_cmd} config | sed -E \"s/cpus: ([0-9\\.]+)/cpus: '\\1'/\""
 }
 
 #======================================================================================================================
@@ -434,19 +536,100 @@ expand_version() {
 #=======================================================================================================================
 # Build a Docker image.
 #=======================================================================================================================
+# Globals:
+#   - command
+#   - docker_dev
+#   - docker_prod
+#   - docker_platforms
+#   - no_cache
+#   - services
 # Outputs:
 #   New Docker image.
 #=======================================================================================================================
 execute_build() {
     print_status "Building images"
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} build" || 
-        base_cmd="${DOCKER_RUN} ${docker_prod} build"
+
+    # init regular build
+    if [ "${multi_architecture}" != 'true' ]; then
+        log "Initializing regular build"
+        [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} build ${services}" || 
+            base_cmd="${DOCKER_RUN} ${docker_prod} build ${services}"
+    # init multi-architecture build
+    else
+        log "Initializing multi-architecture build"
+        display_platforms=$(echo "${docker_platforms}" | sed 's/,/, /g' )
+        log "Targeted platforms: ${display_platforms}"
+        # init buildx builder if needed
+        available=$(eval "${DOCKER_BUILDX} ls | grep ${DBM_BUILDX_BUILDER}")
+        if [ -z "${available}" ]; then
+            log "Initializing buildx builder '${DBM_BUILDX_BUILDER}'"
+            eval "${DOCKER_BUILDX} create --name '${DBM_BUILDX_BUILDER}' > /dev/null"
+        fi
+        # use the dedicated buildx builder
+        eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'"
+        # generate a merged Docker compose file
+        temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
+        cmd=$(generate_config)
+        eval "${cmd} > ${temp_file}"
+        # set the build command
+        base_cmd="${DOCKER_BUILDX} bake -f ${temp_file} --push --set '*.platform=${docker_platforms}'"
+    fi
+
+    # time and execute the build
     t1=$(date +%s)
     [ "${no_cache}" = 'true' ] && base_cmd="${base_cmd} --no-cache"
-    eval "${base_cmd} ${services}"
+    eval "${base_cmd}"
     t2=$(date +%s)
     elapsed_string=$(display_time $((t2 - t1)))
     [ "${t2}" -gt "${t1}" ] && log "Total build time ${elapsed_string}"
+
+    # push regular images to registry if applicable
+    if [ "${multi_architecture}" != 'true' ] && [ "${push}" = 'true' ] && [ -n "${images}" ]; then
+        for image in $images; do
+            match=$(echo "${image}" | sed 's/:/.*/g')
+            if docker image ls | grep -qE "${match}"; then
+                log "Pushing image to registry: ${image}"
+                docker push "${image}"
+            else
+                log "WARN: Cannot push, image not found: ${image}"
+            fi
+        done
+    fi
+
+    # restore builder instance if applicable
+    if [ -n "${docker_platforms}" ]; then
+        eval "${DOCKER_BUILDX} use default"
+    fi
+
+    # clean up temporary files
+    if [ -n "${temp_file}" ]; then
+        rm -f "${temp_file}" || true
+    fi
+}
+
+#=======================================================================================================================
+# Generate a Docker Compose file.
+#=======================================================================================================================
+# Globals:
+#   - config_file
+# Outputs:
+#   Docker Compose file.
+#=======================================================================================================================
+execute_config() {
+    print_status "Generating Docker Compose file"
+
+    # warn if output file exists
+    if [ -f "${config_file}" ]; then
+        echo
+        echo "WARNING! The file '${config_file}' will be overwritten"
+        echo
+        confirm_operation
+    fi
+    
+    # generate the config file
+    cmd=$(generate_config)
+    eval "${cmd} > ${config_file}"
+    log "Generated '${config_file}'"
 }
 
 #=======================================================================================================================
@@ -567,20 +750,25 @@ execute_check_upgrades() {
 #=======================================================================================================================
 # Deploy a Docker image as Docker Stack service(s).
 #=======================================================================================================================
+# Globals:
+#   - docker_stack
 # Outputs:
 #   New Docker Stack service(s).
 #=======================================================================================================================
 execute_deploy() {
     print_status "Deploying Docker Stack services"
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" || 
-        base_cmd="${DOCKER_RUN} ${docker_prod}"
-    # note: uses a workaround to fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
-    eval "${base_cmd} config | sed -E \"s/cpus: ([0-9\\.]+)/cpus: '\\1'/\" | ${docker_stack}"
+    cmd=$(generate_config)
+    eval "${cmd} | ${docker_stack}"
 }
 
 #=======================================================================================================================
 # Stop a running container and remove defined containers/networks.
 #=======================================================================================================================
+# Globals:
+#   - command
+#   - docker_dev
+#   - docker_prod
+#   - services
 # Outputs:
 #   New Docker image.
 #=======================================================================================================================
@@ -662,17 +850,19 @@ execute_validate_and_show_env() {
 #=======================================================================================================================
 # Validate Docker compose configuration. Show image information on console.
 #=======================================================================================================================
+# Globals:
+#   - images
+#   - services
 # Outputs:
 #   Writes targeted image information to stdout, terminates with non-zero exit code on fatal error.
 #=======================================================================================================================
 execute_validate_and_show_images() {
     print_status "Identifying targeted images"
 
-    # Generate temp Docker compose configuration using variable substitution
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} config" || 
-        base_cmd="${DOCKER_RUN} ${docker_prod} config"
+    # Generate temp Docker compose configuration
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    eval "${base_cmd} > ${temp_file}"
+    cmd=$(generate_config)
+    eval "${cmd} > ${temp_file}"
     yaml=$(parse_yaml "${temp_file}")
     # shellcheck disable=SC2181
     [ "$?" -ne 0 ] && terminate "Cannot generate Docker compose configuration"
@@ -682,14 +872,18 @@ execute_validate_and_show_images() {
         for service in $services; do
             image=$(echo "${yaml}" | grep "^services_${service}_image=" | sed 's/^services_/  /' | sed 's/=/: /')
             [ -z "${image}" ] && terminate "Service '${service}' not found"
+            name=$(echo "${image}" | awk -F'"' '{print $2}')
+            images="${images} ${name}"
             echo "${image}"
         done
     else
         # Confirm only one service is defined in terminal mode
-        images=$(echo "${yaml}" | grep "_image=" | sed 's/^services_/  /')
-        count=$(echo "${images}" | wc -l)
+        targets=$(echo "${yaml}" | grep "_image=" | sed 's/^services_/  /')
+        count=$(echo "${targets}" | wc -l)
         [ "${count}" -gt 1 ] && [ "${terminal}" = 'true' ] && terminate "Terminal mode supports one service only"
-        echo "${images}"
+        name=$(echo "${targets}" | awk -F'"' '{print $2}')
+        images="${images} ${name}"
+        echo "${targets}"
     fi
     rm -f "${temp_file}" || true
     echo
@@ -750,6 +944,7 @@ main() {
     # Execute workflows
     case "${subcommand}" in
         build)   execute_build;;
+        config)  execute_config;;
         deploy)  execute_deploy;;
         down)    execute_down;;
         stop)    execute_stop;;
