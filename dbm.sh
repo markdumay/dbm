@@ -721,6 +721,11 @@ main() {
     # initialize global settings
     init_config
 
+    # validate Docker daemon is running
+    if ! docker info >/dev/null 2>&1; then
+        terminate "Docker daemon not running"
+    fi
+
     # Initialize build version and change to working directory
     BUILD_VERSION=$(cat 'VERSION' 2> /dev/null)
     export BUILD_VERSION
