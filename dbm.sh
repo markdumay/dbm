@@ -5,7 +5,7 @@
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
 # Date          : March 4th, 2021
-# Version       : 0.6.1
+# Version       : 0.6.2
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -35,6 +35,7 @@ readonly VERSION_REGEX='([vV])?[0-9]+\.[0-9]+(\.[0-9]+)?' #  MAJOR.MINOR require
 #=======================================================================================================================
 detached='false'
 no_cache='false'
+tag=''
 push='false'
 config_file=''
 terminal='false'
@@ -91,6 +92,9 @@ usage() {
     echo "  --no-cache                  Do not use cache when building the image"
     echo "  --push                      Push image to Docker Registry"
     echo "  --platforms <PLATFORMS...>  Enabled multi-architecture platforms (comma separated)"
+    echo
+    echo "Options (prod and dev only):"
+    echo "  --tag <TAG>                 Override build tag"
     echo
 }
 
@@ -223,6 +227,7 @@ parse_args() {
             --no-cache)                        no_cache='true';;
             --push)                            push='true';;
             --platforms)                       shift; docker_platforms="$1";;
+            --tag)                             shift; tag="$1";;
             -t | --terminal)                   terminal='true';;
             dev | prod | check | version)      command="$1";;
             build | deploy | down | stop | up) subcommand="$1";;
@@ -252,6 +257,10 @@ parse_args() {
     elif [ "${terminal}" = 'true' ] && \
          [ "${service_count}" -gt 1 ]; then 
          fatal_error="Terminal mode supports one service only"
+    # Requirement 5 - At most one service is defined when specifying a tag
+    elif [ -n "${tag}" ] && \
+         [ "${service_count}" -gt 1 ]; then 
+         fatal_error="Tag supports one service only"
     # Warning 1 - Detached mode is not supported in terminal mode
     elif [ "${detached}" = 'true' ] && \
          [ "${terminal}" = 'true' ]; then
@@ -264,6 +273,10 @@ parse_args() {
     elif { [ "${push}" = 'false' ] && [ -n "${docker_platforms}" ]; }; then
         warning="Ignoring platforms argument"
         docker_platforms=''
+    # Warning 4 - Tag not supported for commands other than dev and prod
+    elif [ -n "${tag}" ] && [ "${command}" != 'prod' ] && [ "${command}" != 'dev' ]; then
+        warning="Ignoring tag"
+        tag=''
     # Requirement 6 - Output file is required for config command
     elif [ "${command}" = 'config' ] && [ -z "${config_file}" ]; then 
         fatal_error="Output file required"
@@ -463,8 +476,29 @@ escape_string() {
 generate_config() {
     [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" || 
         base_cmd="${DOCKER_RUN} ${docker_prod}"
-    # note: uses a workaround to fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
-    echo "${base_cmd} config | sed -E \"s/cpus: ([0-9\\.]+)/cpus: '\\1'/\""
+    # fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
+    cmd="${base_cmd} config | sed -E \"s/cpus: ([0-9\\.]+)/cpus: '\\1'/\""
+
+    # replace tag if applicable
+    if [ -n "${tag}" ]; then
+        escaped_tag=$(escape_string "${tag}")
+        cmd="${cmd} | sed -E 's|^    image: .*|    image: ${escaped_tag}|g'"
+    fi
+
+    echo "${cmd}"
+}
+
+#=======================================================================================================================
+# Generates a temporary Docker Compose configuration file and returns the filename.
+#=======================================================================================================================
+# Outputs:
+#   New Docker Stack service(s).
+#=======================================================================================================================
+generate_temp_config_file() {
+    temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
+    cmd=$(generate_config)
+    eval "${cmd} > ${temp_file}"
+    echo "${temp_file}"
 }
 
 #======================================================================================================================
@@ -549,11 +583,13 @@ expand_version() {
 execute_build() {
     print_status "Building images"
 
+    # generate a temporary Docker Compose file
+    temp_file=$(generate_temp_config_file)
+
     # init regular build
     if [ "${multi_architecture}" != 'true' ]; then
         log "Initializing regular build"
-        [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} build ${services}" || 
-            base_cmd="${DOCKER_RUN} ${docker_prod} build ${services}"
+        base_cmd="${DOCKER_RUN} -f ${temp_file} build ${services}"
     # init multi-architecture build
     else
         log "Initializing multi-architecture build"
@@ -567,12 +603,8 @@ execute_build() {
         fi
         # use the dedicated buildx builder
         eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'"
-        # generate a merged Docker compose file
-        temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-        cmd=$(generate_config)
-        eval "${cmd} > ${temp_file}"
         # set the build command
-        base_cmd="${DOCKER_BUILDX} bake -f ${temp_file} --push --set '*.platform=${docker_platforms}'"
+        base_cmd="${DOCKER_BUILDX} bake -f '${temp_file}' --push --set '*.platform=${docker_platforms}'"
     fi
 
     # time and execute the build
@@ -774,9 +806,14 @@ execute_deploy() {
 #=======================================================================================================================
 execute_down() {
     print_status "Bringing containers and networks down"
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} down" || 
-        base_cmd="${DOCKER_RUN} ${docker_prod} down"
+    temp_file=$(generate_temp_config_file)
+    base_cmd="${DOCKER_RUN} -f '${temp_file}' down"
     eval "${base_cmd} ${services}"
+
+    # clean up temporary files
+    if [ -n "${temp_file}" ]; then
+        rm -f "${temp_file}" || true
+    fi
 }
 
 #=======================================================================================================================
@@ -789,7 +826,8 @@ execute_run() {
     print_status "Bringing containers and networks up"
 
     # define base command and flags
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" || base_cmd="${DOCKER_RUN} ${docker_prod}"
+    temp_file=$(generate_temp_config_file)
+        base_cmd="${DOCKER_RUN} -f '${temp_file}'"
     [ "${detached}" = 'true' ] && flags=' -d' || flags='' 
 
     # bring container up
@@ -797,10 +835,9 @@ execute_run() {
 
     # start terminal if applicable
     if [ "${terminal}" = 'true' ] ; then
-        # get container ID
-        id=$(eval "${DOCKER_RUN} ps -q ${services}")
+        id=$(eval "${base_cmd} ps -q ${services}")
         # shellcheck disable=SC2181
-        [ "$?" != 0 ] && terminate "Container ID not found"        
+        { [ "$?" != 0 ] || [ -z "${id}" ]; } && terminate "Container ID not found"        
         count=$(echo "${id}" | wc -l)
         [ "${count}" -gt 1 ] && terminate "Terminal supports one container only"
         eval "${DOCKER_EXEC} ${id} sh" # start sh terminal
@@ -808,6 +845,11 @@ execute_run() {
 
     # bring container down when done and not detached or if in terminal mode
     { [ "${detached}" = 'false' ] || [ "${terminal}" = 'true' ]; } && eval "${base_cmd} down"
+
+    # clean up temporary files
+    if [ -n "${temp_file}" ]; then
+        rm -f "${temp_file}" || true
+    fi
 }
 
 #=======================================================================================================================
@@ -818,9 +860,14 @@ execute_run() {
 #=======================================================================================================================
 execute_stop() {
     print_status "Stopping containers and networks"
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev} stop" || 
-        base_cmd="${DOCKER_RUN} ${docker_prod} stop"
+    temp_file=$(generate_temp_config_file)
+    base_cmd="${DOCKER_RUN} -f '${temp_file}' stop"
     eval "${base_cmd} ${services}"
+
+    # clean up temporary files
+    if [ -n "${temp_file}" ]; then
+        rm -f "${temp_file}" || true
+    fi
 }
 
 #=======================================================================================================================
@@ -885,7 +932,12 @@ execute_validate_and_show_images() {
         images="${images} ${name}"
         echo "${targets}"
     fi
-    rm -f "${temp_file}" || true
+
+    # clean up temporary files
+    if [ -n "${temp_file}" ]; then
+        rm -f "${temp_file}" || true
+    fi
+
     echo
 }
 
