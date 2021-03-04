@@ -278,7 +278,7 @@ parse_args() {
         warning="Ignoring tag"
         tag=''
     # Requirement 6 - Output file is required for config command
-    elif [ "${command}" = 'config' ] && [ -z "${config_file}" ]; then 
+    elif [ "${subcommand}" = 'config' ] && [ -z "${config_file}" ]; then 
         fatal_error="Output file required"
     # Requirement 7 - Services do not start with '-' character
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
