@@ -234,7 +234,7 @@ parse_args() {
             config )                           subcommand="$1"; shift; config_file="$1";;
             * )                                services="${services} $1"
         esac
-        shift
+        [ -n "$1" ] && shift
     done
 
     # Validate arguments
