@@ -5,7 +5,7 @@
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
 # Date          : March 4th, 2021
-# Version       : 0.6.2
+# Version       : 0.6.3
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -474,18 +474,18 @@ escape_string() {
 #   New Docker Stack service(s).
 #=======================================================================================================================
 generate_config() {
-    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" || 
+    [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" ||
         base_cmd="${DOCKER_RUN} ${docker_prod}"
     # fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
-    cmd="${base_cmd} config | sed -E \"s/cpus: ([0-9\\.]+)/cpus: '\\1'/\""
+    config=$(eval "${base_cmd} config" | sed -E "s/cpus: ([0-9\\.]+)/cpus: '\\1'/")
 
     # replace tag if applicable
     if [ -n "${tag}" ]; then
         escaped_tag=$(escape_string "${tag}")
-        cmd="${cmd} | sed -E 's|^    image: .*|    image: ${escaped_tag}|g'"
+        config=$(echo "${config}" | sed -E "s|^    image: .*|    image: ${escaped_tag}|g")
     fi
 
-    echo "${cmd}"
+    echo "${config}"
 }
 
 #=======================================================================================================================
@@ -496,8 +496,7 @@ generate_config() {
 #=======================================================================================================================
 generate_temp_config_file() {
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    cmd=$(generate_config)
-    eval "${cmd} > ${temp_file}"
+    generate_config > "${temp_file}"
     echo "${temp_file}"
 }
 
@@ -659,8 +658,7 @@ execute_config() {
     fi
     
     # generate the config file
-    cmd=$(generate_config)
-    eval "${cmd} > ${config_file}"
+    generate_config > "${config_file}"
     log "Generated '${config_file}'"
 }
 
@@ -789,8 +787,8 @@ execute_check_upgrades() {
 #=======================================================================================================================
 execute_deploy() {
     print_status "Deploying Docker Stack services"
-    cmd=$(generate_config)
-    eval "${cmd} | ${docker_stack}"
+    config=$(generate_config)
+    eval "echo ${config} | ${docker_stack}"
 }
 
 #=======================================================================================================================
@@ -909,8 +907,8 @@ execute_validate_and_show_images() {
 
     # Generate temp Docker compose configuration
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    cmd=$(generate_config)
-    eval "${cmd} > ${temp_file}"
+    generate_config > "${temp_file}"
+
     yaml=$(parse_yaml "${temp_file}")
     # shellcheck disable=SC2181
     [ "$?" -ne 0 ] && terminate "Cannot generate Docker compose configuration"
