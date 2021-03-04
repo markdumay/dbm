@@ -888,9 +888,10 @@ execute_validate_and_show_env() {
     # Show environment information
     os=$(uname -s)
     arch=$(uname -m | sed 's/x86_64/amd64/')
-    log "  Docker Engine:  v${docker_version}"
-    log "  Docker Compose: v${compose_version}"
-    log "  Host:           ${os}/${arch}"
+    log "  Docker Engine:        v${docker_version}"
+    log "  Docker Compose:       v${compose_version}"
+    log "  Docker Build Manager: v${script_version}"
+    log "  Host:                 ${os}/${arch}"
     echo
 }
 
