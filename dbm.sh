@@ -487,7 +487,7 @@ get_latest_github_tag() {
 }
 
 #======================================================================================================================
-# Retrieves the latest available tag from the Docker Hub. Official Docker repositoriy links are converted to input
+# Retrieves the latest available tag from the Docker Hub. Official Docker repository links are converted to input
 # supported by the Docker registry API.
 #======================================================================================================================
 # Arguments:
