@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : March 3rd, 2021
-# Version       : 0.6.0
+# Date          : March 4th, 2021
+# Version       : 0.6.1
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -27,7 +27,7 @@ readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_API='https://hub.docker.com/v2'
 readonly GITHUB_API="https://api.github.com"
 readonly DOCKER_API_PAGE_SIZE=100 # Limit Docker API results to the first 100 only
-readonly VERSION_REGEX='([vV])?[0-9]+(.[0-9]+)?(.[0-9]+)?' #  MAJOR required, 'v', MINOR and PATCH are optional
+readonly VERSION_REGEX='([vV])?[0-9]+\.[0-9]+(\.[0-9]+)?' #  MAJOR.MINOR required, 'v' and PATCH are optional
 
 
 #=======================================================================================================================
@@ -504,7 +504,7 @@ get_latest_docker_tag() {
 
     url="${DOCKER_API}/repositories/${owner}/${repo}/tags/?page_size=${DOCKER_API_PAGE_SIZE}"
     tags=$(curl -s "${url}")
-    tags=$(echo "${tags}" | jq -r '.results|.[]|.name' | grep -E "^${VERSION_REGEX}${extension}$")    
+    tags=$(echo "${tags}" | jq -r '.results|.[]|.name' | grep -E "^${VERSION_REGEX}${extension}$")
     echo "${tags}" | sort --version-sort | tail -n1
 }
 
