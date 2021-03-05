@@ -295,7 +295,7 @@ parse_args() {
 
     # Inform user and terminate on fatal error
     [ -n "${fatal_error}" ] && usage && terminate "${fatal_error}"
-    [ -n "${warning}" ] && log "WARN: ${warning}"
+    [ -n "${warning}" ] && [ "${command}" != 'check' ] && [ "${command}" != 'version' ] && log "WARN: ${warning}"
 
     # Standardize arguments
     [ "${terminal}" = 'true' ] && detached='true'
