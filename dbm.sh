@@ -706,11 +706,12 @@ execute_config() {
 #   The repository returned a different version as latest (which might be newer).
 #=======================================================================================================================
 # Outputs:
-#   Writes matching key/value pairs to stdout.
+#   Writes matching key/value pairs to stdout. Returns 1 in case of potential updates, 0 otherwise.
 #=======================================================================================================================
 # shellcheck disable=SC2059
 execute_check_upgrades() {
     logs=''
+    flag=0
     # retrieve all dependendencies from the DBM config file
     # remove all comments, trailing spaces, and protocols; separate each dependency by a ';'
     dependencies=$(grep '^DBM_.*VERSION=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_//g;')
@@ -772,6 +773,7 @@ execute_check_upgrades() {
             logs="${logs}${dependency}\t Up to date\n"
         else
             logs="${logs}${dependency}\t Different version found: '${latest}'\n"
+            flag=1
         fi
     done
 
@@ -779,6 +781,8 @@ execute_check_upgrades() {
     width=$((width + 2))
     tabs "${width}"
     printf "${logs}"
+
+    return "${flag}"
 }
 
 #=======================================================================================================================
