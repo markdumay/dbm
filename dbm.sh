@@ -186,6 +186,10 @@ validate_platforms() {
     # validate if all platforms are supported
     platforms="$1,"
     supported=$(eval "${DOCKER_BUILDX} inspect default | grep 'Platforms:' | sed 's/^Platforms: //g'")
+    if [ -z "${supported}" ]; then
+        echo "No information about supported platforms found"
+        return 1
+    fi
     missing=''
     IFS=',' # initialize platforms separator
     for item in $platforms; do
