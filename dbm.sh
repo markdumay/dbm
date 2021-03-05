@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : March 4th, 2021
-# Version       : 0.6.3
+# Date          : March 5th, 2021
+# Version       : 0.6.4
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -480,13 +480,14 @@ escape_string() {
 generate_config() {
     [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" ||
         base_cmd="${DOCKER_RUN} ${docker_prod}"
+    config=$(eval "${base_cmd} config 2> /dev/null") || return 1
     # fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
-    config=$(eval "${base_cmd} config" | sed -E "s/cpus: ([0-9\\.]+)/cpus: '\\1'/")
+    config=$(echo "${config}" | sed -E "s/cpus: ([0-9\\.]+)/cpus: '\\1'/") || return 1
 
     # replace tag if applicable
     if [ -n "${tag}" ]; then
         escaped_tag=$(escape_string "${tag}")
-        config=$(echo "${config}" | sed -E "s|^    image: .*|    image: ${escaped_tag}|g")
+        config=$(echo "${config}" | sed -E "s|^    image: .*|    image: ${escaped_tag}|g") || return 1
     fi
 
     echo "${config}"
@@ -500,7 +501,9 @@ generate_config() {
 #=======================================================================================================================
 generate_temp_config_file() {
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    generate_config > "${temp_file}"
+    if ! generate_config > "${temp_file}"; then
+        terminate "Cannot generate Docker Compose file: ${temp_file}"
+    fi
     echo "${temp_file}"
 }
 
@@ -602,10 +605,11 @@ execute_build() {
         available=$(eval "${DOCKER_BUILDX} ls | grep ${DBM_BUILDX_BUILDER}")
         if [ -z "${available}" ]; then
             log "Initializing buildx builder '${DBM_BUILDX_BUILDER}'"
-            eval "${DOCKER_BUILDX} create --name '${DBM_BUILDX_BUILDER}' > /dev/null"
+            eval "${DOCKER_BUILDX} create --name '${DBM_BUILDX_BUILDER}' > /dev/null" || \
+                terminate "Cannot create buildx instance"
         fi
         # use the dedicated buildx builder
-        eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'"
+        eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || terminate "Cannot use buildx instance"
         # set the build command
         base_cmd="${DOCKER_BUILDX} bake -f '${temp_file}' --push --set '*.platform=${docker_platforms}'"
     fi
@@ -613,7 +617,7 @@ execute_build() {
     # time and execute the build
     t1=$(date +%s)
     [ "${no_cache}" = 'true' ] && base_cmd="${base_cmd} --no-cache"
-    eval "${base_cmd}"
+    eval "${base_cmd}" || terminate "Could not complete build"
     t2=$(date +%s)
     elapsed_string=$(display_time $((t2 - t1)))
     [ "${t2}" -gt "${t1}" ] && log "Total build time ${elapsed_string}"
@@ -662,7 +666,9 @@ execute_config() {
     fi
     
     # generate the config file
-    generate_config > "${config_file}"
+    if ! generate_config > "${config_file}"; then
+        terminate "Cannot generate Docker Compose file: ${config_file}"
+    fi
     log "Generated '${config_file}'"
 }
 
@@ -795,8 +801,18 @@ execute_check_upgrades() {
 #=======================================================================================================================
 execute_deploy() {
     print_status "Deploying Docker Stack services"
-    config=$(generate_config)
-    eval "echo ${config} | ${docker_stack}"
+    fatal=''
+    temp_file=$(generate_temp_config_file)
+    base_cmd="docker stack deploy -c ${temp_file} ${docker_service}"
+    eval "${base_cmd}" || fatal="Could not deploy services"
+
+    # clean up temporary files
+    if [ -n "${temp_file}" ]; then
+        rm -f "${temp_file}" || true
+    fi
+
+    # terminate on fatal error
+    [ -n "${fatal}" ] && terminate "${fatal}"
 }
 
 #=======================================================================================================================
@@ -812,14 +828,18 @@ execute_deploy() {
 #=======================================================================================================================
 execute_down() {
     print_status "Bringing containers and networks down"
+    fatal=''
     temp_file=$(generate_temp_config_file)
     base_cmd="${DOCKER_RUN} -f '${temp_file}' down"
-    eval "${base_cmd} ${services}"
+    eval "${base_cmd} ${services}" || fatal="Could not deploy services"
 
     # clean up temporary files
     if [ -n "${temp_file}" ]; then
         rm -f "${temp_file}" || true
     fi
+
+    # terminate on fatal error
+    [ -n "${fatal}" ] && terminate "${fatal}"
 }
 
 #=======================================================================================================================
@@ -837,7 +857,7 @@ execute_run() {
     [ "${detached}" = 'true' ] && flags=' -d' || flags='' 
 
     # bring container up
-    eval "${base_cmd} up ${flags} --remove-orphans ${services}"
+    eval "${base_cmd} up ${flags} --remove-orphans ${services}" || terminate "Could not bring up containers"
 
     # start terminal if applicable
     if [ "${terminal}" = 'true' ] ; then
@@ -868,12 +888,15 @@ execute_stop() {
     print_status "Stopping containers and networks"
     temp_file=$(generate_temp_config_file)
     base_cmd="${DOCKER_RUN} -f '${temp_file}' stop"
-    eval "${base_cmd} ${services}"
+    eval "${base_cmd} ${services}" || fatal="Could not bring down containers"
 
     # clean up temporary files
     if [ -n "${temp_file}" ]; then
         rm -f "${temp_file}" || true
     fi
+
+    # terminate on fatal error
+    [ -n "${fatal}" ] && terminate "${fatal}" 
 }
 
 #=======================================================================================================================
@@ -915,7 +938,9 @@ execute_validate_and_show_images() {
 
     # Generate temp Docker compose configuration
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    generate_config > "${temp_file}"
+    if ! generate_config > "${temp_file}"; then
+        terminate "Cannot generate Docker Compose file: ${temp_file}"
+    fi
 
     yaml=$(parse_yaml "${temp_file}")
     # shellcheck disable=SC2181
@@ -957,7 +982,6 @@ execute_validate_and_show_images() {
 #   Writes version information to stdout.
 #=======================================================================================================================
 execute_show_version() {
-    # TODO: suppress warnings
     script=$(basename "$0")
     log "${script} version ${script_version}"
 }
@@ -987,9 +1011,10 @@ main() {
     # Parse arguments and initialize environment variables
     parse_args "$@"
     [ "${command}" = 'version' ] && execute_show_version && exit
-    [ "${command}" = 'check' ] && execute_check_upgrades && exit
     [ "${command}" = 'dev' ] && export IMAGE_SUFFIX='-debug' 
-    
+    if [ "${command}" = 'check' ]; then
+        execute_check_upgrades && exit || exit 1
+    fi
     staged=$(export_env_values)
     eval "${staged}"
 
