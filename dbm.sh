@@ -219,7 +219,7 @@ validate_platforms() {
 # Arguments:
 #   $@ - All available command-line arguments.
 # Outputs:
-#   Writes warning or error to stdout if applicable, terminates with non-zero exit code on fatal error
+#   Writes warning or error to stdout if applicable, terminates with non-zero exit code on fatal error.
 #=======================================================================================================================
 parse_args() {
     subcommand=''
@@ -475,7 +475,7 @@ escape_string() {
 #   - docker_prod
 #   - docker_dev
 # Outputs:
-#   New Docker Stack service(s).
+#   Writes config to stdout, or returns 1 on error.
 #=======================================================================================================================
 generate_config() {
     [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" ||
@@ -496,7 +496,7 @@ generate_config() {
 # Generates a temporary Docker Compose configuration file and returns the filename.
 #=======================================================================================================================
 # Outputs:
-#   New Docker Stack service(s).
+#   Temporary Docker Compose configuration file; returns the filename.
 #=======================================================================================================================
 generate_temp_config_file() {
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
@@ -581,7 +581,7 @@ expand_version() {
 #   - no_cache
 #   - services
 # Outputs:
-#   New Docker image.
+#   New Docker image, terminates on error.
 #=======================================================================================================================
 execute_build() {
     print_status "Building images"
@@ -787,7 +787,7 @@ execute_check_upgrades() {
 # Globals:
 #   - docker_stack
 # Outputs:
-#   New Docker Stack service(s).
+#   New Docker Stack service(s), terminates on error.
 #=======================================================================================================================
 execute_deploy() {
     print_status "Deploying Docker Stack services"
@@ -804,7 +804,7 @@ execute_deploy() {
 #   - docker_prod
 #   - services
 # Outputs:
-#   New Docker image.
+#   Removed Docker container, terminates on error.
 #=======================================================================================================================
 execute_down() {
     print_status "Bringing containers and networks down"
@@ -822,7 +822,7 @@ execute_down() {
 # Run a Docker image as container.
 #=======================================================================================================================
 # Outputs:
-#   New Docker image.
+#   New Docker container, terminates on error.
 #=======================================================================================================================
 execute_run() {
     print_status "Bringing containers and networks up"
@@ -858,7 +858,7 @@ execute_run() {
 # Stop a running container.
 #=======================================================================================================================
 # Outputs:
-#   New Docker image.
+#   Stopped Docker container, terminates on error.
 #=======================================================================================================================
 execute_stop() {
     print_status "Stopping containers and networks"
