@@ -437,7 +437,7 @@ init_config_value() {
 init_config() {
     # initialize settings and/or default values 
     [ ! -f "${DBM_CONFIG_FILE}" ] && log "WARN: Config file '${DBM_CONFIG_FILE}' not found, using default values"
-    docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker')
+    docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' './')
     docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml')
     docker_prod_yml=$(init_config_value 'DOCKER_PROD_YML' 'docker-compose.prod.yml')
     docker_dev_yml=$(init_config_value 'DOCKER_DEV_YML' 'docker-compose.dev.yml')
