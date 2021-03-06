@@ -22,6 +22,7 @@ readonly BOLD='\e[1m' # Bold font
 readonly DBM_CONFIG_FILE='dbm.ini'
 readonly DOCKER_RUN='docker-compose'
 readonly DOCKER_BUILDX='docker buildx'
+readonly DOCKER_STACK='docker stack'
 readonly DBM_BUILDX_BUILDER='dbm_buildx'
 readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_API='https://hub.docker.com/v2'
@@ -48,7 +49,6 @@ docker_base=''
 docker_prod=''
 docker_dev=''
 docker_platforms=''
-docker_stack=''
 docker_service=''
 script_version=''
 
@@ -448,7 +448,6 @@ init_config() {
     docker_base="-f ${docker_base_yml}"
     docker_prod="${docker_base} -f ${docker_prod_yml}"
     docker_dev="${docker_base} -f ${docker_dev_yml}"
-    docker_stack="docker stack deploy -c - ${docker_service}"
 
     # init script version info
     script_dir=$(dirname "$0")
@@ -806,7 +805,7 @@ execute_deploy() {
     print_status "Deploying Docker Stack services"
     fatal=''
     temp_file=$(generate_temp_config_file)
-    base_cmd="docker stack deploy -c ${temp_file} ${docker_service}"
+    base_cmd="${DOCKER_STACK} deploy -c ${temp_file} ${docker_service}"
     eval "${base_cmd}" || fatal="Could not deploy services"
 
     # clean up temporary files
