@@ -37,7 +37,7 @@
 
 
 ## About
-Docker Compose is a popular tool to deploy Docker images. This repository uses Docker Compose to further simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image.
+Docker Compose is a popular tool to deploy Docker images. This repository uses Docker Compose to further simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. It supports both regular builds and multi-architecture builds. The repository also contains a script to harden a standard Linux Alpine base image.
 
 <!-- TODO: add tutorial deep-link 
 Detailed background information is available on the author's [personal blog][blog].
