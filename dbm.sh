@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : March 5th, 2021
-# Version       : 0.6.4
+# Date          : March 6th, 2021
+# Version       : 0.6.5
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -286,8 +286,11 @@ parse_args() {
         fatal_error="Output file required"
     # Requirement 7 - Services do not start with '-' character
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
+    # Requirement 8 - jq needs to be installed for check command
+    elif [ "${command}" = 'check' ] && ! command -v jq >/dev/null 2>&1; then
+        fatal_error="command jq not found"
     fi
-    
+
     # Validate buildx support for targeted platforms
     if [ -z "${fatal_error}" ] && [ -n "${docker_platforms}" ]; then
         fatal_error=$(validate_platforms "${docker_platforms}")
