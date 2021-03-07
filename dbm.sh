@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : March 5th, 2021
-# Version       : 0.6.4
+# Date          : March 7th, 2021
+# Version       : 0.6.5
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -274,7 +274,7 @@ parse_args() {
          [ "${subcommand}" != 'build' ]; then
         warning="Ignoring build arguments"
     # Warning 3 - Platforms not supported without push
-    elif { [ "${push}" = 'false' ] && [ -n "${docker_platforms}" ]; }; then
+    elif [ "${push}" = 'false' ] && [ -n "${docker_platforms}" ]; then
         warning="Ignoring platforms argument"
         docker_platforms=''
     # Warning 4 - Tag not supported for commands other than dev and prod
@@ -288,19 +288,19 @@ parse_args() {
     elif [ "${prefix}" = "-" ]; then fatal_error="Invalid option"
     fi
     
+    # Standardize arguments
+    [ "${terminal}" = 'true' ] && detached='true'
+    [ "${push}" = 'true' ] && [ -n "${docker_platforms}" ] && multi_architecture='true'
+    services=$(echo "${services}" | awk '{gsub(/^ +| +$/,"")} {print $0}') # remove spaces
+
     # Validate buildx support for targeted platforms
-    if [ -z "${fatal_error}" ] && [ -n "${docker_platforms}" ]; then
+    if [ -z "${fatal_error}" ] && [ "${multi_architecture}" = 'true' ]; then
         fatal_error=$(validate_platforms "${docker_platforms}")
     fi
 
     # Inform user and terminate on fatal error
     [ -n "${fatal_error}" ] && usage && terminate "${fatal_error}"
     [ -n "${warning}" ] && [ "${command}" != 'check' ] && [ "${command}" != 'version' ] && log "WARN: ${warning}"
-
-    # Standardize arguments
-    [ "${terminal}" = 'true' ] && detached='true'
-    [ "${push}" = 'true' ] && [ -n "${docker_platforms}" ] && multi_architecture='true'
-    services=$(echo "${services}" | awk '{gsub(/^ +| +$/,"")} {print $0}') # remove spaces
 }
 
 #=======================================================================================================================
