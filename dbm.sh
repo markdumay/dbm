@@ -888,7 +888,7 @@ execute_stop() {
     print_status "Stopping containers and networks"
     temp_file=$(generate_temp_config_file)
     base_cmd="${DOCKER_RUN} -f '${temp_file}' stop"
-    eval "${base_cmd} ${services}" || fatal="Could not bring down containers"
+    eval "${base_cmd} ${services}" || fatal="Could not stop containers"
 
     # clean up temporary files
     if [ -n "${temp_file}" ]; then
