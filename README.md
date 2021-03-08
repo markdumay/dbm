@@ -37,7 +37,7 @@
 
 
 ## About
-Docker Compose is a popular tool to deploy Docker images. This repository uses Docker Compose to further simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image.
+Docker Build Manager (**DBM**) is a helper utility to simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image. **DBM** uses Docker Compose under the hood.
 
 <!-- TODO: add tutorial deep-link 
 Detailed background information is available on the author's [personal blog][blog].
@@ -50,10 +50,10 @@ The project uses the following core software components:
 
 ## Prerequisites
 ### Host Requirements
-The Docker Build Manager (*dbm*) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
+The Docker Build Manager (**DBM**) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
 
 ### Repository Requirements
-*dbm* assumes your repository defines three Docker Compose configurations. Both the production and development configuration are relative to the base image. See the [nginx-certbot][nginx-cerbot] repository for an example.
+**DBM** assumes your repository defines three Docker Compose configurations. Both the production and development configuration are relative to the base image. See [nginx-certbot][nginx-cerbot] and [restic-unattended][restic-unattended] for an example.
 1. `docker-compose.yml` - The base configuration of the Docker image using Docker Compose notation
 2. `docker-compose.prod.yml` - Production modifications to the base configuration
 3. `docker-compose.dev.yml` - Development modifications to the base configuration
@@ -62,35 +62,35 @@ For proper versioning support, the file `VERSION` needs to be present at the roo
 
 
 ## Deployment
-Docker Build Manager works best if integrated as a submodule in your repository. Run the following command from within your repository directory to add *dbm* as a submodule.
+Docker Build Manager works best if integrated as a submodule in your repository. Run the following command from within your repository directory to add **DBM** as a submodule.
 
 ```console
-git submodule add https://github.com/markdumay/dbm dbm
+$ git submodule add https://github.com/markdumay/dbm dbm
 ```
 
 Setup an `alias` to simplify the execution of *dbm*.
 ```console
-alias dbm="dbm/dbm.sh"  
+$ alias dbm="dbm/dbm.sh"  
 ```
 
 Add the same line to your shell settings (e.g. `~/.zshrc` on macOS or `~/.bashrc` on Ubuntu with bash login) to make the `alias` persistent.
 
 
 ## Usage
-Use the following command to invoke *dbm* from the command line.
+Use the following command to invoke **DBM** from the command line.
 
 ```
-dbm COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]
+$ dbm COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]
 ```
 
 ### Commands
-*dbm* supports the following commands. 
+**DBM** supports the following commands. The Wiki contains a more extensive overview of the [available commands][wiki_commands].
 
 | Command       | Description |
 |---------------|-------------|
 | **`prod`**    | Target a production image |
 | **`dev`**     | Target a development image |
-| **`check`**     | Check for dependency upgrades |
+| **`check`**   | Check for dependency upgrades |
 | **`version`** | Show version information |
 
 The commands `prod` and `dev` support the following subcommands.
@@ -110,10 +110,10 @@ The following options are available also.
 | `-d`   | `--detached` | Run in detached mode |
 | `-t`   | `--terminal` | Run in detached mode and start terminal (if supported by image) |
 
-Lastly, adding the name of one or more services restricts the operation to the specified services only. If omitted, *dbm* processes all services defined by the Docker Compose configuration.
+Lastly, adding the name of one or more services restricts the operation to the specified services only. If omitted, **DBM** processes all services defined by the Docker Compose configuration.
 
 ### Configuration
-*dbm* supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository].
+**DBM** supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository]. The configuration files accepts [custom variables][wiki_vars] too, see the Wiki for more details. The Wiki also explains how to [define dependencies][wiki_dependencies] with version tracking.
 
 | Variable              | Required | Example                   | Description |
 |-----------------------|----------|---------------------------|-------------|
@@ -121,92 +121,13 @@ Lastly, adding the name of one or more services restricts the operation to the s
 | `DOCKER_BASE_YML`     | `No`     | `docker-compose.yml`      | Base configuration of the Docker image using Docker Compose notation |
 | `DOCKER_PROD_YML`     | `No`     | `docker-compose.prod.yml` | Production modifications to the base configuration |
 | `DOCKER_DEV_YML`      | `No`     | `docker-compose.dev.yml`  | Development modifications to the base configuration |
-| `DOCKER_SERVICE_NAME` | `No`     | `example`                 | Prefix to use when deploying images as containers |
+| `DOCKER_SERVICE_NAME` | `No`     | `example`                 | Prefix to use when deploying images as Docker Stack services |
 
-### Defining Custom Variables
-*Dbm* supports custom variables in addition to the predefined variables described in the previous section. Any variable starting with the prefix `DBM_` within the `dbm.ini` file is exported to be used by any of the *dbm* commands `build`, `deploy`, `down`, `up`, and `stop`.
-
-For example, the following pseudo code uses the variables `UID` and `GID` to add a non-root user to the Docker image.
-
-1. Use the prefix `DBM_` to define custom variables in **dbm.ini**
-```
-[...]
-DBM_BUILD_UID=1234
-DBM_BUILD_GID=1234
-DBM_BUILD_USER=myuser
-```
-
-2. Expose the custom variables as build arguments in **docker-compose.yml** (removing the `DBM_` prefix)
-```
-version: "3.7"
-
-services:
-  <service-name>:
-    image: <image-name>
-    build:
-      dockerfile: Dockerfile
-      context: .
-      args:
-        BUILD_UID:  "${BUILD_UID}"
-        BUILD_GID:  "${BUILD_GID}"
-        BUILD_USER: "${BUILD_USER}"
-```
-
-3. Define the build arguments with default values in **Dockerfile**
-```
-ARG BUILD_UID=1001
-ARG BUILD_GID=1001
-ARG BUILD_USER=user
-FROM <base-image>
-
-RUN set -eu; \
-    apk update -f; \
-    apk --no-cache add -f shadow; \
-    rm -rf /var/cache/apk/*; \
-    /usr/sbin/groupadd -g "${BUILD_GID}" "${BUILD_USER}"; \
-    /usr/sbin/useradd -s /bin/sh -g "${BUILD_GID}" -u "${BUILD_UID}" "${BUILD_USER}"; \
-[...]
-```
-
-### Defining Dependencies
-*Dbm* supports versioning of dependencies. Dependencies are identified by the pattern `DBM_*_VERSION` as a variant to a custom variable. Invoking the command `check` scans all dependencies and verifies if a newer version is available in a repository. Currently supported repository providers are `github.com` and `hub.docker.com`. The algorithm expects a semantic versioning pattern, following the pattern `MAJOR.MINOR.PATCH` with a potential extension. The matching is not strict, as version strings consisting of only `MAJOR` or `MAJOR.MINOR` are also considered valid. A `v` or `V` prefix is optional. Dependencies are exported as environment variables in similar fashion to custom variables. The provider url is removed in this case.
-
-#### Input Definitions
-The format of a dependency takes the following form:
-```
-DBM_<IDENTIFIER>_VERSION=<MAJOR>[.MINOR][.PATCH][EXTENSION]
-DBM_<IDENTIFIER>_VERSION=[{http|https}]<PROVIDER>[/r]/<OWNER>/<REPO> [{v|V}]<MAJOR>[.MINOR][.PATCH][EXTENSION]
-```
-
-The following dependency definitions are all valid examples.
-```
-DBM_GOLANG_VERSION=https://hub.docker.com/_/golang 1.16-buster
-DBM_ALPINE_GIT_VERSION=https://hub.docker.com/r/alpine/git v2.30
-DBM_RESTIC_VERSION=github.com/restic/restic 0.12.0 # this is a comment
-DBM_ALPINE_VERSION=3.12
-```
-
-The following *version strings* are examples of valid or invalid inputs:
-| Version string           | Format  | Comments |
-|--------------------------|---------|----------|
-| `1.14-buster`            | Valid   | `MAJOR='1'`, `MINOR='14'`, `EXTENSION='-buster'` |
-| `1.14.15`                | Valid   | `MAJOR='1'`, `MINOR='14'`, `PATCH='15'` |
-| `alpine3.13`             | Invalid | Starts with `EXTENSION='alpine'` instead of `MAJOR` |
-| `windowsservercore-1809` | Invalid | Starts with `EXTENSION='windowsservercore'` instead of `MAJOR` |
-
-#### Potential Outcomes of Check Command
-Invoking the command `check` scans all dependencies for potential version updates. The outcome for each dependency can be one of the following:
-
-* **No repository link, skipping** - The dependency does not specify a repository, e.g. `DBM_ALPINE_VERSION=3.12`.
-* **Malformed, skipping** - At least one of the mandatory arguments `PROVIDER`, `OWNER`, `REPO`, or `MAJOR` is missing. For example, in the dependency `DBM_RESTIC_VERSION=github.com/restic 0.12.0` the `REPO` is missing.
-* **Provider not supported, skipping** - The specified provider is not supported, currently only `github.com` and `hub.docker.com` are supported. For example. `DBM_YAML_VERSION=gopkg.in/yaml.v2 v2.4.0` refers to the unsupported provider `gopkg.in`.
-* **No tags found, skipping** - The repository did not return any tags matching the (optional) extension. Ensure the `OWNER` and `REPO` are correct.
-* **Different version found** - The repository returned a different version as latest (which might be newer). It is recommended to verify the available release and to update the dependency version as required.
 
 ## Contributing
 1. Clone the repository and create a new branch 
     ```console
-    git checkout https://github.com/markdumay/dbm.git -b name_for_new_branch
+    $ git checkout https://github.com/markdumay/dbm.git -b name_for_new_branch
     ```
 2. Make and test the changes
 3. Submit a Pull Request with a comprehensive description of the changes
@@ -235,3 +156,7 @@ Copyright © [Mark Dumay][blog]
 [blog]: https://github.com/markdumay
 [repository]: https://github.com/markdumay/dbm.git
 [nginx-cerbot]: https://github.com/markdumay/nginx-certbot
+[restic-unattended]: https://github.com/markdumay/restic-unattended
+[wiki_commands]: https://github.com/markdumay/dbm/wiki/Available-Commands
+[wiki_dependencies]: https://github.com/markdumay/dbm/wiki/Defining-Dependencies
+[wiki_vars]: https://github.com/markdumay/dbm/wiki/Defining-Custom-Variables

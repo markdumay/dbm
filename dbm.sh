@@ -4,8 +4,8 @@
 # Title         : dbm.sh
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
-# Date          : March 7th, 2021
-# Version       : 0.6.5
+# Date          : March 8th, 2021
+# Version       : 0.6.6
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -478,7 +478,10 @@ escape_string() {
 generate_config() {
     [ "${command}" = 'dev' ] && base_cmd="${DOCKER_RUN} ${docker_dev}" ||
         base_cmd="${DOCKER_RUN} ${docker_prod}"
-    config=$(eval "${base_cmd} config 2> /dev/null") || return 1
+    if ! config=$(eval "${base_cmd} config"); then
+        echo "${config}"
+        return 1
+    fi
     # fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
     config=$(echo "${config}" | sed -E "s/cpus: ([0-9\\.]+)/cpus: '\\1'/") || return 1
 
@@ -499,8 +502,10 @@ generate_config() {
 #=======================================================================================================================
 generate_temp_config_file() {
     temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    if ! generate_config > "${temp_file}"; then
-        terminate "Cannot generate Docker Compose file: ${temp_file}"
+    if ! config=$(generate_config); then
+        terminate "Cannot generate Docker Compose file: ${temp_file}; error='${config}'"
+    else
+        printf '%s' "${config}" > "${temp_file}"
     fi
     echo "${temp_file}"
 }
@@ -662,10 +667,12 @@ execute_config() {
         echo
         confirm_operation
     fi
-    
+
     # generate the config file
-    if ! generate_config > "${config_file}"; then
-        terminate "Cannot generate Docker Compose file: ${config_file}"
+    if ! config=$(generate_config); then
+        terminate "Cannot generate Docker Compose file: ${config_file}; error='${config}'"
+    else
+        printf '%s' "${config}" > "${config_file}"
     fi
     log "Generated '${config_file}'"
 }
@@ -935,11 +942,8 @@ execute_validate_and_show_images() {
     print_status "Identifying targeted images"
 
     # Generate temp Docker compose configuration
-    temp_file=$(mktemp -t "${docker_service}.XXXXXXXXX")
-    if ! generate_config > "${temp_file}"; then
-        terminate "Cannot generate Docker Compose file: ${temp_file}"
-    fi
-
+    # generate a temporary Docker Compose file
+    temp_file=$(generate_temp_config_file)
     yaml=$(parse_yaml "${temp_file}")
     # shellcheck disable=SC2181
     [ "$?" -ne 0 ] && terminate "Cannot generate Docker compose configuration"
