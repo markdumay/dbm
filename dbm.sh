@@ -48,7 +48,6 @@ docker_base=''
 docker_prod=''
 docker_dev=''
 docker_platforms=''
-docker_stack=''
 docker_service=''
 script_version=''
 
@@ -445,7 +444,6 @@ init_config() {
     docker_base="-f ${docker_base_yml}"
     docker_prod="${docker_base} -f ${docker_prod_yml}"
     docker_dev="${docker_base} -f ${docker_dev_yml}"
-    docker_stack="docker stack deploy -c - ${docker_service}"
 
     # init script version info
     script_dir=$(dirname "$0")
