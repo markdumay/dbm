@@ -79,7 +79,7 @@ usage() {
     echo "Subcommands (prod and dev):"
     echo "  build                       Build a Docker image"
     echo "  config <OUTPUT>             Generate a merged Docker Compose file"
-    echo "  deploy                      Deploy the container as Docker Stack service"
+    echo "  deploy                      Deploy the image(s) as Docker Stack service(s)"
     echo "  down                        Stop a running container and remove defined containers/networks"
     echo "  up                          Run a Docker image as container"
     echo "  stop                        Stop a running container"
