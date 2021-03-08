@@ -831,7 +831,7 @@ execute_down() {
     fatal=''
     temp_file=$(generate_temp_config_file)
     base_cmd="${DOCKER_RUN} -f '${temp_file}' down"
-    eval "${base_cmd} ${services}" || fatal="Could not deploy services"
+    eval "${base_cmd} ${services}" || fatal="Could not bring down containers"
 
     # clean up temporary files
     if [ -n "${temp_file}" ]; then
