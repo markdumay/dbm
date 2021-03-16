@@ -5,7 +5,7 @@
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
 # Date          : March 16th, 2021
-# Version       : 0.7.2
+# Version       : 0.7.3
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -178,12 +178,13 @@ main() {
         eval "${exported_vars}"
 
         # Generate consolidated compose file
-        config_file=$(generate_config_file "${docker_compose_flags}" '') || { err "${config_file}"; return 1; }
+        config_file=$(generate_config_file "${docker_compose_flags}" '' "${arg_services}" "${arg_tag}") || { err "${config_file}"; return 1; }
 
         # Validate targeted images
         images=$(list_images "${config_file}" "${arg_services}") || { err "${images}"; return 1; }
         count=$(echo "${images}" | wc -l)
         [ "${count}" -gt 1 ] && [ "${terminal}" = 'true' ] && err "Terminal mode supports one service only" && return 1
+        [ "${count}" -gt 1 ] && [ -n "${arg_tag}" ] && err "Tag supports one service only" && return 1
 
         # Display information about host, environment, and targeted images
         execute_show_info "${script_version}" "${host_os}" "${host_arch}"

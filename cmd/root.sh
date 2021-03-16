@@ -14,7 +14,6 @@ Usage:
   dbm <command> [flags]
 "
 
-# TODO: check tag
 readonly usage_msg_full="
 Docker Build Manager (DBM) is a helper utility to simplify the development of
 custom Docker images. It includes versioning support, the definition of
