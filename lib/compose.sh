@@ -91,14 +91,14 @@ list_images() {
     # Show targeted images information, filtered for services if applicable
     if [ -n "${services}" ] ; then
         for service in $services; do
-            image=$(echo "${yaml}" | grep "^services_${service}_image=" | sed 's/^services_/  /' | sed 's/=/: /')
+            image=$(echo "${yaml}" | grep "^services_${service}_image=" | sed 's/^services_/ /' | sed 's/=/: /')
             [ -z "${image}" ] && echo "Service '${service}' not found" && return 1
             name=$(echo "${image}" | awk -F'"' '{print $2}')
             images="${images} ${name}"
             echo "${image}"
         done
     else
-        targets=$(echo "${yaml}" | grep "_image=" | sed 's/^services_/  /')
+        targets=$(echo "${yaml}" | grep "_image=" | sed 's/^services_/ /')
         name=$(echo "${targets}" | awk -F'"' '{print $2}')
         images="${images} ${name}"
         echo "${targets}"

@@ -153,7 +153,7 @@ stage_env() {
     [ "${target}" = 'dev' ] && export IMAGE_SUFFIX='-debug' 
 
     # Display environment
-    exported_vars=$(echo "${staged}" | sed 's/^export /  /g')
+    exported_vars=$(echo "${staged}" | sed 's/^export / /g')
     show_host_env "${script_version}" "${host_os}" "${host_arch}" "${exported_vars}"
     return 0
 }
@@ -195,6 +195,7 @@ main() {
         images=$(list_images "${config_file}" "${arg_services}") || { err "${images}"; return 1; }
         count=$(echo "${images}" | wc -l)
         [ "${count}" -gt 1 ] && [ "${terminal}" = 'true' ] && err "Terminal mode supports one service only" && return 1
+        echo "Targeted images:"
         echo "${images}"
     fi
 
