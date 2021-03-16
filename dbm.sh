@@ -133,13 +133,16 @@ show_host_env() {
     docker_version=$(docker -v 2>/dev/null | grep -Eo "[0-9]*.[0-9]*.[0-9]*," | cut -d',' -f 1)
     compose_version=$(docker-compose -v 2>/dev/null | grep -Eo "[0-9]*.[0-9]*.[0-9]*," | cut -d',' -f 1)
     notary_version=$(notary version 2>/dev/null | grep 'Version:' | awk -F':' '{print $2}' | awk '{$1=$1};1')
+    [ -z "${docker_version}" ] && docker_version='N/A' || docker_version="v${docker_version}"
+    [ -z "${compose_version}" ] && compose_version='N/A' || compose_version="v${compose_version}"
+    [ -z "${notary_version}" ] && notary_version='N/A' || notary_version="v${notary_version}"
 
     # Show host information
     log "Host:"
-    log "  Docker Engine:        v${docker_version:-unavailable}"
-    log "  Docker Compose:       v${compose_version:-unavailable}"
-    log "  Docker Build Manager: v${script_version:-unavailable}"
-    log "  Notary Client:        v${notary_version:-unavailable}"
+    log "  Docker Engine:        ${docker_version}"
+    log "  Docker Compose:       ${compose_version}"
+    log "  Docker Build Manager: ${script_version}"
+    log "  Notary Client:        ${notary_version}"
     log "  Host:                 ${host_os}/${host_arch}"
     echo
 
