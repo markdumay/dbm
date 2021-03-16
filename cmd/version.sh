@@ -19,7 +19,7 @@ Version displays the current version of DBM.
 ${usage_version_msg_short}
 
 Global Flags:
-  -h, --help                  Help for the deploy command
+  -h, --help                  Help for the version command
 
 "
 
