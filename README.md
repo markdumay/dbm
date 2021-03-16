@@ -46,7 +46,8 @@ Detailed background information is available on the author's [personal blog][blo
 ## Built With
 The project uses the following core software components:
 * [Docker][docker_url] - Open-source container platform.
-* POSIX shell - Included shell scripts are all POSIX compliant.
+* [Notary][notary] - Client to interact with trusted collections, such as the Docker Hub.
+* [ShellSpec][shellspec] - Framework for unit testing of shell scripts.
 
 ## Prerequisites
 ### Host Requirements
@@ -141,6 +142,8 @@ The **DBM** codebase is released under the [MIT license][license]. The README.md
 [repository]: https://github.com/markdumay/dbm.git
 [nginx-cerbot]: https://github.com/markdumay/nginx-certbot
 [restic-unattended]: https://github.com/markdumay/restic-unattended
+[notary]: https://github.com/theupdateframework/notary
+[shellspec]: https://shellspec.info
 [wiki]: https://github.com/markdumay/dbm/wiki/
 [wiki_commands]: https://github.com/markdumay/dbm/wiki/Available-Commands
 [wiki_dependencies]: https://github.com/markdumay/dbm/wiki/Defining-Dependencies
