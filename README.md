@@ -51,7 +51,7 @@ The project uses the following core software components:
 
 ## Prerequisites
 ### Host Requirements
-The Docker Build Manager (*dbm*) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The tool [jq][jq_download] is required for running dependency checks. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
+The Docker Build Manager (**DBM**) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The tool [jq][jq_download] is required for running dependency checks. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
 
 ### Repository Requirements
 **DBM** assumes your repository defines three Docker Compose configurations. Both the production and development configuration are relative to the base image. See [nginx-certbot][nginx-cerbot] and [restic-unattended][restic-unattended] for an example.
