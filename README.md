@@ -141,6 +141,7 @@ The **DBM** codebase is released under the [MIT license][license]. The README.md
 [repository]: https://github.com/markdumay/dbm.git
 [nginx-cerbot]: https://github.com/markdumay/nginx-certbot
 [restic-unattended]: https://github.com/markdumay/restic-unattended
+[wiki]: https://github.com/markdumay/dbm/wiki/
 [wiki_commands]: https://github.com/markdumay/dbm/wiki/Available-Commands
 [wiki_dependencies]: https://github.com/markdumay/dbm/wiki/Defining-Dependencies
 [wiki_vars]: https://github.com/markdumay/dbm/wiki/Defining-Custom-Variables
