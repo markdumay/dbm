@@ -51,6 +51,7 @@ generate_config() {
 #   $1 - Docker Compose file flag(s), for example '-f docker-compose.yml -f docker-compose.dev.yml'
 #   $2 - Optional filename, replaced with temporary name if omitted
 #   $3 - Name of the Docker Stack service
+#   $4 - Optional tag to override default image tag.
 # Outputs:
 #   Temporary Docker Compose configuration file; returns the filename.
 #=======================================================================================================================
@@ -58,9 +59,10 @@ generate_config_file() {
     compose_files="$1"
     config_file="$2"
     service="$3"
+    tag="$4"
 
     [ -z "${config_file}" ] && config_file=$(mktemp -t "dbm_temp.XXXXXXXXX")
-    if ! config=$(generate_config "${compose_files}"); then
+    if ! config=$(generate_config "${compose_files}" "${tag}"); then
         echo "Cannot generate Docker Compose file: ${config_file}; error='${config}'"
         return 1
     else
