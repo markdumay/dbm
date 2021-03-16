@@ -80,25 +80,37 @@ Add the same line to your shell settings (e.g. `~/.zshrc` on macOS or `~/.bashrc
 Use the following command to invoke **DBM** from the command line.
 
 ```
-$ dbm <command> [flags]
-
+$ dbm COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]
 ```
 
 ### Commands
-**DBM** supports the following commands. The Wiki contains a more extensive overview of the [available commands][wiki_commands] and their options.
+**DBM** supports the following commands. The Wiki contains a more extensive overview of the [available commands][wiki_commands].
 
 | Command       | Description |
 |---------------|-------------|
-| **`build`**   | Build a Docker image |
+| **`prod`**    | Target a production image |
+| **`dev`**     | Target a development image |
 | **`check`**   | Check for dependency upgrades |
-| **`config`**  | Generate a merged Docker Compose file |
-| **`deploy`**  | Deploy Docker Stack service(s) |
-| **`down`**    | Stop running container(s) and network(s) |
-| **`info`**    | Display current system information |
-| **`stop`**    | Stop running container(s) |
-| **`up`**      | Run Docker image(s) as container(s) |
 | **`version`** | Show version information |
 
+The commands `prod` and `dev` support the following subcommands.
+| Subcommand   | Applicable to | Description |
+|--------------|---------------|-------------|
+| **`build`**  | `prod`, `dev` | Build a Docker image |
+| **`deploy`** | `prod`, `dev` | Deploy the container as Docker Stack service |
+| **`down`**   | `prod`, `dev` | Stop a running container and remove defined containers/networks |
+| **`up`**     | `prod`, `dev` | Run a Docker image as container |
+| **`stop`**   | `prod`, `dev` | Stop a running container |
+
+
+The following options are available also.
+
+| Option | Alias        | Description |
+|--------|--------------|-------------|
+| `-d`   | `--detached` | Run in detached mode |
+| `-t`   | `--terminal` | Run in detached mode and start terminal (if supported by image) |
+
+Lastly, adding the name of one or more services restricts the operation to the specified services only. If omitted, **DBM** processes all services defined by the Docker Compose configuration.
 
 ### Configuration
 **DBM** supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository]. The configuration files accepts [custom variables][wiki_vars] too, see the Wiki for more details. The Wiki also explains how to [define dependencies][wiki_dependencies] with version tracking.
