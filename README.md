@@ -82,7 +82,6 @@ Use the following command to invoke **DBM** from the command line.
 
 ```
 $ dbm <command> [flags]
-
 ```
 
 ### Commands
