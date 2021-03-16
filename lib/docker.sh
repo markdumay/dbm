@@ -156,7 +156,7 @@ push_image() {
             log "Pushing image to registry: ${image}"
             docker push "${image}"
         else
-            log "WARN: Cannot push, image not found: ${image}"
+            warn "Cannot push, image not found: ${image}"
             result=1
         fi
     done
