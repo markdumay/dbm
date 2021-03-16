@@ -60,8 +60,6 @@ readonly REPOSITORY_DEPENDENCIES='curl jq'
 readonly VERSION_DEPENDENCIES='basename cat dirname'
 # readonly TRUST_DEPENDENCIES='notary openssl'
 
-images=''
-config_file=''
 
 #=======================================================================================================================
 # Functions
@@ -164,6 +162,8 @@ stage_env() {
 main() {
     # config_file=''
     result=0
+    images=''
+    config_file=''
 
     # Parse command-line arguments
     parse_args "$@"
