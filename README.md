@@ -46,11 +46,12 @@ Detailed background information is available on the author's [personal blog][blo
 ## Built With
 The project uses the following core software components:
 * [Docker][docker_url] - Open-source container platform.
-* POSIX shell - Included shell scripts are all POSIX compliant.
+* [Notary][notary] - Client to interact with trusted collections, such as the Docker Hub.
+* [ShellSpec][shellspec] - Framework for unit testing of shell scripts.
 
 ## Prerequisites
 ### Host Requirements
-The Docker Build Manager (**DBM**) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
+The Docker Build Manager (*dbm*) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The tool [jq][jq_download] is required for running dependency checks. The setup has been tested locally on macOS Big Sur and in production on a server running Ubuntu 20.04 LTS. 
 
 ### Repository Requirements
 **DBM** assumes your repository defines three Docker Compose configurations. Both the production and development configuration are relative to the base image. See [nginx-certbot][nginx-cerbot] and [restic-unattended][restic-unattended] for an example.
@@ -80,37 +81,25 @@ Add the same line to your shell settings (e.g. `~/.zshrc` on macOS or `~/.bashrc
 Use the following command to invoke **DBM** from the command line.
 
 ```
-$ dbm COMMAND [SUBCOMMAND] [OPTIONS] [SERVICE...]
+$ dbm <command> [flags]
+
 ```
 
 ### Commands
-**DBM** supports the following commands. The Wiki contains a more extensive overview of the [available commands][wiki_commands].
+**DBM** supports the following commands. The Wiki contains a more extensive overview of the [available commands][wiki_commands] and their options.
 
 | Command       | Description |
 |---------------|-------------|
-| **`prod`**    | Target a production image |
-| **`dev`**     | Target a development image |
+| **`build`**   | Build a Docker image |
 | **`check`**   | Check for dependency upgrades |
+| **`config`**  | Generate a merged Docker Compose file |
+| **`deploy`**  | Deploy Docker Stack service(s) |
+| **`down`**    | Stop running container(s) and network(s) |
+| **`info`**    | Display current system information |
+| **`stop`**    | Stop running container(s) |
+| **`up`**      | Run Docker image(s) as container(s) |
 | **`version`** | Show version information |
 
-The commands `prod` and `dev` support the following subcommands.
-| Subcommand   | Applicable to | Description |
-|--------------|---------------|-------------|
-| **`build`**  | `prod`, `dev` | Build a Docker image |
-| **`deploy`** | `prod`, `dev` | Deploy the container as Docker Stack service |
-| **`down`**   | `prod`, `dev` | Stop a running container and remove defined containers/networks |
-| **`up`**     | `prod`, `dev` | Run a Docker image as container |
-| **`stop`**   | `prod`, `dev` | Stop a running container |
-
-
-The following options are available also.
-
-| Option | Alias        | Description |
-|--------|--------------|-------------|
-| `-d`   | `--detached` | Run in detached mode |
-| `-t`   | `--terminal` | Run in detached mode and start terminal (if supported by image) |
-
-Lastly, adding the name of one or more services restricts the operation to the specified services only. If omitted, **DBM** processes all services defined by the Docker Compose configuration.
 
 ### Configuration
 **DBM** supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository]. The configuration files accepts [custom variables][wiki_vars] too, see the Wiki for more details. The Wiki also explains how to [define dependencies][wiki_dependencies] with version tracking.
@@ -137,26 +126,26 @@ Lastly, adding the name of one or more services restricts the operation to the s
 <a href="https://www.buymeacoffee.com/markdumay" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;"></a>
 
 ## License
-<a href="https://github.com/markdumay/dbm/blob/main/LICENSE" alt="License">
-    <img src="https://img.shields.io/github/license/markdumay/dbm" />
-</a>
-
-Copyright © [Mark Dumay][blog]
-
-
+The **DBM** codebase is released under the [MIT license][license]. The README.md file and files in the "[wiki][wiki]" repository are licensed under the Creative Commons *Attribution-NonCommercial 4.0 International* ([CC BY-NC 4.0)][cc-by-nc-4.0] license.
 
 <!-- MARKDOWN PUBLIC LINKS -->
 [docker_url]: https://docker.com
 [semver_url]: https://semver.org
+[jq_download]: https://stedolan.github.io/jq/download/
 
 <!-- MARKDOWN MAINTAINED LINKS -->
 <!-- TODO: add blog link
 [blog]: https://markdumay.com
 -->
+[cc-by-nc-4.0]: https://creativecommons.org/licenses/by-nc/4.0/
 [blog]: https://github.com/markdumay
+[license]: https://github.com/markdumay/dbm/blob/main/LICENSE
 [repository]: https://github.com/markdumay/dbm.git
 [nginx-cerbot]: https://github.com/markdumay/nginx-certbot
 [restic-unattended]: https://github.com/markdumay/restic-unattended
+[notary]: https://github.com/theupdateframework/notary
+[shellspec]: https://shellspec.info
+[wiki]: https://github.com/markdumay/dbm/wiki/
 [wiki_commands]: https://github.com/markdumay/dbm/wiki/Available-Commands
 [wiki_dependencies]: https://github.com/markdumay/dbm/wiki/Defining-Dependencies
 [wiki_vars]: https://github.com/markdumay/dbm/wiki/Defining-Custom-Variables
