@@ -37,7 +37,7 @@
 
 
 ## About
-Docker Build Manager (**DBM**) is a helper utility to simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image. **DBM** uses Docker Compose under the hood.
+Docker Build Manager (**DBM**) is a helper utility to simplify the development of custom Docker images. It includes versioning support, the definition of development and production images, and simplified commands to run images in detached or terminal mode. The repository also contains a script to harden a standard Linux Alpine base image. Written as POSIX-compliant shell script, **DBM** uses Docker Compose under the hood.
 
 <!-- TODO: add tutorial deep-link 
 Detailed background information is available on the author's [personal blog][blog].
