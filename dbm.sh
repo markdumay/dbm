@@ -177,6 +177,7 @@ main() {
     [ "${arg_target}" = 'dev' ] && docker_compose_flags="${docker_compose_flags} -f ${config_docker_dev_yml}"
     [ "${arg_target}" = 'prod' ] && docker_compose_flags="${docker_compose_flags} -f ${config_docker_prod_yml}"
     [ "${arg_platforms}" = "${host_os}/${host_arch}" ] && arg_platforms='' # set regular build if target equals host
+    [ "${arg_terminal}" = 'true' ] && arg_detached='true' # always start in daemon mode prior to starting terminal
 
     # Prepare environment if applicable
     if [ "${arg_command}" != 'check' ] && [ "${arg_command}" != 'info' ] && [ "${arg_command}" != 'version' ]; then
