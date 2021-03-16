@@ -384,7 +384,7 @@ execute_remove_admin_commands() {
 #=======================================================================================================================
 execute_remove_world_writable_permissions() {
     print_status 'Removing world-writable permissions'
-    if [ "${enable_read_only}" = 'true' ]; then
+    if [ "${enable_read_only}" != 'true' ]; then
         find / -xdev -type d -perm +0002 -exec chmod o-w {} +
         find / -xdev -type f -perm +0002 -exec chmod o-w {} +
     else
