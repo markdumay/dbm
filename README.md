@@ -137,13 +137,7 @@ Lastly, adding the name of one or more services restricts the operation to the s
 <a href="https://www.buymeacoffee.com/markdumay" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;"></a>
 
 ## License
-<a href="https://github.com/markdumay/dbm/blob/main/LICENSE" alt="License">
-    <img src="https://img.shields.io/github/license/markdumay/dbm" />
-</a>
-
-Copyright © [Mark Dumay][blog]
-
-
+The **DBM** codebase is released under the [MIT license][license]. The README.md file and files in the "[wiki][wiki]" repository are licensed under the Creative Commons *Attribution-NonCommercial 4.0 International* ([CC BY-NC 4.0)][cc-by-nc-4.0] license.
 
 <!-- MARKDOWN PUBLIC LINKS -->
 [docker_url]: https://docker.com
@@ -153,7 +147,9 @@ Copyright © [Mark Dumay][blog]
 <!-- TODO: add blog link
 [blog]: https://markdumay.com
 -->
+[cc-by-nc-4.0]: https://creativecommons.org/licenses/by-nc/4.0/
 [blog]: https://github.com/markdumay
+[license]: https://github.com/markdumay/dbm/blob/main/LICENSE
 [repository]: https://github.com/markdumay/dbm.git
 [nginx-cerbot]: https://github.com/markdumay/nginx-certbot
 [restic-unattended]: https://github.com/markdumay/restic-unattended
