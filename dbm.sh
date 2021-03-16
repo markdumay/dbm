@@ -43,6 +43,8 @@ basedir=$(dirname "$0")
 . "${basedir}"/cmd/deploy.sh
 # shellcheck source=cmd/down.sh
 . "${basedir}"/cmd/down.sh
+# shellcheck source=cmd/info.sh
+. "${basedir}"/cmd/info.sh
 # shellcheck source=cmd/stop.sh
 . "${basedir}"/cmd/stop.sh
 # shellcheck source=cmd/up.sh
@@ -127,29 +129,11 @@ show_host_env() {
     host_arch="$3"
     exported_vars="$4"
 
+    # Show host and environment information
     print_status "Capturing host configuration"
-
-    # Detect current verions of Docker, Docker Compose, and Notary client
-    docker_version=$(docker -v 2>/dev/null | grep -Eo "[0-9]*.[0-9]*.[0-9]*," | cut -d',' -f 1)
-    compose_version=$(docker-compose -v 2>/dev/null | grep -Eo "[0-9]*.[0-9]*.[0-9]*," | cut -d',' -f 1)
-    notary_version=$(notary version 2>/dev/null | grep 'Version:' | awk -F':' '{print $2}' | awk '{$1=$1};1')
-    [ -z "${docker_version}" ] && docker_version='N/A' || docker_version="v${docker_version}"
-    [ -z "${compose_version}" ] && compose_version='N/A' || compose_version="v${compose_version}"
-    [ -z "${notary_version}" ] && notary_version='N/A' || notary_version="v${notary_version}"
-
-    # Show host information
-    log "Host:"
-    log "  Docker Engine:        ${docker_version}"
-    log "  Docker Compose:       ${compose_version}"
-    log "  Docker Build Manager: ${script_version}"
-    log "  Notary Client:        ${notary_version}"
-    log "  Host:                 ${host_os}/${host_arch}"
-    echo
-
-    # Show environment information
+    execute_show_info "${script_version}" "${host_os}" "${host_arch}"
     log "Environment:"    
     log "${exported_vars}"
-    echo
 }
 
 stage_env() {
@@ -187,15 +171,15 @@ main() {
     # Initialize global settings
     init_config
     script_version=$(init_script_version)
-    host_os=$(uname -s)
-    host_arch=$(uname -m | sed 's/x86_64/amd64/')
+    host_os=$(get_os)
+    host_arch=$(get_arch)
     docker_compose_flags="-f ${config_docker_base_yml}"
     [ "${arg_target}" = 'dev' ] && docker_compose_flags="${docker_compose_flags} -f ${config_docker_dev_yml}"
     [ "${arg_target}" = 'prod' ] && docker_compose_flags="${docker_compose_flags} -f ${config_docker_prod_yml}"
     [ "${arg_platforms}" = "${host_os}/${host_arch}" ] && arg_platforms='' # set regular build if target equals host
 
     # Prepare environment if applicable
-    if [ "${arg_command}" != 'check' ] && [ "${arg_command}" != 'version' ]; then
+    if [ "${arg_command}" != 'check' ] && [ "${arg_command}" != 'info' ] && [ "${arg_command}" != 'version' ]; then
         # Change to working directory
         cd "${config_docker_working_dir}" 2> /dev/null || \
             { echo "Cannot find working directory: ${config_docker_working_dir}"; return 1; }
@@ -222,6 +206,7 @@ main() {
             config)   execute_config "${config_file}" "${arg_config_file}" || result=1;;
             deploy)   execute_deploy "${config_file}" "${config_docker_service}" || result=1;;
             down)     execute_down "${config_file}" "${arg_services}" || result=1;;
+            info)     execute_show_info "${script_version}" "${host_os}" "${host_arch}" && exit || result=1;;
             stop)     execute_stop "${config_file}" "${arg_services}" || result=1;;
             up)       execute_up "${config_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
             version ) execute_show_version "${script_version}" && exit || result=1;;

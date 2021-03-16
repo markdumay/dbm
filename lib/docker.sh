@@ -116,6 +116,35 @@ deploy_stack() {
     eval "docker stack deploy -c ${compose_file} ${service_name}" && return 0 || return 1
 }
 
+
+#=======================================================================================================================
+# Returns the CPU architecture of the Docker Engine. If unavailable, the architecture of the host is returned instead.
+# The architecture 'x86_64' is converted to 'amd64' for compatibility with the buildx plugin.
+#=======================================================================================================================
+# Outputs:
+#   Architecture of the Docker Engine if available, the host system otherwise.
+#=======================================================================================================================
+get_arch() {
+    host_arch=$(docker info 2> /dev/null | grep Architecture | awk -F': ' '{print $2}')
+    [ -z "${host_arch}" ] && host_arch=$(uname -m)
+    echo "${host_arch}" | sed 's/x86_64/amd64/'
+}
+
+#=======================================================================================================================
+# Returns the Operating System (OS) of the Docker Engine. If unavailable, the OS of the host is returned instead. On
+# certain systems like macOS and Windows, the Docker Engine runs within a Virtual Machine (VM) instead of directly on
+# the host system. In this situation, the function get_os() returns the OS of the VM to correctly evaluate the platform
+# capability of the buildx plugin.
+#=======================================================================================================================
+# Outputs:
+#   OS of the Docker Engine's VM if applicable, the host system otherwise.
+#=======================================================================================================================
+get_os() {
+    host_os=$(docker info 2> /dev/null | grep OSType | awk -F': ' '{print $2}')
+    [ -z "${host_os}" ] && host_os=$(uname -s)
+    echo "${host_os}"
+}
+
 push_image() {
     # init arguments and variables
     images="$1"
