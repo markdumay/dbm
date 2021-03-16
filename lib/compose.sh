@@ -81,9 +81,11 @@ generate_config_file() {
 # Outputs:
 #   Writes targeted image information to stdout, returns 1 in case of errors.
 #=======================================================================================================================
+# shellcheck disable=SC2059
 list_images() {
     config_file="$1"
     services="$2"
+    images=''
 
     # Parse the generated Docker Compose file
     yaml=$(parse_yaml "${config_file}") || { echo "Cannot parse configuration file: ${config_file}"; return 1; }
@@ -94,15 +96,14 @@ list_images() {
             image=$(echo "${yaml}" | grep "^services_${service}_image=" | sed 's/^services_/ /' | sed 's/=/: /')
             [ -z "${image}" ] && echo "Service '${service}' not found" && return 1
             name=$(echo "${image}" | awk -F'"' '{print $2}')
-            images="${images} ${name}"
-            echo "${image}"
+            images="${images}${name}\n"
         done
     else
         targets=$(echo "${yaml}" | grep "_image=" | sed 's/^services_/ /')
         name=$(echo "${targets}" | awk -F'"' '{print $2}')
-        images="${images} ${name}"
-        echo "${targets}"
+        images="${name}\n"
     fi
 
+    printf "${images}"
     return 0
 }

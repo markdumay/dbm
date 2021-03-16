@@ -5,7 +5,7 @@
 # Description   : Helper script to manage Docker images
 # Author        : Mark Dumay
 # Date          : March 16th, 2021
-# Version       : 0.7.1
+# Version       : 0.7.2
 # Usage         : ./dbm.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
