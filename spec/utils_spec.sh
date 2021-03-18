@@ -11,6 +11,7 @@ Describe 'lib/utils.sh'
     Todo 'confirm_operation()'
     Todo 'escape_string()'
     Todo 'is_number()'
+    Todo 'url_encode()'
 
     Describe 'validate_dependencies()'
         Parameters

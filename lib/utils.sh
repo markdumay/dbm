@@ -49,6 +49,19 @@ is_number() {
     [ -n "$1" ] && [ -z "${1##[0-9]*}" ] && return 0 || return 1
 }
 
+#======================================================================================================================
+# Encodes a variable to a url-safe variable using jq. For example, the string 'encode this' is encoded to 
+# 'encode%20this'.
+#======================================================================================================================
+# Arguments:
+#   $1 - Variable to encode.
+# Outputs:
+#   Url-encoded variable.
+#======================================================================================================================
+url_encode() {
+    printf '%s' "$1" | jq -sRr @uri
+}
+
 #=======================================================================================================================
 # Validates if required commands are available on the host. For example, the following command tests the availability of
 # some common commands.
