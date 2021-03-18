@@ -9,8 +9,12 @@
 # Constants
 #=======================================================================================================================
 readonly DOCKER_API='https://hub.docker.com/v2'
-readonly GITHUB_API="https://api.github.com"
+readonly DOCKER_AUTH='https://auth.docker.io'
+readonly DOCKER_REGISTRY_DOMAIN='https://registry-1.docker.io'
+readonly DOCKER_MANIFEST_HEADER='application/vnd.docker.distribution.manifest.list.v2+json'
 readonly DOCKER_API_PAGE_SIZE=100 # Limit Docker API results to the first 100 only
+readonly GITHUB_API='https://api.github.com'
+readonly GITHUB_HEADER='application/vnd.github.v3+json'
 readonly VERSION_REGEX='([vV])?[0-9]+\.[0-9]+(\.[0-9]+)?' #  MAJOR.MINOR required, 'v' and PATCH are optional
 
 #=======================================================================================================================
@@ -35,6 +39,95 @@ _expand_version() {
     else
         echo "$1$2"
     fi
+}
+
+#======================================================================================================================
+# Retrieves the SHA digest for a specific tagged image from the Docker Hub. For regular images, the image digest is 
+# retrieved. For multi-architecture images, the repository digest is obtained instead. The output should be compatible
+# with the digest information retrieved by 'docker pull'. The returned digest includes the encoding prefix, typically
+# 'sha256'.
+#
+# Regular image example:
+#   _get_docker_digest 'library' 'varnish' '6.5.1-1'
+#   sha256:9f1c24b270e55593b90fe1df8d9d6c362b2245920d4b333f78884c750132a2bb
+#   Compare the result with the digest retrieved by 'docker pull varnish:6.5.1-1'
+#
+# Multi-architecture image example:
+#   _get_docker_digest 'library' 'ghost' '4.0.1-alpine'
+#   sha256:7f3710185d1b70ededdd2994a57df504897b8e9fca2a7c992553cb2ae4f5a21c
+#   Compare the result with the digest retrieved by 'docker pull ghost:4.0.1-alpine'
+#======================================================================================================================
+# Arguments:
+#   $1 - Repository owner.
+#   $2 - Repository name.
+#   $3 - Image tag.
+# Outputs:
+#   SHA256 digest of the remote image or repository.
+#======================================================================================================================
+_get_docker_digest() {
+    owner=$(url_encode "$1")
+    repository=$(url_encode "$2")
+    tag=$(url_encode "$3")
+    digest=''
+
+    # Retrieve authorization token for targeted repository
+    token=$(curl -sSL "${DOCKER_AUTH}/token?service=registry.docker.io&scope=repository:${owner}/${repository}:pull" \
+            | jq --raw-output .token)
+    [ -z "${token}" ] && echo "Cannot retrieve authorization token" && return 1
+
+    # Request a "fat manifest" by default, HEAD only
+    response=$(curl --HEAD -sH "Authorization: Bearer ${token}" \
+        -H "Accept: ${DOCKER_MANIFEST_HEADER}" "${DOCKER_REGISTRY_DOMAIN}/v2/${owner}/${repository}/manifests/${tag}")
+    [ -z "${response}" ] && echo "Cannot retrieve manifest data" && return 1
+
+    if echo "${response}" | grep -q "${DOCKER_MANIFEST_HEADER}"; then
+        # Capture the repository digest for a multi-architecture image
+        digest=$(echo "${response}" | grep 'Docker-Content-Digest' | awk -F': ' '{print $2}')
+    else
+        # Capture the repository digest for a regular image
+        digest=$(curl -s "${DOCKER_API}/repositories/${owner}/${repository}/tags/${tag}" | jq -r '.images[0].digest')
+    fi
+
+    # Return the retrieved digest
+    [ -z "${digest}" ] && echo "Cannot retrieve digest" && return 1 
+    echo "${digest}"; 
+    return 0
+}
+
+#======================================================================================================================
+# Retrieves the SHA digest for a specific tagged release from GitHub. The version prefix 'v' is optional. The returned
+# digest includes the encoding prefix 'sha'.
+#======================================================================================================================
+# Arguments:
+#   $1 - Repository owner.
+#   $2 - Repository name.
+#   $3 - Release tag.
+#   $4 - Shortens the SHA digest when 'true', defaults to 'false'.
+# Outputs:
+#   SHA digest of the tagged GitHub release.
+#======================================================================================================================
+_get_github_digest() {
+    owner=$(url_encode "$1")
+    repository=$(url_encode "$2")
+    tag=$(url_encode "$3")
+    short="$4"
+
+    # Get all tags
+    tags=$(curl -sH "Accept: ${GITHUB_HEADER}" "${GITHUB_API}/repos/${owner}/${repository}/tags")
+    [ -z "${tags}" ] && echo "Cannot retrieve tags" && return 1
+    
+    # Get the digest matching the tag (with optional 'v' prefix)
+    digest=$(echo "${tags}" | jq -r ".[] | select(.name | test(\"^[vV]?${tag}\$\")) | .commit.sha")
+
+    # Validate the retrieved digest
+    [ -z "${digest}" ] && echo "Cannot retrieve digest" && return 1 
+    count=$(echo "${digest}" | wc -l)
+    [ "${count}" -gt 1 ] && echo "Received multiple matches" && return 1
+
+    # Return the retrieved digest
+    [ "${short}" = 'true' ] && digest=$(echo "${digest}" | cut -c1-7)
+    echo "sha:${digest}"
+    return 0
 }
 
 #======================================================================================================================
