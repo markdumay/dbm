@@ -133,7 +133,7 @@ stage_env() {
     [ "${target}" = 'dev' ] && image_suffix='-debug' 
 
     # Export environment variables as script
-    staged=$(export_env_values) || return 1
+    staged=$(export_env_values) || { echo "${staged}"; return 1; }
     staged="${staged}\nexport BUILD_VERSION=${build_version}"
     staged="${staged}\nexport IMAGE_SUFFIX=${image_suffix}"
 
