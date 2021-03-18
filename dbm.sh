@@ -16,7 +16,8 @@
 #=======================================================================================================================
 # Dependencies
 #=======================================================================================================================
-basedir=$(dirname "$0")
+script_path=$(realpath "$0")
+basedir=$(dirname "${script_path}")
 # shellcheck source=lib/config.sh
 . "${basedir}"/lib/config.sh
 # shellcheck source=lib/compose.sh
@@ -55,7 +56,7 @@ basedir=$(dirname "$0")
 #=======================================================================================================================
 # Constants
 #=======================================================================================================================
-readonly CORE_DEPENDENCIES='awk cut date docker docker-compose grep sed sort tr uname wc'
+readonly CORE_DEPENDENCIES='awk cut date docker docker-compose grep realpath sed sort tr uname wc'
 readonly REPOSITORY_DEPENDENCIES='curl jq'
 readonly VERSION_DEPENDENCIES='basename cat dirname'
 # readonly TRUST_DEPENDENCIES='notary openssl'
@@ -152,7 +153,7 @@ main() {
     parse_args "$@"
 
     # Initialize global settings
-    init_config
+    init_config "${basedir}"
     script_version=$(init_script_version)
     host_os=$(get_os)
     host_arch=$(get_arch)
@@ -167,8 +168,8 @@ main() {
         print_status "Preparing environment"
 
         # Change to working directory
-        cd "${config_docker_working_dir}" 2> /dev/null || \
-            { echo "Cannot find working directory: ${config_docker_working_dir}"; return 1; }
+        docker_dir=$(realpath "${basedir}/${config_docker_working_dir}")
+        cd "${docker_dir}" 2> /dev/null || { echo "Cannot find working directory: ${docker_dir}"; return 1; }
 
         # Validate host dependencies
         validate_host_dependencies "${arg_command}" || return 1
@@ -178,7 +179,7 @@ main() {
         eval "${exported_vars}"
 
         # Generate consolidated compose file
-        config_file=$(generate_config_file "${docker_compose_flags}" '' "${arg_services}" "${arg_tag}") || { err "${config_file}"; return 1; }
+        config_file=$(generate_config_file "${docker_compose_flags}" "${docker_dir}" '' "${arg_services}" "${arg_tag}") || { err "${config_file}"; return 1; }
 
         # Validate targeted images
         images=$(list_images "${config_file}" "${arg_services}") || { err "${images}"; return 1; }

@@ -21,7 +21,7 @@ config_docker_dev_yml=''
 # TODO: rename service to stack
 config_docker_service=''
 config_docker_platforms=''
-
+config_file=''
 
 #=======================================================================================================================
 # Functions
@@ -36,9 +36,11 @@ config_docker_platforms=''
 #=======================================================================================================================
 # shellcheck disable=SC2059
 export_env_values() {
+    [ ! -f "${config_file}" ] && echo "Cannot find config file: ${config_file}" && return 1
+    
     # retrieve all custom variables from the DBM config file
     # remove all comments and trailing spaces; separate each dependency by a ';'
-    vars=$(grep '^DBM_.*=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_//g')
+    vars=$(grep '^DBM_.*=.*' "${config_file}" | sed 's/^DBM_//g')
     vars=$(printf "${vars}\n\n" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/;/g')
     vars=$(printf "${vars}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
     results=''
@@ -53,7 +55,7 @@ export_env_values() {
             entry=$(echo "${item}" | sed 's/=/ /g' | awk  '{print $1, $3}' | sed 's/ /=/g')
             results="${results}export ${entry}\n"
         else
-            echo "Invalid entry in '${DBM_CONFIG_FILE}': ${item}"
+            echo "Invalid entry in '${config_file}': ${item}"
             return 1
         fi
     done
@@ -72,7 +74,7 @@ export_env_values() {
 #   Writes setting to stdout.
 #=======================================================================================================================
 init_config_value() {
-    match=$(grep -in "^$1=" "${DBM_CONFIG_FILE}" 2> /dev/null) # read entry from config file
+    match=$(grep -in "^$1=" "${config_file}" 2> /dev/null) # read entry from config file
     line=$(echo "${match}" | awk -F':' '{print $1}') # read line number
     value=$(echo "${match}" | awk -F'=' '{print $2}') # read setting value
     value="${value:-$2}" # assign a default value if needed
@@ -105,11 +107,16 @@ init_config_value() {
 #   - config_docker_dev_yml
 #   - config_docker_service
 #   - config_docker_platforms
+# Arguments:
+#   $1 - Base directory of the config gile.
 # Outputs:
 #   Initalized global config variables, terminates with non-zero exit code on fatal error.
 #=======================================================================================================================
 # shellcheck disable=SC2034
 init_config() {
+    basedir="${1:-$PWD}"
+    config_file="${basedir}/${DBM_CONFIG_FILE}"
+
     # initialize settings and/or default values 
     config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || return 1
     config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || return 1
@@ -130,11 +137,11 @@ init_config() {
 #   Initalized global config variables, terminates with non-zero exit code on fatal error.
 #=======================================================================================================================
 read_dependencies() {
-    [ ! -f "${DBM_CONFIG_FILE}" ] && return 1
+    [ ! -f "${config_file}" ] && return 1
 
     # retrieve all dependendencies from the DBM config file
     # remove all comments, trailing spaces, and protocols; separate each dependency by a ';'
-    dependencies=$(grep '^DBM_.*VERSION=.*' "${DBM_CONFIG_FILE}" | sed 's/^DBM_//g;')
+    dependencies=$(grep '^DBM_.*VERSION=.*' "${config_file}" | sed 's/^DBM_//g;')
     dependencies=$(echo "${dependencies}" | sed 's/hub.docker.com\/r\//hub.docker.com\//g')
     dependencies=$(echo "${dependencies}" | sed 's/_VERSION=/ /g;s/\// /g;')
     dependencies=$(echo "${dependencies}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
