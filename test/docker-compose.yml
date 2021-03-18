@@ -1,0 +1,12 @@
+#=======================================================================================================================
+# Copyright © 2021 Mark Dumay. All rights reserved.
+# Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
+#=======================================================================================================================
+
+version: "3.7"
+
+services:
+  dbm-test:
+    image: "markdumay/dbm-test:${BUILD_VERSION:?version}${IMAGE_SUFFIX:-}"
+    container_name: "dbm-test"
+    restart: unless-stopped
