@@ -91,7 +91,7 @@ _get_docker_digest() {
 
     # Return the retrieved digest
     [ -z "${digest}" ] && echo "Cannot retrieve digest" && return 1 
-    echo "${digest}"; 
+    echo "${digest}"
     return 0
 }
 
