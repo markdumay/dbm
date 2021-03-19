@@ -142,9 +142,9 @@ _get_github_digest() {
 #   Latest available tag if found, empty string otherwise.
 #======================================================================================================================
 _get_latest_github_tag() {
-    owner="$1"
-    repo="$2"
-    extension=$(escape_string "$3")
+    owner=$(url_encode "$1")
+    repo=$(url_encode "$2")
+    extension=$(url_encode "$3")
 
     tag=$(curl -s "${GITHUB_API}/repos/${owner}/${repo}/releases/latest" | grep "tag_name" | awk -F'"' '{print $4}')
     echo "${tag}" | grep -Eo "^${VERSION_REGEX}${extension}$"
@@ -162,9 +162,9 @@ _get_latest_github_tag() {
 #   Latest available tag if found, empty string otherwise.
 #======================================================================================================================
 _get_latest_docker_tag() {
-    [ "$1" = "_" ] && owner='library' || owner="$1" # Update owner of official Docker repositories
-    repo="$2"
-    extension=$(escape_string "$3")
+    [ "$1" = "_" ] && owner='library' || owner=$(url_encode "$1") # Update owner of official Docker repositories
+    repo=$(url_encode "$2")
+    extension=$(url_encode "$3")
 
     url="${DOCKER_API}/repositories/${owner}/${repo}/tags/?page_size=${DOCKER_API_PAGE_SIZE}"
     tags=$(curl -s "${url}")
