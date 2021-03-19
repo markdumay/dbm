@@ -120,7 +120,6 @@ validate_host_dependencies() {
 #=======================================================================================================================
 # Arguments:
 #   $1 - Main command from the command-line.
-#   $2 - Target platforms to test, comma separated.
 # Outputs:
 #   Returns 0 if valid and returns 1 if invalid.
 #=======================================================================================================================
