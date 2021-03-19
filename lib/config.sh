@@ -9,6 +9,7 @@
 # Constants
 #=======================================================================================================================
 readonly DBM_CONFIG_FILE='dbm.ini'
+readonly DBM_DIGEST_FILE='dbm.digest'
 
 
 #=======================================================================================================================
@@ -22,6 +23,7 @@ config_docker_dev_yml=''
 config_docker_service=''
 config_docker_platforms=''
 config_file=''
+config_digest_file=''
 
 #=======================================================================================================================
 # Functions
@@ -116,6 +118,7 @@ init_config_value() {
 init_config() {
     basedir="${1:-$PWD}"
     config_file="${basedir}/${DBM_CONFIG_FILE}"
+    config_digest_file="${basedir}/${DBM_DIGEST_FILE}"
 
     # initialize settings and/or default values 
     config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || return 1
