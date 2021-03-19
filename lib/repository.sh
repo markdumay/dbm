@@ -79,6 +79,7 @@ _get_docker_digest() {
     response=$(curl --HEAD -sH "Authorization: Bearer ${token}" \
         -H "Accept: ${DOCKER_MANIFEST_HEADER}" "${DOCKER_REGISTRY_DOMAIN}/v2/${owner}/${repository}/manifests/${tag}")
     [ -z "${response}" ] && echo "Cannot retrieve manifest data" && return 1
+    response=$(echo "${response}" | tr -d '\r') # remove special character '\r'
 
     if echo "${response}" | grep -q "${DOCKER_MANIFEST_HEADER}"; then
         # Capture the repository digest for a multi-architecture image
