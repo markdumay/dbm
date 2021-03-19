@@ -129,7 +129,7 @@ init_config() {
 }
 
 #=======================================================================================================================
-# Reads all dependencies defined within the configuration file, identify by the pattern '^DBM_.*VERSION=.*'. Comments,
+# Reads all dependencies defined within the configuration file, identified by the pattern '^DBM_.*VERSION=.*'. Comments,
 # trailing spaces, and protocols (http/https) are stripped. The function returns a single line of all identified
 # dependencies as key-value pairs, separated by ';'. 
 #=======================================================================================================================
