@@ -65,7 +65,7 @@ _expand_version() {
 #   SHA256 digest of the remote image or repository.
 #======================================================================================================================
 _get_docker_digest() {
-    owner=$(url_encode "$1")
+    [ "$1" = "_" ] && owner='library' || owner=$(url_encode "$1") # Update owner of official Docker repositories    
     repository=$(url_encode "$2")
     tag=$(url_encode "$3")
     digest=''
