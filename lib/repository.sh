@@ -132,7 +132,10 @@ _get_github_digest() {
 }
 
 #======================================================================================================================
-# Retrieves the latest available tag from a GitHub repository. Release candidates are excluded by default.
+# Retrieves the latest available tag from a GitHub repository. Release candidates are excluded by default. To avoid
+# hitting the API rate limit, set the environment variable 'GITHUB_TOKEN' to a valid GitHub token with read access to
+# repositories. This will increase the rate limit of 60 requests/hr to 5.000 requests/hr. Within GitHub actions, use
+# the built-in GITHUB_TOKEN to increase the rate limit to 1.000 requests/hr per repository.
 #======================================================================================================================
 # Arguments:
 #   $1 - Repository owner.
@@ -146,7 +149,8 @@ _get_latest_github_tag() {
     repo=$(url_encode "$2")
     extension=$(url_encode "$3")
 
-    tag=$(curl -s "${GITHUB_API}/repos/${owner}/${repo}/releases/latest" | grep "tag_name" | awk -F'"' '{print $4}')
+    [ -n "${GITHUB_TOKEN}" ] && auth="--header 'authorization: Bearer ${GITHUB_TOKEN}'" || auth=''
+    tag=$(eval "curl -s ${auth} ${GITHUB_API}/repos/${owner}/${repo}/releases/latest" | grep "tag_name" | awk -F'"' '{print $4}')
     echo "${tag}" | grep -Eo "^${VERSION_REGEX}${extension}$"
 }
 
