@@ -72,7 +72,7 @@ _get_docker_digest() {
 
     # Retrieve authorization token for targeted repository
     token=$(curl -sSL "${DOCKER_AUTH}/token?service=registry.docker.io&scope=repository:${owner}/${repository}:pull" \
-            | jq --raw-output .token)
+            | jq --raw-output .token 2> /dev/null)
     [ -z "${token}" ] && echo "Cannot retrieve authorization token" && return 1
 
     # Request a "fat manifest" by default, HEAD only
@@ -86,7 +86,7 @@ _get_docker_digest() {
         digest=$(echo "${response}" | grep 'Docker-Content-Digest' | awk -F': ' '{print $2}')
     else
         # Capture the repository digest for a regular image
-        digest=$(curl -s "${DOCKER_API}/repositories/${owner}/${repository}/tags/${tag}" | jq -r '.images[0].digest')
+        digest=$(curl -s "${DOCKER_API}/repositories/${owner}/${repository}/tags/${tag}" | jq -r '.images[0].digest' 2> /dev/null )
     fi
 
     # Return the retrieved digest
@@ -118,7 +118,7 @@ _get_github_digest() {
     [ -z "${tags}" ] && echo "Cannot retrieve tags" && return 1
     
     # Get the digest matching the tag (with optional 'v' prefix)
-    digest=$(echo "${tags}" | jq -r ".[] | select(.name | test(\"^[vV]?${tag}\$\")) | .commit.sha")
+    digest=$(echo "${tags}" | jq -r ".[] | select(.name | test(\"^[vV]?${tag}\$\")) | .commit.sha" 2> /dev/null)
 
     # Validate the retrieved digest
     [ -z "${digest}" ] && echo "Cannot retrieve digest" && return 1 
@@ -168,7 +168,7 @@ _get_latest_docker_tag() {
 
     url="${DOCKER_API}/repositories/${owner}/${repo}/tags/?page_size=${DOCKER_API_PAGE_SIZE}"
     tags=$(curl -s "${url}")
-    tags=$(echo "${tags}" | jq -r '.results|.[]|.name' | grep -E "^${VERSION_REGEX}${extension}$")
+    tags=$(echo "${tags}" | jq -r '.results|.[]|.name' 2> /dev/null | grep -E "^${VERSION_REGEX}${extension}$")
     echo "${tags}" | sort --version-sort | tail -n1
 }
 
