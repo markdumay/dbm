@@ -220,6 +220,8 @@ _get_latest_docker_tag() {
 # - Different version found
 #   The repository returned a different version as latest (which might be newer).
 #=======================================================================================================================
+# Arguments:
+#   $2 - Normalized dependencies, e.g. '9:ALPINE hub.docker.com _ alpine 3.13.2-rc;'
 # Outputs:
 #   Writes matching key/value pairs to stdout. Returns 1 in case of potential updates, 0 otherwise.
 #=======================================================================================================================
@@ -227,63 +229,71 @@ _get_latest_docker_tag() {
 check_upgrades() {
     dependencies="$1"
     logs=''
+    latest=''
+    remote_digest=''
     flag=0
 
     IFS=';' # initialize dependency separator
     width=0 # initialize tab width of first output column
     for item in $dependencies; do
-        # initialize dependency provider, owner, repo, version, and extension
-        # version information is always expanded to 'MAJOR.MINOR.PATCH', setting MINOR and PATCH to '0' if omitted
-        name=$(echo "${item}" | awk -F' ' '{print $1}')
-        provider=$(echo "${item}" | awk -F' ' '{print $2}' | tr '[:upper:]' '[:lower:]') # make case insensitive
-        owner=$(echo "${item}" | awk -F' ' '{print $3}')
-        repo=$(echo "${item}" | awk -F' ' '{print $4}')
-        extension=$(echo "${item}" | awk -F' ' '{print $5}')
-        version=$(echo "${extension}" | grep -Eo "^${VERSION_REGEX}")
-        esc_version=$(escape_string "${version}")
-        [ -n "${esc_version}" ] && extension=$(echo "${extension}" | sed "s/${esc_version}//g") # strip version information
-        version=$(echo "${version}" | sed 's/^v//g;s/^V//g;')
-        version=$(_expand_version "${version}") # expand version info if needed with minor and patch
-        count=$(echo "${item}" | wc -w) # identify number of parsed arguments (should be 2 or 5)
-        [ "${count}" -eq 2 ] && version="${provider}" && extension=''
+        # validate if the item has the expected number of tokens
+        if ! result=$(is_valid_dependency "${item}"); then
+            [ "$?" -ne 2 ] && flag=1
+            logs="${logs}${result}\n"
+            continue
+        fi
+
+        # retrieve key fields
+        {
+            name=$(get_dependency_name "${item}") && \
+            provider=$(get_dependency_provider "${item}") && \
+            owner=$(get_dependency_owner "${item}") && \
+            repo=$(get_dependency_repository "${item}") && \
+            tag=$(get_dependency_tag "${item}") && \
+            version=$(get_dependency_version "${item}") && \
+            extension=$(get_dependency_extension "${item}")
+        } || { logs="${logs}Skipping malformed dependency: ${item}\n"; flag=1; continue; }
+
+        # set dependency display name and adjust column width if needed
         dependency="[${name} v${version}${extension}]"
         curr_width=$(echo "${dependency}" | awk '{print length}') # set current tab width
         [ "${curr_width}" -gt "${width}" ] && width="${curr_width}" # update tab width if needed
-
-        # validate number of arguments
-        if [ "${count}" -eq 2 ]; then
-            logs="${logs}${dependency}\t No repository link, skipping\n"
-            continue
-        elif [ "${count}" -ne 5 ]; then
-            logs="${logs}[${name}]\t Malformed, skipping\n"
-            continue
-        fi
         
-        # obtain latest tag from supported providers
+        # obtain latest tag and digest from supported providers
         case "${provider}" in
             hub.docker.com )
                 latest=$(_get_latest_docker_tag "${owner}" "${repo}" "${extension}")
+                remote_digest=$(_get_docker_digest "${owner}" "${repo}" "${tag}")
                 ;;
             github.com )
                 latest=$(_get_latest_github_tag "${owner}" "${repo}" "${extension}")
+                remote_digest=$(_get_github_digest "${owner}" "${repo}" "${tag}" 'false')
                 ;;
             * )
                 logs="${logs}${dependency}\t Provider '${provider}' not supported, skipping\n"
                 continue
         esac
 
-        # compare latest tag to current tag
+        # compare digest and tag
         latest_base=$(echo "${latest}" | sed "s/${extension}$//g;s/^v//g;s/^V//g;")
         latest_expanded=$(_expand_version "${latest_base}" "${extension}")
+        local_digest=$(read_update_stored_digest "${provider}/${owner}/${repo}" "v${version}${extension}" \
+            "${remote_digest}") || { logs="${logs}${dependency}\t${local_digest}\n"; flag=1; break; }
         if [ -z "${latest}" ]; then
             logs="${logs}${dependency}\t No tags found, skipping\n"
-        elif [ "${version}${extension}" = "${latest_expanded}" ]; then
-            logs="${logs}${dependency}\t Up to date\n"
-        else
-            logs="${logs}${dependency}\t Different version found: '${latest}'\n"
+        elif [ "${local_digest}" != "${remote_digest}" ]; then
+            logs="${logs}${dependency}\t Different digest found: ${remote_digest}\n"
             flag=1
+        elif [ "${version}${extension}" != "${latest_expanded}" ]; then
+            logs="${logs}${dependency}\t Different version found: ${latest}\n"
+            flag=1
+        else
+            logs="${logs}${dependency}\t Up to date\n"
         fi
     done
+
+    # clean up digest file; remove all dependencies/version not present in configuration file
+    clean_digest_file "${dependencies}"
 
     # format and display findings
     width=$((width + 2))
