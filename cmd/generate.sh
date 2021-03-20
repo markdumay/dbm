@@ -8,26 +8,26 @@
 #=======================================================================================================================
 # Constants
 #=======================================================================================================================
-readonly usage_config_msg_short="
+readonly usage_generate_msg_short="
 Usage:
-  dbm config <dev|prod> <output> [flags]
+  dbm generate <dev|prod> <output> [flags]
 "
 
-readonly usage_config_msg_full="
-Config generates a consolidated Docker Compose file for the targeted environment
+readonly usage_generate_msg_full="
+Generate creates a consolidated Docker Compose file for the targeted environment
 and writes the output to a specified file.
 
-${usage_config_msg_short}
+${usage_generate_msg_short}
 
 Examples:
-  dbm config dev output.yml
+  dbm generate dev output.yml
   Generate output.yml using docker-compose.yml and docker-compose.dev.yml
 
-  dbm config prod output.yml
+  dbm generate prod output.yml
   Generate output.yml using docker-compose.yml and docker-compose.prod.yml
 
 Global Flags:
-  -h, --help                  Help for the config command
+  -h, --help                  Help for the generate command
 
 "
 
@@ -45,7 +45,7 @@ Global Flags:
 # Outputs:
 #   Docker Compose file.
 #=======================================================================================================================
-execute_config() {
+execute_generate() {
     print_status "Generating Docker Compose file"
     temp_file="$1"
     output_file="$2"
@@ -72,18 +72,18 @@ execute_config() {
 }
 
 #=======================================================================================================================
-# Parse and validate the command-line arguments for the config command.
+# Parse and validate the command-line arguments for the generate command.
 #=======================================================================================================================
 # Arguments:
 #   $@ - All available command-line arguments.
 # Outputs:
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
-parse_config_args() {
+parse_generate_args() {
     error=''
     show_help='false'
 
-    # Ignore first argument, which is the 'config' command
+    # Ignore first argument, which is the 'generate' command
     shift
 
     # Capture any additional flags
@@ -91,16 +91,16 @@ parse_config_args() {
         case "$1" in
             dev | prod )   arg_target="$1";;
             -h | --help )  show_help='true';;
-            *           )  [ -z "${arg_config_file}" ] && arg_config_file="$1" || \
+            *           )  [ -z "${arg_compose_file}" ] && arg_compose_file="$1" || \
                             error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_config 'false' && return 1
-    [ -z "${arg_target}" ] && error="Expected target" && arg_config_file=''
-    [ -z "${arg_config_file}" ] && [ -z "${error}" ] && error="Expected output file"
-    [ -n "${error}" ] && usage_config 'true' && err "${error}" && return 1
+    [ "${show_help}" = 'true' ] && usage_generate 'false' && return 1
+    [ -z "${arg_target}" ] && error="Expected target" && arg_compose_file=''
+    [ -z "${arg_compose_file}" ] && [ -z "${error}" ] && error="Expected output file"
+    [ -n "${error}" ] && usage_generate 'true' && err "${error}" && return 1
     return 0
 }
 
@@ -111,7 +111,7 @@ parse_config_args() {
 #   Writes message to stdout.
 #=======================================================================================================================
 # TODO: check SERVICE support
-usage_config() {
+usage_generate() {
     short="$1"
-    [ "${short}" = 'true' ] && echo "${usage_config_msg_short}" || echo "${usage_config_msg_full}"
+    [ "${short}" = 'true' ] && echo "${usage_generate_msg_short}" || echo "${usage_generate_msg_full}"
 }

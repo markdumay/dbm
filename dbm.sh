@@ -38,8 +38,7 @@ basedir=$(dirname "${script_path}")
 . "${basedir}"/cmd/build.sh
 # shellcheck source=cmd/check.sh
 . "${basedir}"/cmd/check.sh
-# shellcheck source=cmd/config.sh
-. "${basedir}"/cmd/config.sh
+# shellcheck source=cmd/generate.sh
 # shellcheck source=cmd/deploy.sh
 . "${basedir}"/cmd/deploy.sh
 # shellcheck source=cmd/down.sh
@@ -146,7 +145,7 @@ stage_env() {
 main() {
     result=0
     images=''
-    config_file=''
+    compose_file=''
 
     # Parse command-line arguments
     parse_args "$@"
