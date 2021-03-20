@@ -152,7 +152,7 @@ main() {
     parse_args "$@"
 
     # Initialize global settings
-    init_config "${basedir}"
+    init_config "${basedir}" "${arg_config}"
     script_version=$(init_script_version)
     host_os=$(get_os)
     host_arch=$(get_arch)

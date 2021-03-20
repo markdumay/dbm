@@ -27,6 +27,7 @@ Examples:
   Stops the production container identified by 'myservice'
  
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the stop command
 
 "
@@ -74,6 +75,7 @@ parse_stop_args() {
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
             dev | prod )    arg_target="$1";;
+            --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             -h | --help )   show_help='true';;
             --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \

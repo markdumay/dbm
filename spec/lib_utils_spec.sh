@@ -12,6 +12,7 @@ Describe 'lib/utils.sh'
     Todo 'escape_string()'
     Todo 'is_number()'
     Todo 'url_encode()'
+    Todo 'get_absolute_path()'
 
     Describe 'validate_dependencies()'
         Parameters

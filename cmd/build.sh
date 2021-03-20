@@ -50,6 +50,7 @@ Flags:
   --tag <tag>                 Image tag override
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the build command
 
 "
@@ -154,6 +155,7 @@ parse_build_args() {
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
             dev | prod )    arg_target="$1";;
+            --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             --no-cache )    arg_no_cache='true';;
             --platforms )   shift; [ -n "$1" ] && arg_platforms="$1" || error="Missing platform argument";;
             --push )        arg_push='true';;

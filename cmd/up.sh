@@ -33,6 +33,7 @@ Flags:
       --shell                 Shell to invoke for terminal (defaults to 'sh')
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the up command
 
 "
@@ -88,6 +89,7 @@ parse_up_args() {
             -d | --detached )   arg_detached='true';;
             -t | --terminal )   arg_terminal='true';;
             -h | --help )       show_help='true';;
+            --config )          shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             --shell )           shift; [ -n "$1" ] && arg_shell="$1" || error="Missing shell argument";;
             --tag )             shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             * )                 service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \

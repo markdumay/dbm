@@ -34,6 +34,7 @@ Commands:
   version                     Show version information
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for a command
 
 "
@@ -44,6 +45,7 @@ Global Flags:
 #=======================================================================================================================
 arg_command=''
 arg_target=''
+arg_config=''
 arg_compose_file=''
 arg_detached='false'
 arg_no_cache='false'

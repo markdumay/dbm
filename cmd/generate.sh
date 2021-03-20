@@ -27,6 +27,7 @@ Examples:
   Generate output.yml using docker-compose.yml and docker-compose.prod.yml
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the generate command
 
 "
@@ -79,6 +80,7 @@ execute_generate() {
 # Outputs:
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
+# shellcheck disable=SC2034
 parse_generate_args() {
     error=''
     show_help='false'
@@ -89,10 +91,11 @@ parse_generate_args() {
     # Capture any additional flags
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
-            dev | prod )   arg_target="$1";;
-            -h | --help )  show_help='true';;
-            *           )  [ -z "${arg_compose_file}" ] && arg_compose_file="$1" || \
-                            error="Argument not supported: $1"
+            dev | prod )    arg_target="$1";;
+            --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
+            -h | --help )   show_help='true';;
+            * )             [ -z "${arg_compose_file}" ] && arg_compose_file="$1" || \
+                                error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
     done

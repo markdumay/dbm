@@ -29,6 +29,7 @@ Examples:
   Deploy production images as Docker Stack services
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the deploy command
 
 "
@@ -74,9 +75,10 @@ parse_deploy_args() {
     # Capture any additional flags
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
-            dev | prod  )   arg_target="$1";;
+            dev | prod )    arg_target="$1";;
+            --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             -h | --help )   show_help='true';;
-            --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
+            --tag )         shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac

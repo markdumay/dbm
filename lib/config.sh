@@ -383,16 +383,22 @@ is_valid_dependency() {
 #   - config_docker_service
 #   - config_docker_platforms
 # Arguments:
-#   $1 - Base directory of the config gile.
+#   $1 - Base directory of the config file.
 # Outputs:
 #   Initalized global config variables, terminates with non-zero exit code on fatal error.
 #=======================================================================================================================
 # shellcheck disable=SC2034
 init_config() {
     basedir="${1:-$PWD}"
-    config_file="${basedir}/${DBM_CONFIG_FILE}"
-    config_digest_file="${basedir}/${DBM_DIGEST_FILE}"
-
+    config_file_override="${2:-${DBM_CONFIG_FILE}}"
+    
+    # continue if file(s) do not exist
+    config_file=$(get_absolute_path "${basedir}" "${config_file_override}")
+    if [ -n "${config_file}" ]; then
+        dir=$(dirname "${config_file}")
+        config_digest_file=$(echo "${dir}/${DBM_DIGEST_FILE}" | sed 's|//|/|g')
+    fi
+    
     # initialize settings and/or default values 
     config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || return 1
     config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || return 1

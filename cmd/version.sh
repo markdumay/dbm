@@ -19,6 +19,7 @@ Version displays the current version of DBM.
 ${usage_version_msg_short}
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the version command
 
 "
@@ -62,6 +63,7 @@ init_script_version() {
 # Outputs:
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
+# shellcheck disable=SC2034
 parse_version_args() {
     error=''
     show_help='false'
@@ -72,6 +74,7 @@ parse_version_args() {
     # Capture any additional flags
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
+            --config )     shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             -h | --help )  show_help='true';;
             * )            error="Argument not supported: $1"
         esac

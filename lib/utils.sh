@@ -38,6 +38,27 @@ escape_string() {
 }
 
 #=======================================================================================================================
+# Retrieves the absolute path for a given path. If the provided path is relative it is appended to the provided base
+# directory.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Base directory.
+#   $2 - Path, either relative or absolute.
+# Outputs:
+#   Absolute path, terminates with non-zero exit code on fatal error.
+#=======================================================================================================================
+get_absolute_path() {
+    basedir="$1"
+    path="$2"
+    result=''
+
+    start=$(echo "${path}" | cut -c-1)
+    [ "${start}" = '/' ] && result="${path}" || result="${basedir}/${path}"
+    
+    realpath "${result}" 2> /dev/null && return 0 || return 1
+}
+
+#=======================================================================================================================
 # Validates if a variable is a valid positive integer.
 #=======================================================================================================================
 # Arguments:
