@@ -39,6 +39,7 @@ basedir=$(dirname "${script_path}")
 # shellcheck source=cmd/check.sh
 . "${basedir}"/cmd/check.sh
 # shellcheck source=cmd/generate.sh
+. "${basedir}"/cmd/generate.sh
 # shellcheck source=cmd/deploy.sh
 . "${basedir}"/cmd/deploy.sh
 # shellcheck source=cmd/down.sh
