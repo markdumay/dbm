@@ -44,7 +44,7 @@ Global Flags:
 #=======================================================================================================================
 arg_command=''
 arg_target=''
-arg_config_file=''
+arg_compose_file=''
 arg_detached='false'
 arg_no_cache='false'
 arg_platforms=''

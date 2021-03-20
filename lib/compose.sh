@@ -26,7 +26,7 @@
 # Outputs:
 #   Writes config to stdout, or returns 1 on error.
 #=======================================================================================================================
-generate_config() {
+generate_compose_string() {
     compose_files="$1"
     context="$2"
     tag="$3"
@@ -63,7 +63,7 @@ generate_config() {
 # Outputs:
 #   Temporary Docker Compose configuration file; returns the filename.
 #=======================================================================================================================
-generate_config_file() {
+generate_compose_file() {
     compose_files="$1"
     context="$2"
     config_file="$3"
@@ -71,7 +71,7 @@ generate_config_file() {
     tag="$5"
 
     [ -z "${config_file}" ] && config_file=$(mktemp -t "dbm_temp.XXXXXXXXX")
-    if ! config=$(generate_config "${compose_files}" "${context}" "${tag}"); then
+    if ! config=$(generate_compose_string "${compose_files}" "${context}" "${tag}"); then
         echo "Cannot generate Docker Compose file: ${config_file}; error='${config}'"
         return 1
     else
