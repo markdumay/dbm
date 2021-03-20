@@ -233,6 +233,8 @@ check_upgrades() {
     remote_digest=''
     flag=0
 
+    { [ -z "${dependencies}" ] || [ "${dependencies}" = ';' ]; } && echo "No dependencies found" && return 0
+
     IFS=';' # initialize dependency separator
     width=0 # initialize tab width of first output column
     for item in $dependencies; do
