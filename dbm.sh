@@ -167,8 +167,10 @@ main() {
         print_status "Preparing environment"
 
         # Change to working directory
-        docker_dir=$(realpath "${basedir}/${config_docker_working_dir}")
-        cd "${docker_dir}" 2> /dev/null || { echo "Cannot find working directory: ${docker_dir}"; return 1; }
+        {
+            docker_dir=$(realpath "${basedir}/${config_docker_working_dir}" 2> /dev/null) &&
+            cd "${docker_dir}" 2> /dev/null
+         } || { echo "Cannot find working directory: ${docker_dir}"; return 1; }
 
         # Validate host dependencies
         validate_host_dependencies "${arg_command}" || return 1
