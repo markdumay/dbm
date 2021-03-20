@@ -200,9 +200,9 @@ main() {
         case "${arg_command}" in
             build)    execute_build "${compose_file}" "${arg_services}" "${images}" "${arg_no_cache}" "${arg_push}" "${arg_platforms}" || result=1;;
             check )   execute_check_upgrades && exit || result=1;;
-            config)   execute_config "${compose_file}" "${arg_compose_file}" || result=1;;
             deploy)   execute_deploy "${compose_file}" "${config_docker_service}" || result=1;;
             down)     execute_down "${compose_file}" "${arg_services}" || result=1;;
+            generate) execute_generate "${compose_file}" "${arg_compose_file}" || result=1;;
             info)     execute_show_info "${script_version}" "${host_os}" "${host_arch}" && exit || result=1;;
             stop)     execute_stop "${compose_file}" "${arg_services}" || result=1;;
             up)       execute_up "${compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
