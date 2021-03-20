@@ -8,7 +8,7 @@
 Describe 'lib/compose'
     Include lib/compose.sh
 
-    Todo 'generate_config()'
-    Todo 'execute_config()'
+    Todo 'generate_compose_string()'
+    Todo 'generate_compose_file()'
     Todo 'list_images()'
 End
