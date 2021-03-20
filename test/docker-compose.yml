@@ -10,3 +10,9 @@ services:
     image: "markdumay/dbm-test:${BUILD_VERSION:?version}${IMAGE_SUFFIX:-}"
     container_name: "dbm-test"
     restart: unless-stopped
+  alpine-test:
+    image: "alpine:3.12.2"
+    container_name: "alpine-test"
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "echo 'This is an Alpine container'; trap : TERM INT; (while true; do sleep infinity; done) & wait"
