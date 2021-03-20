@@ -177,10 +177,11 @@ main() {
         eval "${exported_vars}"
 
         # Generate consolidated compose file
-        config_file=$(generate_config_file "${docker_compose_flags}" "${docker_dir}" '' "${arg_services}" "${arg_tag}") || { err "${config_file}"; return 1; }
+        compose_file=$(generate_compose_file "${docker_compose_flags}" "${docker_dir}" '' "${arg_services}" "${arg_tag}") \
+            || { err "${compose_file}"; return 1; }
 
         # Validate targeted images
-        images=$(list_images "${config_file}" "${arg_services}") || { err "${images}"; return 1; }
+        images=$(list_images "${compose_file}" "${arg_services}") || { err "${images}"; return 1; }
         count=$(echo "${images}" | wc -l)
         [ "${count}" -gt 1 ] && [ "${terminal}" = 'true' ] && err "Terminal mode supports one service only" && return 1
         [ "${count}" -gt 1 ] && [ -n "${arg_tag}" ] && err "Tag supports one service only" && return 1
@@ -196,21 +197,21 @@ main() {
     # Execute commands
     if [ "${result}" -eq 0 ]; then
         case "${arg_command}" in
-            build)    execute_build "${config_file}" "${arg_services}" "${images}" "${arg_no_cache}" "${arg_push}" "${arg_platforms}" || result=1;;
+            build)    execute_build "${compose_file}" "${arg_services}" "${images}" "${arg_no_cache}" "${arg_push}" "${arg_platforms}" || result=1;;
             check )   execute_check_upgrades && exit || result=1;;
-            config)   execute_config "${config_file}" "${arg_config_file}" || result=1;;
-            deploy)   execute_deploy "${config_file}" "${config_docker_service}" || result=1;;
-            down)     execute_down "${config_file}" "${arg_services}" || result=1;;
+            config)   execute_config "${compose_file}" "${arg_compose_file}" || result=1;;
+            deploy)   execute_deploy "${compose_file}" "${config_docker_service}" || result=1;;
+            down)     execute_down "${compose_file}" "${arg_services}" || result=1;;
             info)     execute_show_info "${script_version}" "${host_os}" "${host_arch}" && exit || result=1;;
-            stop)     execute_stop "${config_file}" "${arg_services}" || result=1;;
-            up)       execute_up "${config_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
+            stop)     execute_stop "${compose_file}" "${arg_services}" || result=1;;
+            up)       execute_up "${compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
             version ) execute_show_version "${script_version}" && exit || result=1;;
         esac
     fi
 
     # Clean up temporary files and exit
-    if [ -n "${config_file}" ] && [ -f "${config_file}" ]; then
-        rm -f "${config_file}" || true
+    if [ -n "${compose_file}" ] && [ -f "${compose_file}" ]; then
+        rm -f "${compose_file}" || true
     fi
     [ "${result}" -ne 0 ] && exit "${result}"
     echo "Done."
