@@ -85,8 +85,7 @@ build_cross_platform_image() {
     eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || { echo "Cannot use buildx instance"; return 1; }
 
     # set the build command
-    # TODO: check if TARGET can be used for SERVICES
-    base_cmd="${DOCKER_BUILDX} bake -f '${compose_file}' --push --set '*.platform=${docker_platforms}'"
+    base_cmd="${DOCKER_BUILDX} bake -f '${compose_file}' --push --set '*.platform=${docker_platforms}' ${services}"
 
     [ "${no_cache}" = 'true' ] && base_cmd="${base_cmd} --no-cache"
     eval "${base_cmd}" || return 1
