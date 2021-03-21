@@ -18,6 +18,16 @@ readonly DBM_BUILDX_BUILDER='dbm_buildx'
 # Functions
 #=======================================================================================================================
 
+#=======================================================================================================================
+# Brings a running Docker container down for the targeted environment. Once stopped, the container and related networks
+# are removed. The referenced image(s) are untouched. It does not stop or remove deployed Docker Stack services.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to bring down.
+# Outputs:
+#   Stopped Docker container, terminates on error.
+#=======================================================================================================================
 bring_container_down() {
     # init arguments
     compose_file="$1"
@@ -27,13 +37,15 @@ bring_container_down() {
 }
 
 #=======================================================================================================================
-# Run a Docker image as container.
+# Initiates and starts the containers for the targeted environment. The referenced images need to be available either
+# locally or remotely. Build the images prior to the up operation if needed.
 #=======================================================================================================================
 # Arguments:
-#   $1 - Docker Compose configuration file
-#   $2 - Services
-#   $3 - detached
-#   $4 - terminal
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to bring up.
+#   $3 - Flag to run container in detached mode (defaults to 'false')
+#   $4 - Flag to run container in terminal mode (defaults to 'false')
+#   $5 - Specific terminal shell to run (defaults to 'sh')
 # Outputs:
 #   New Docker container, terminates on error.
 #=======================================================================================================================
@@ -66,6 +78,19 @@ bring_container_up() {
         bring_container_down "${compose_file}" "${services}"
 }
 
+#=======================================================================================================================
+# Builds a multi-architecture image instead of a regular image. The resulting image(s) are pushed to a central Docker
+# registry (typically docker.io). The build command invokes Docker buildx, which needs to be enabled on the host (and is
+# currently an experimental Docker feature).
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to build (defaults to all).
+#   $3 - Flag to build image without using cache (defaults to 'false')
+#   $4 - Comma-separated target platforms, e.g. 'linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64'
+# Outputs:
+#   New Docker image(s) pushed to Docker registry, terminates on error.
+#=======================================================================================================================
 build_cross_platform_image() {
     # init arguments
     compose_file="$1"
@@ -94,7 +119,17 @@ build_cross_platform_image() {
     eval "${DOCKER_BUILDX} use default"
 }
 
-
+#=======================================================================================================================
+# Builds regular image(s) and store them locally. Use the 'services' argument to build selected images only.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to build (defaults to all).
+#   $3 - Flag to build image without using cache (defaults to 'false')
+#   $4 - Comma-separated target platforms, e.g. 'linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64'
+# Outputs:
+#   New Docker image(s) built locally, terminates on error.
+#=======================================================================================================================
 build_image() {
     # init arguments
     compose_file="$1"
@@ -106,7 +141,16 @@ build_image() {
     eval "${cmd}" && return 0 || return 1
 }
 
-
+#=======================================================================================================================
+# Deploys the defined services as a Docker Stack. The referenced images need to be available either locally or remotely.
+# Build the images prior to the deploy operation if needed.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Service name to use for the Docker stack.
+# Outputs:
+#   New Docker image(s) built locally, terminates on error.
+#=======================================================================================================================
 deploy_stack() {
     # init arguments
     compose_file="$1"
@@ -114,7 +158,6 @@ deploy_stack() {
 
     eval "docker stack deploy -c ${compose_file} ${service_name}" && return 0 || return 1
 }
-
 
 #=======================================================================================================================
 # Returns the CPU architecture of the Docker Engine. If unavailable, the architecture of the host is returned instead.
@@ -144,6 +187,14 @@ get_os() {
     echo "${host_os}"
 }
 
+#=======================================================================================================================
+# Pushes locally built images to a central Docker repository (typically docker.io). 
+#=======================================================================================================================
+# Arguments:
+#   $1 - Images to push, separated by a newline '\n'.
+# Outputs:
+#   Docker image(s) pushed to registry, terminates on error.
+#=======================================================================================================================
 push_image() {
     # init arguments and variables
     images="$1"
@@ -163,6 +214,16 @@ push_image() {
     return "${result}"
 }
 
+#=======================================================================================================================
+# Pauses the execution of running Docker containers for the targeted environment. It does not stop or remove deployed
+# Docker Stack services.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to stop (defaults to all).
+# Outputs:
+#   Stopped Docker containers, terminates on error.
+#=======================================================================================================================
 stop_container() {
     # init arguments
     compose_file="$1"
