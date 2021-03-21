@@ -23,6 +23,8 @@ Describe 'lib/docker.sh'
         arg_target='dev'
         init_global_settings
         prepare_environment
+
+        spec_xbuild_expected="*pushing manifest for docker.io/markdumay/dbm-test:${BUILD_VERSION}-debug * done*"
     }
 
     # shellcheck disable=SC2154
@@ -40,36 +42,37 @@ Describe 'lib/docker.sh'
     Todo 'bring_container_up()'
     Todo 'build_cross_platform_image()'
 
+    Describe 'build_cross_platform_image()' test
+        Parameters
+            # shellcheck disable=SC2154
+            "${app_compose_file}" ''         'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
+            "${app_compose_file}" ''         'true'  "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
+            "${app_compose_file}" 'dbm-test' 'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
+            "${app_compose_file}" 'invalid'  'false' "${app_host_os}/${app_host_arch}" 'error: failed to find target invalid' failure
+        End
 
-#   --no-cache                  Do not use cache when building the image
-#   --platforms <platforms...>  Targeted multi-architecture platforms
-#                               (comma separated)
-#   --push                      Push image to Docker Registry
-#   --tag <tag>                 Image tag override
-
-
-    # compose_file="$1"
-    # services="$2"
-    # no_cache="$3"
-
-
-    Describe 'build_image()' test
-        Describe 'regular'
-            Parameters
-                "${app_compose_file}" ''         'false' 'alpine-test uses an image, skipping?Building dbm-test*' success
-                "${app_compose_file}" ''         'true'  'alpine-test uses an image, skipping?Building dbm-test*' success
-                "${app_compose_file}" 'dbm-test' 'false' 'Building dbm-test*' success
-            End
-
-            It 'builds a development image'
-                When call build_image "$1" "$2" "$3"
-                The status should be "$5"
-                The output should start with 'Successfully built'
-                The error should match pattern "$4"
-            End
+        It 'builds a cross-platform development image'
+            When call build_cross_platform_image "$1" "$2" "$3" "$4"
+            The status should be "$6"
+            The error should match pattern "$5"
         End
     End
 
+    Describe 'build_image()' test
+        Parameters
+            "${app_compose_file}" ''         'false' 'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
+            "${app_compose_file}" ''         'true'  'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
+            "${app_compose_file}" 'dbm-test' 'false' 'Successfully built' 'Building dbm-test*' success
+            "${app_compose_file}" 'invalid'  'false' ''                   'No such service: invalid' failure
+        End
+
+        It 'builds a regular development image'
+            When call build_image "$1" "$2" "$3"
+            The status should be "$6"
+            The output should start with "$4"
+            The error should match pattern "$5"
+        End
+    End
 
 
     Todo 'deploy_stack()'
