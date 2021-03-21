@@ -10,6 +10,7 @@
 #=======================================================================================================================
 readonly DBM_CONFIG_FILE='dbm.ini'
 readonly DBM_DIGEST_FILE='dbm.digest'
+readonly DBM_VERSION_FILE='VERSION'
 
 
 #=======================================================================================================================
@@ -24,6 +25,7 @@ config_docker_service=''
 config_docker_platforms=''
 config_file=''
 config_digest_file=''
+config_version_file="${DBM_VERSION_FILE}"
 
 #=======================================================================================================================
 # Functions
@@ -397,6 +399,7 @@ init_config() {
     if [ -n "${config_file}" ]; then
         dir=$(dirname "${config_file}")
         config_digest_file=$(echo "${dir}/${DBM_DIGEST_FILE}" | sed 's|//|/|g')
+        config_version_file=$(echo "${dir}/${DBM_VERSION_FILE}" | sed 's|//|/|g')
     fi
     
     # initialize settings and/or default values 

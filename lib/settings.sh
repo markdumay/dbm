@@ -81,16 +81,17 @@ prepare_environment() {
 #  - IMAGE_SUFFIX: set to '-debug' when targeting a development environment, empty otherwise.
 #=======================================================================================================================
 # Arguments:
-#   $1 - Main command from the command-line.
+#   $1 - Build target from the command-line.
 # Outputs:
 #   Returns 0 if valid and returns 1 if invalid.
 #=======================================================================================================================
-# shellcheck disable=SC2059
+# shellcheck disable=SC2059,SC2154
 stage_env() {
     target="$1"
 
     # Identify repository version and optional image name suffix
-    build_version=$(cat 'VERSION' 2> /dev/null)
+    build_version=$(cat "${config_version_file}" 2> /dev/null) || \
+        { echo "Cannot find VERSION: ${config_version_file}"; return 1; }
     [ "${target}" = 'dev' ] && image_suffix='-debug' 
 
     # Export environment variables as script
