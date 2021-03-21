@@ -107,6 +107,7 @@ _get_docker_digest() {
 # Outputs:
 #   SHA digest of the tagged GitHub release.
 #======================================================================================================================
+# TODO: use token
 _get_github_digest() {
     owner=$(url_encode "$1")
     repository=$(url_encode "$2")
@@ -165,6 +166,9 @@ _get_latest_github_tag() {
 # Outputs:
 #   Latest available tag if found, empty string otherwise.
 #======================================================================================================================
+# TODO: use token
+# TODO: see https://docs.docker.com/docker-hub/download-rate-limit/
+# TODO: see https://cloud.google.com/container-registry/docs/pulling-cached-images
 _get_latest_docker_tag() {
     [ "$1" = "_" ] && owner='library' || owner=$(url_encode "$1") # Update owner of official Docker repositories
     repo=$(url_encode "$2")
