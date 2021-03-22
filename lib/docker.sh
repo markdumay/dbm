@@ -95,20 +95,19 @@ windows"
 
 #=======================================================================================================================
 # Brings a running Docker container down for the targeted environment. Once stopped, the container and related networks
-# are removed. The referenced image(s) are untouched. It does not stop or remove deployed Docker Stack services.
+# are removed. The referenced image(s) are untouched. It does not stop or remove deployed Docker Stack services. By
+# convention, all running containers referencing to a service defined in the specified Docker Compose file are stopped.
 #=======================================================================================================================
 # Arguments:
 #   $1 - Docker Compose configuration file.
-#   $2 - Services to bring down.
 # Outputs:
 #   Stopped Docker container, terminates on error.
 #=======================================================================================================================
 bring_container_down() {
     # init arguments
     compose_file="$1"
-    services="$2"
 
-    eval "${DOCKER_RUN} -f '${compose_file}' down ${services}" && return 0 || return 1
+    eval "${DOCKER_RUN} -f '${compose_file}' down" && return 0 || return 1
 }
 
 #=======================================================================================================================
