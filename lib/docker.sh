@@ -149,7 +149,9 @@ bring_container_up() {
 
     # bring container down when done and not detached or if in terminal mode
     { [ "${detached}" = 'false' ] || [ "${terminal}" = 'true' ]; } && \
-        bring_container_down "${compose_file}" "${services}"
+        bring_container_down "${compose_file}"
+
+    return 0
 }
 
 #=======================================================================================================================
