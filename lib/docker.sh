@@ -185,9 +185,8 @@ build_cross_platform_image() {
     # use the dedicated buildx builder
     eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || { echo "Cannot use buildx instance"; return 1; }
 
-    # set the build command
+    # set and run the buildx command
     base_cmd="${DOCKER_BUILDX} bake -f '${compose_file}' --push --set '*.platform=${docker_platforms}' ${services}"
-
     [ "${no_cache}" = 'true' ] && base_cmd="${base_cmd} --no-cache"
     eval "${base_cmd}" || return 1
 
@@ -202,7 +201,6 @@ build_cross_platform_image() {
 #   $1 - Docker Compose configuration file.
 #   $2 - Services to build (defaults to all).
 #   $3 - Flag to build image without using cache (defaults to 'false')
-#   $4 - Comma-separated target platforms, e.g. 'linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64'
 # Outputs:
 #   New Docker image(s) built locally, terminates on error.
 #=======================================================================================================================
