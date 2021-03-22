@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/docker.sh'
+Describe 'lib/docker.sh' docker
     Include lib/config.sh
     Include lib/compose.sh
     Include lib/docker.sh
@@ -24,12 +24,12 @@ Describe 'lib/docker.sh'
         init_global_settings
         prepare_environment
 
+        # variable used for xbuild validation
         spec_xbuild_expected="*pushing manifest for docker.io/markdumay/dbm-test:${BUILD_VERSION}-debug * done*"
     }
 
     # shellcheck disable=SC2154
     cleanup() {
-        # Clean up temporary files
         if [ -n "${app_compose_file}" ] && [ -f "${app_compose_file}" ]; then
             rm -f "${app_compose_file}" || true
         fi
@@ -38,9 +38,53 @@ Describe 'lib/docker.sh'
     BeforeAll 'setup'
     AfterAll 'cleanup'
 
-    Todo 'bring_container_down()'
-    Todo 'bring_container_up()'
-    Todo 'build_cross_platform_image()'
+    Describe 'bring_container_down()'
+        setup_local() {
+            mute 'true'
+            build_image "${app_compose_file}" 'dbm-test' 'false'
+            bring_container_up "${app_compose_file}" 'dbm-test' 'true' 'false' 'sh'
+            mute 'false'
+        }
+
+        BeforeCall 'setup_local'
+
+        It 'brings all containers down'
+            When call bring_container_down "${app_compose_file}"
+            The status should be success
+            The error should match pattern '*Stopping dbm-test ... done*'
+            The error should match pattern '*Removing dbm-test ... done*'
+        End
+    End
+
+    Describe 'bring_container_up()'
+        setup_local() {
+            mute 'true'
+            build_image "${app_compose_file}" 'dbm-test' 'false'
+            mute 'false'
+        }
+
+        cleanup_local() { 
+            mute 'true'
+            bring_container_down "${app_compose_file}"
+            mute 'false'
+        }
+        
+        Before 'setup_local'
+        After 'cleanup_local'
+
+        It 'brings a specific container up (detached)'
+            When call bring_container_up "${app_compose_file}" 'dbm-test' 'true' 'false' 'sh'
+            The status should be success
+            The error should match pattern '*Creating dbm-test ... done?'
+        End
+
+        It 'brings all containers up (detached)'
+            When call bring_container_up "${app_compose_file}" '' 'true' 'false' 'sh'
+            The status should be success
+            The error should match pattern '*Creating alpine-test ... done*'
+            The error should match pattern '*Creating dbm-test    ... done*'
+        End
+    End
 
     Describe 'build_cross_platform_image()' test
         Parameters
@@ -58,7 +102,7 @@ Describe 'lib/docker.sh'
         End
     End
 
-    Describe 'build_image()' test
+    Describe 'build_image()'
         Parameters
             "${app_compose_file}" ''         'false' 'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
             "${app_compose_file}" ''         'true'  'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
@@ -74,11 +118,128 @@ Describe 'lib/docker.sh'
         End
     End
 
+    Describe 'deploy_stack()'
+        setup_local() {
+            mute 'true'
+            build_image "${app_compose_file}" 'dbm-test' 'false'
+            mute 'false'
+        }
 
-    Todo 'deploy_stack()'
-    Todo 'get_arch()'
-    Todo 'get_os()'
-    Todo 'push_image()'
-    Todo 'stop_container()'
-    Todo 'validate_platforms()'
+        cleanup_local() { 
+            mute 'true'
+            docker stack rm 'shellspec'
+            mute 'false'
+        }
+        
+        Before 'setup_local'
+        After 'cleanup_local'
+
+        Parameters
+            "${app_compose_file}" 'shellspec' '' success
+        End
+
+        It 'deploys a stack with correct service name'
+            When call deploy_stack "$1" "$2"
+            The status should be "$4"
+            The output should match pattern '*Creating service shellspec_alpine-test*'
+            The output should match pattern '*Creating service shellspec_dbm-test*'
+            The error should match pattern '*Ignoring unsupported options: build, restart*'
+        End
+    End
+
+    Describe 'get_arch()'
+        is_valid() {
+            is_valid_arch "${is_valid:?}"
+        }        
+
+        It 'retrieves a valid architecture'
+            When call get_arch
+            The status should be success
+            The output should satisfy is_valid
+        End
+    End
+
+    Describe 'get_os()'
+        is_valid() {
+            is_valid_os "${is_valid:?}"
+        }        
+
+        It 'retrieves a valid architecture'
+            When call get_os
+            The status should be success
+            The output should satisfy is_valid
+        End
+    End
+
+    Describe 'push_image()'
+        setup_local() {
+            mute 'true'
+            build_image "${app_compose_file}" 'dbm-test' 'false'
+            mute 'false'
+        }
+
+        cleanup_local() { 
+            mute 'true'
+            bring_container_down "${app_compose_file}"
+            mute 'false'
+        }
+        
+        Before 'setup_local'
+        After 'cleanup_local'
+
+        Parameters
+            "markdumay/dbm-test:${BUILD_VERSION}-debug" "Pushing image to registry" success
+            "invalid/invalid" 'WARN:  Cannot push, image not found' failure
+        End
+
+        It 'pushes a specific image'
+            When call push_image "$1"
+            The status should be "$3"
+            The output should match pattern "*$2: $1*"
+        End
+    End
+
+    Describe 'stop_container()'
+        setup_local() {
+            mute 'true'
+            build_image "${app_compose_file}" 'dbm-test' 'false'
+            bring_container_up "${app_compose_file}" '' 'true' 'false' 'sh'
+            mute 'false'
+        }
+
+        cleanup_local() { 
+            mute 'true'
+            bring_container_down "${app_compose_file}"
+            mute 'false'
+        }
+        
+        Before 'setup_local'
+        After 'cleanup_local'
+
+        It 'stops a specific container (detached)'
+            When call stop_container "${app_compose_file}" 'dbm-test'
+            The status should be success
+            The error should match pattern '*Stopping dbm-test ... done*'
+        End
+
+        It 'stops all containers (detached)'
+            When call stop_container "${app_compose_file}" ''
+            The status should be success
+            The error should match pattern '*Stopping alpine-test ... done*'
+            The error should match pattern '*Stopping dbm-test    ... done*'
+        End
+    End
+
+    Describe 'validate_platforms()'
+        Parameters
+            "${app_host_os}/${app_host_arch}" '' success
+            "invalid/invalid" 'Target platforms not supported: invalid/invalid' failure
+        End
+
+        It 'builds a cross-platform development image'
+            When call validate_platforms "$1"
+            The status should be "$3"
+            The output should equal "$2"
+        End
+    End
 End
