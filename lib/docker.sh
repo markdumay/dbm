@@ -12,7 +12,82 @@ readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_RUN='docker-compose'
 readonly DOCKER_BUILDX='docker buildx'
 readonly DBM_BUILDX_BUILDER='dbm_buildx'
+# Defines the platforms supported by Docker buildx and the registry manifest
+# See 'platform' in https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list
+# Derived from '$GOOS and $GOARCH' in https://golang.org/doc/install/source#environment
+readonly SUPPORTED_PLATFORMS=\
+"aix/ppc64
+android/386
+android/amd64
+android/arm
+android/arm64
+darwin/amd64
+darwin/arm64
+dragonfly/amd64
+freebsd/386
+freebsd/amd64
+freebsd/arm
+illumos/amd64
+ios/arm64
+js/wasm
+linux/386
+linux/amd64
+linux/arm
+linux/arm64
+linux/ppc64
+linux/ppc64le
+linux/mips
+linux/mipsle
+linux/mips64
+linux/mips64le
+linux/riscv64
+linux/s390x
+netbsd/386
+netbsd/amd64
+netbsd/arm
+openbsd/386
+openbsd/amd64
+openbsd/arm
+openbsd/arm64
+plan9/386
+plan9/amd64
+plan9/arm
+solaris/amd64
+windows/386
+windows/amd64"
 
+# Derived from SUPPORTED_PLATFORMS: echo "${SUPPORTED_PLATFORMS}" | grep -o '/\S*$' | sed 's|/||g' | sort -u
+readonly SUPPORTED_ARCH=\
+"386
+amd64
+arm
+arm64
+mips
+mips64
+mips64le
+mipsle
+ppc64
+ppc64le
+riscv64
+s390x
+wasm"
+
+# Derived from SUPPORTED_PLATFORMS: echo "${SUPPORTED_PLATFORMS}" | grep -o '^\S*/' | sed 's|/||g' | sort -u
+readonly SUPPORTED_OS=\
+"aix
+android
+darwin
+dragonfly
+freebsd
+illumos
+ios
+js
+linux
+netbsd
+openbsd
+plan9
+solaris
+windows"
 
 #=======================================================================================================================
 # Functions
@@ -185,6 +260,49 @@ get_os() {
     host_os=$(docker info 2> /dev/null | grep OSType | awk -F': ' '{print $2}')
     [ -z "${host_os}" ] && host_os=$(uname -s)
     echo "${host_os}"
+}
+
+#=======================================================================================================================
+# Validates if a given CPU architecture is supported by Docker. The validation is case sensitive. See 
+# is_valid_platform() for more details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Architecture to validate, e.g. 'amd64'.
+# Outputs:
+#   Return 0 is valid, returns 1 otherwise.
+#=======================================================================================================================
+is_valid_arch() {
+    [ -n "$1" ] && arch="$1" || return 1
+    echo "${SUPPORTED_ARCH}" | grep -q "^${arch}\$"
+}
+
+#=======================================================================================================================
+# Validates if a given OS is supported by Docker. The validation is case sensitive. See is_valid_platform() for more
+# details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Architecture to validate, e.g. 'amd64'.
+# Outputs:
+#   Return 0 is valid, returns 1 otherwise.
+#=======================================================================================================================
+is_valid_os() {
+    [ -n "$1" ] && os="$1" || return 1
+    echo "${SUPPORTED_OS}" | grep -q "^${os}\$"
+}
+
+#=======================================================================================================================
+# Validates if a given platform is supported by Docker. The platform consists of the operating system and the CPU
+# architecture. The validation is case sensitive. 
+# See https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list for more details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Platform to validate, e.g. 'linux/amd64'.
+# Outputs:
+#   Return 0 is valid, returns 1 otherwise.
+#=======================================================================================================================
+is_valid_platform() {
+    [ -n "$1" ] && platform="$1" || return 1
+    echo "${SUPPORTED_PLATFORMS}" | grep -q "^${platform}\$"
 }
 
 #=======================================================================================================================
