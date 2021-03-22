@@ -192,7 +192,7 @@ build_cross_platform_image() {
     eval "${base_cmd}" || return 1
 
     # restore builder instance
-    eval "${DOCKER_BUILDX} use default"
+    eval "${DOCKER_BUILDX} use default" && return 0 || return 1
 }
 
 #=======================================================================================================================
