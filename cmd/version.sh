@@ -66,7 +66,6 @@ init_script_version() {
 # shellcheck disable=SC2034
 parse_version_args() {
     error=''
-    show_help='false'
 
     # Ignore first argument, which is the 'version' command
     shift 
@@ -75,13 +74,12 @@ parse_version_args() {
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
             --config )     shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )  show_help='true';;
+            -h | --help )   usage_version 'false'; exit;;
             * )            error="Argument not supported: $1"
         esac
         shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_version 'false' && return 1
     [ -n "${error}" ] && usage_version 'true' && err "${error}" && return 1
     return 0
 }

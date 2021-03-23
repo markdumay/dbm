@@ -62,7 +62,6 @@ execute_check_upgrades() {
 # shellcheck disable=SC2034
 parse_check_args() {
     error=''
-    show_help='false'
     
     # Ignore first argument, which is the 'check' command
     shift 
@@ -71,13 +70,12 @@ parse_check_args() {
     while [ -n "$1" ]; do
         case "$1" in
             --config )    shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help ) show_help='true';;
+            -h | --help ) usage_check 'false'; exit;;
             * )           error="Argument not supported: $1"
         esac
         shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_check 'false' && return 1
     [ -n "${error}" ] && usage_check 'true' && err "${error}" && return 1
     return 0
 }

@@ -93,14 +93,13 @@ parse_generate_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )   show_help='true';;
+            -h | --help )   usage_generate 'false'; exit;;
             * )             [ -z "${arg_compose_file}" ] && arg_compose_file="$1" || \
                                 error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_generate 'false' && return 1
     [ -z "${arg_target}" ] && error="Expected target" && arg_compose_file=''
     [ -z "${arg_compose_file}" ] && [ -z "${error}" ] && error="Expected output file"
     [ -n "${error}" ] && usage_generate 'true' && err "${error}" && return 1

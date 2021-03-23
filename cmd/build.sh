@@ -146,7 +146,6 @@ execute_build() {
 # shellcheck disable=SC2034
 parse_build_args() {
     error=''
-    show_help='false'
 
     # Ignore first argument, which is the 'build' command
     shift
@@ -160,7 +159,7 @@ parse_build_args() {
             --platforms )   shift; [ -n "$1" ] && arg_platforms="$1" || error="Missing platform argument";;
             --push )        arg_push='true';;
             --tag )         shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
-            -h | --help )   show_help='true';;
+            -h | --help )   usage_build 'false'; exit;;
             * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac
@@ -171,7 +170,6 @@ parse_build_args() {
     arg_services=$(echo "${arg_services}" | awk '{$1=$1};1') 
 
     # Validate arguments
-    [ "${show_help}" = 'true' ] && usage_build 'false' && return 1
     [ -z "${arg_target}" ] && error="Expected target" && arg_services=''
     [ "${arg_push}" = 'false' ] && [ -n "${arg_platforms}" ] && [ -z "${error}" ] && \
         error="Add '--push' for multi-architecture build"

@@ -82,13 +82,12 @@ parse_info_args() {
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
             --config )     shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )  show_help='true';;
+            -h | --help )  usage_info 'false'; exit;;
             * )            error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_info 'false' && return 1
     [ -n "${error}" ] && usage_info 'true' && err "${error}" && return 1
     return 0
 }

@@ -66,7 +66,6 @@ execute_stop() {
 # shellcheck disable=SC2034
 parse_stop_args() {
     error=''
-    show_help='false'
 
     # Ignore first argument, which is the 'stop' command
     shift
@@ -76,7 +75,7 @@ parse_stop_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )   show_help='true';;
+            -h | --help )   usage_stop 'false'; exit;;
             --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
@@ -88,7 +87,6 @@ parse_stop_args() {
     arg_services=$(echo "${arg_services}" | awk '{$1=$1};1') 
 
     # Validate arguments
-    [ "${show_help}" = 'true' ] && usage_stop 'false' && return 1
     [ -z "${arg_target}" ] && error="Expected target" && arg_services=''
     [ -n "${error}" ] && usage_stop 'true' && err "${error}" && return 1
     return 0

@@ -105,7 +105,7 @@ parse_args() {
         stop )         arg_command="$1"; parse_stop_args "$@" || exit 1;;
         up )           arg_command="$1"; parse_up_args "$@" || exit 1;;
         version )      arg_command="$1"; parse_version_args "$@" || exit 1;;
-        -h | --help )  usage 'false' && exit 1;;
+        -h | --help )  usage 'false' && exit;;
         * )            usage 'true' && fail "Command not supported: $1"
     esac
 }
