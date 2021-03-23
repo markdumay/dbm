@@ -1,0 +1,25 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Unit tests
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install shellspec
+        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
+
+      - name: Run unit tests
+        run: shellspec
