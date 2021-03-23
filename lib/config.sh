@@ -444,7 +444,7 @@ read_dependencies() {
 #   $2 - Fully expanded dependency version, e.g. 'v3.13.2'
 #   $3 - Default digest value, e.g. 'sha256:a75afd8b57e7f34e4dad8d65e2c7ba2e1975c795ce1ee22fa34f8cf46f96a3be'
 # Outputs:
-#   Writes setting to stdout.
+#   Writes setting to stdout and updates local digest file.
 #=======================================================================================================================
 read_update_stored_digest() {
     url="$1"
@@ -457,7 +457,7 @@ read_update_stored_digest() {
     match=$(grep -in "^${url} ${version}" "${config_digest_file}" 2> /dev/null) # read entry from digest file
     value=$(echo "${match}" | awk -F' ' '{print $3}' | sed 's/[\n\r]//g') # read stored digest
 
-        # update digest and digest file if needed
+    # update digest and digest file if needed
     if [ -z "${value}" ] && [ -n "${digest}" ]; then
         value="${digest}"
         echo "${url} ${version} ${digest}" >> "${config_digest_file}"
