@@ -86,7 +86,7 @@ main() {
         execute_show_info "${app_script_version}" "${app_host_os}" "${app_host_arch}"
         log "Environment:"    
         log "${app_exported_vars}" | sed 's/^export//g'
-        log "Targeted images:"
+        log "Images:"
         display_images=$(echo "${app_images}" | sed 's/^/ /')
         log "${display_images}"
     fi
