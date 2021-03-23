@@ -96,6 +96,7 @@ parse_generate_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
+            --tag )             shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             -h | --help )   usage_generate 'false'; exit;;
             * )             [ -z "${arg_compose_file}" ] && arg_compose_file="$1" || \
                                 error="Argument not supported: $1"

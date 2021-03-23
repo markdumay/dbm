@@ -78,8 +78,8 @@ parse_down_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )   usage_down 'false'; exit;;
             --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
+            -h | --help )   usage_down 'false'; exit;;
             * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac

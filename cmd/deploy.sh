@@ -79,8 +79,8 @@ parse_deploy_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )   usage_deploy 'false'; exit;;
             --tag )         shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
+            -h | --help )   usage_deploy 'false'; exit;;
             * )             error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
