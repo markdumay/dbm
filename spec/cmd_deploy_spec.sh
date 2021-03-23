@@ -76,20 +76,6 @@ Describe 'cmd/deploy.sh' cmd deploy
             End
         End
 
-        Describe 'services'
-            Parameters
-                deploy dev SERVICE1 SERVICE2 success
-            End
-
-            It 'parses --tag flag'
-                When call parse_deploy_args "$1" "$2" "$3" "$4"
-                The status should be "$5"
-                The variable arg_target should equal "$2"
-                The variable arg_tag should be blank
-                The variable arg_services should equal "$3 $4"
-            End
-        End
-
         Describe 'help'
             Parameters
                 deploy -h failure '?Deploy*'
