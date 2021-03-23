@@ -78,12 +78,12 @@ Describe 'cmd/deploy.sh' cmd deploy
 
         Describe 'help'
             Parameters
-                deploy -h failure '?Deploy*'
-                deploy --help failure '?Deploy*'
+                deploy -h success '?Deploy*'
+                deploy --help success '?Deploy*'
             End
 
             It 'displays help'
-                When call parse_deploy_args "$1" "$2"
+                When run parse_deploy_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -95,7 +95,7 @@ Describe 'cmd/deploy.sh' cmd deploy
 
     Describe 'usage_deploy()'
         It 'displays usage for deploy command'
-            When call usage_deploy
+            When run usage_deploy
             The output should match pattern "?Deploy*"
         End
     End

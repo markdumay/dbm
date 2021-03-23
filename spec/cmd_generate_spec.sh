@@ -106,12 +106,12 @@ Describe 'cmd/generate.sh' cmd generate
 
         Describe 'help'
             Parameters
-                generate -h failure '?Generate*'
-                generate --help failure '?Generate*'
+                generate -h success '?Generate*'
+                generate --help success '?Generate*'
             End
 
             It 'displays help'
-                When call parse_generate_args "$1" "$2"
+                When run parse_generate_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
             End
@@ -120,7 +120,7 @@ Describe 'cmd/generate.sh' cmd generate
 
     Describe 'usage_generate()'
         It 'displays usage for generate command'
-            When call usage_generate
+            When run usage_generate
             The output should match pattern '?Generate*'
         End
     End

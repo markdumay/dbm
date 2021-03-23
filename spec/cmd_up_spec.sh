@@ -174,12 +174,12 @@ Describe 'cmd/up.sh' cmd up
 
         Describe 'help'
             Parameters
-                up -h failure '?Up*'
-                up --help failure '?Up*'
+                up -h success '?Up*'
+                up --help success '?Up*'
             End
 
             It 'displays help'
-                When call parse_up_args "$1" "$2"
+                When run parse_up_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -193,7 +193,7 @@ Describe 'cmd/up.sh' cmd up
 
     Describe 'usage_up()'
         It 'displays usage for up command'
-            When call usage_up
+            When run usage_up
             The output should match pattern '?Up*'
         End
     End

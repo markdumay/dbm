@@ -92,12 +92,12 @@ Describe 'cmd/stop.sh' cmd stop
 
         Describe 'help'
             Parameters
-                stop -h failure '?Stop*'
-                stop --help failure '?Stop*'
+                stop -h success '?Stop*'
+                stop --help success '?Stop*'
             End
 
             It 'displays help'
-                When call parse_stop_args "$1" "$2"
+                When run parse_stop_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -109,7 +109,7 @@ Describe 'cmd/stop.sh' cmd stop
 
     Describe 'usage_stop()'
         It 'displays usage for stop command'
-            When call usage_stop
+            When run usage_stop
             The output should match pattern '?Stop*'
         End
     End

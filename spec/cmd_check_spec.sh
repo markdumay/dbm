@@ -42,12 +42,12 @@ Describe 'cmd/check.sh' cmd check
 
         Describe 'help'
             Parameters
-                check -h failure '?Check*'
-                check --help failure '?Check*'
+                check -h success '?Check*'
+                check --help success '?Check*'
             End
 
             It 'displays help'
-                When call parse_check_args "$1" "$2"
+                When run parse_check_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
             End
@@ -56,7 +56,7 @@ Describe 'cmd/check.sh' cmd check
 
     Describe 'usage_check()'
         It 'displays usage for check command'
-            When call usage_check
+            When run usage_check
             The output should match pattern '?Check*'
         End
     End

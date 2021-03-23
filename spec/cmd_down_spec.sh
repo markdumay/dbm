@@ -92,12 +92,12 @@ Describe 'cmd/down.sh' cmd down
 
         Describe 'help'
             Parameters
-                down -h failure '?Down*'
-                down --help failure '?Down*'
+                down -h success '?Down*'
+                down --help success '?Down*'
             End
 
             It 'displays help'
-                When call parse_down_args "$1" "$2"
+                When run parse_down_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -109,7 +109,7 @@ Describe 'cmd/down.sh' cmd down
 
     Describe 'usage_down()'
         It 'displays usage for down command'
-            When call usage_down
+            When run usage_down
             The output should match pattern "?Down*"
         End
     End

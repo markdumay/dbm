@@ -16,7 +16,7 @@ Describe 'cmd/root.sh' cmd
 
     Describe 'usage()'
         It 'displays usage for DBM'
-            When call usage
+            When run usage
             The output should match pattern '?Docker Build Manager*'
         End
     End
