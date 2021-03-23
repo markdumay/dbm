@@ -74,6 +74,36 @@ Describe 'cmd/generate.sh' cmd generate
             End
         End
 
+        Describe 'tag'
+            Parameters
+                generate dev output.yml --tag custom success
+            End
+
+            It 'parses --tag flag'
+                When call parse_generate_args "$1" "$2" "$3" "$4" "$5"
+                The status should be "$6"
+                The variable arg_target should equal "$2"
+                The variable arg_tag should equal "$5"
+                The variable arg_services should be blank
+            End
+        End
+
+        Describe 'tag'
+            Parameters
+                generate dev output.yml --tag failure 'ERROR: Missing tag argument'
+            End
+
+            It 'rejects --tag flag without argument'
+                When call parse_generate_args "$1" "$2" "$3" "$4"
+                The status should be "$5"
+                The output should match pattern '?Usage*'
+                The error should equal "$6"
+                The variable arg_target should equal "$2"
+                The variable arg_tag should be blank
+                The variable arg_services should be blank
+            End
+        End
+
         Describe 'help'
             Parameters
                 generate -h failure '?Generate*'
