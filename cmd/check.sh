@@ -21,6 +21,13 @@ The version string needs to adhere to semantic versioning standards, with
 MAJOR.MINOR as required fields and PATCH optional. The prefix 'v' is also
 optional.
 
+Next to the version information, the check commands also validates the digests
+of the defined dependencies. The digest retrieved from the repository or image
+source is compared to the locally stored digest (typically in the dbm.digest
+file). A warning is displayed if the two digests differ. If no local digest is
+availabe, the retrieved digest is appended to the local digest file. Obsolete
+local digests are removed.
+
 ${usage_check_msg_short}
 
 Examples:
