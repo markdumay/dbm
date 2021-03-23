@@ -29,6 +29,9 @@ Examples:
   dbm deploy prod
   Deploy production images as Docker Stack services
 
+Flags:
+  --tag <tag>                 Image tag override
+
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the deploy command
