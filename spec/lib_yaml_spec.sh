@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/yaml.sh'
+Describe 'lib/yaml.sh' yaml
     Include lib/yaml.sh
 
     Todo 'parse_yaml()'

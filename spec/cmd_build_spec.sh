@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/build.sh'
+Describe 'cmd/build.sh' cmd build
     Include lib/log.sh
     Include cmd/root.sh
     Include cmd/build.sh

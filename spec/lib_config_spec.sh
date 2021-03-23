@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/config.sh'
+Describe 'lib/config.sh' config
     Include lib/config.sh
 
     Todo 'clean_digest_file()'

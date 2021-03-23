@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/info.sh'
+Describe 'cmd/info.sh' cmd info
     Include lib/log.sh
     Include cmd/root.sh
     Include cmd/info.sh

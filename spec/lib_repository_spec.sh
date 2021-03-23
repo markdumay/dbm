@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/repository.sh'
+Describe 'lib/repository.sh' repository
     Include lib/repository.sh
 
     Todo 'check_upgrades()'

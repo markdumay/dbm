@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/log.sh'
+Describe 'lib/log.sh' log
     Include lib/log.sh
 
     Describe '_msg()'

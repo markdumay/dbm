@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/compose'
+Describe 'lib/compose' compose
     Include lib/compose.sh
 
     Todo 'generate_compose_string()'

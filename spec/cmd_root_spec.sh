@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/root.sh'
+Describe 'cmd/root.sh' cmd
     Include lib/log.sh
     Include cmd/root.sh
 
