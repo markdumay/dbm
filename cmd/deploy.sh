@@ -47,7 +47,8 @@ Global Flags:
 # Deploy a Docker image as Docker Stack service(s).
 #=======================================================================================================================
 # Arguments:
-#   $1 - service name
+#   $1 - Docker Compose configuration.
+#   $2 - Targeted name of the Docker Stack.
 # Outputs:
 #   New Docker Stack service(s), terminates on error.
 #=======================================================================================================================
