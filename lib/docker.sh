@@ -12,6 +12,7 @@ readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_RUN='docker-compose'
 readonly DOCKER_BUILDX='docker buildx'
 readonly DBM_BUILDX_BUILDER='dbm_buildx'
+readonly STACK_REMOVAL_TIMEOUT='60'  # timeout in seconds
 # Defines the platforms supported by Docker buildx and the registry manifest
 # See 'platform' in https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list
 # Derived from '$GOOS and $GOARCH' in https://golang.org/doc/install/source#environment
@@ -231,6 +232,69 @@ deploy_stack() {
     service_name="$2"
 
     eval "docker stack deploy -c ${compose_file} ${service_name}" && return 0 || return 1
+}
+
+#=======================================================================================================================
+# Removes a previously deployed Docker Stack. It waits for it to be finished, unless instructed otherwise.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Service name to use for the Docker stack.
+#   $2 - Wait for completion, defaults to 'true'.
+# Outputs:
+#   Removed Docker Stack, terminates on error.
+#=======================================================================================================================
+# TODO: add as command
+remove_stack() {
+    service_name="$1"
+    sync="${2:=true}"
+    services_removed='false'
+    networks_removed='false'
+    time_passed=0
+
+    [ -z "${service_name}" ] && err "No service name provided for Docker Stack" && return 1
+    docker stack services -q "${service_name}" 2>&1 | grep -q 'Nothing found in stack:' && \
+        { err "Cannot find Docker Stack: ${service_name}"; return 1; }
+
+    # ask Docker to remove the stack
+    results=$(docker stack rm "${service_name}" 2>&1) || { err "Cannot remove Docker Stack: ${service_name}"; return 1; }
+    [ "${sync}" != 'true' ] && return 0
+
+    # capture the names of the embedded networks
+    networks=$(echo "${results}" | grep 'Removing network ' | sed 's/Removing network //g')
+    networks=$(echo "${networks}" | sed 'H;1h;$!d;x;y/\n/|/') # replace newline with '|'
+    [ -z "${networks}" ] && networks_removed='true'
+
+    # wait for both services and networks to have been removed, or a timeout occurred
+    i=0
+    msg "Waiting for Docker Stack to be removed...  "
+    while [ "${services_removed}" != 'true' ] || [ "${networks_removed}" != 'true' ]; do
+        # print spinner
+        i=$(((i + 1) % 4))
+        spinner=$(echo '/-\|' | cut -c "$((i + 1))")
+        printf "\b%s" "${spinner}"
+
+        # check services
+        if [ "${services_removed}" != 'true' ]; then
+            docker stack services -q "${service_name}" 2>&1 | grep -q 'Nothing found in stack:' && services_removed='true'
+        fi
+
+        # check networks
+        if [ "${networks_removed}" != 'true' ]; then
+            ! docker network ls | grep -Eq "${networks}" && networks_removed='true'
+        fi
+
+        # exit the loop when a timeout occurred
+        time_passed=$((time_passed + 1))
+        [ "${time_passed}" -gt "${STACK_REMOVAL_TIMEOUT}" ] && printf "\b%s\n" "timeout" && break
+        
+        sleep 1
+    done
+
+    [ "${services_removed}" != 'true' ] && err "Cannot remove Docker Stack services: ${service_name}" && return 1
+    [ "${networks_removed}" != 'true' ] && err "Cannot remove Docker Stack networks: ${service_name}" && return 1
+
+    printf "\b%s\n" "done"
+    return 0
 }
 
 #=======================================================================================================================
