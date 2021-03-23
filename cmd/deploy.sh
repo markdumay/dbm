@@ -10,14 +10,15 @@
 #=======================================================================================================================
 readonly usage_deploy_msg_short="
 Usage:
-  dbm deploy <dev|prod> [flags] [service...]
+  dbm deploy <dev|prod> [flags]
 "
 
 readonly usage_deploy_msg_full="
 Deploy generates a consolidated Docker Compose file for the targeted environment
-and deploys the defined services as a Docker Stack. The referenced images need
-to be available either locally or remotely. Build the images prior to the
-deploy operation if needed.
+and deploys the defined services as a Docker Stack. By convention, all services
+and networks defined in the specified Docker Compose file are deployed. The
+referenced images need to be available either locally or remotely. Build the
+images prior to the deploy operation if needed.
 
 ${usage_deploy_msg_short}
 
@@ -47,7 +48,6 @@ Global Flags:
 # Outputs:
 #   New Docker Stack service(s), terminates on error.
 #=======================================================================================================================
-# TODO: check SERVICE support
 execute_deploy() {
     compose_file="$1"
     service_name="$2"
@@ -78,8 +78,7 @@ parse_deploy_args() {
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             -h | --help )   usage_deploy 'false'; exit;;
             --tag )         shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
-            * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
-                                error="Argument not supported: ${service}"
+            * )             error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
     done
