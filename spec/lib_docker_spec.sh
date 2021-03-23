@@ -10,6 +10,7 @@ Describe 'lib/docker.sh' docker
     Include lib/compose.sh
     Include lib/docker.sh
     Include lib/log.sh
+    Include lib/repository.sh
     Include lib/settings.sh
     Include lib/utils.sh
     Include lib/yaml.sh
@@ -190,15 +191,16 @@ Describe 'lib/docker.sh' docker
         Before 'setup_local'
         After 'cleanup_local'
 
-        Parameters
-            "markdumay/dbm-test:${BUILD_VERSION}-debug" "Pushing image to registry" success
-            "invalid/invalid" 'WARN:  Cannot push, image not found' failure
+        It 'pushes a specific image'
+            When call push_image "markdumay/dbm-test:${BUILD_VERSION}-debug"
+            The status should be success
+            The output should match pattern "*Pushing image to registry: markdumay/dbm-test:${BUILD_VERSION}-debug*"
         End
 
         It 'pushes a specific image'
-            When call push_image "$1"
-            The status should be "$3"
-            The output should match pattern "*$2: $1*"
+            When call push_image 'invalid/invalid'
+            The status should be failure
+            The error should match pattern "*WARN:  Cannot push, image not found: invalid/invalid*"
         End
     End
 

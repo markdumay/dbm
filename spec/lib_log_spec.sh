@@ -85,7 +85,7 @@ Describe 'lib/log.sh' log
         It 'displays a warning with json formatting'
             When call warn "$1"
             The status should be "$3"
-            The output should equal "$2"
+            The error should equal "$2"
         End
     End
 
