@@ -26,6 +26,9 @@ Examples:
   dbm generate prod output.yml
   Generate output.yml using docker-compose.yml and docker-compose.prod.yml
 
+Flags:
+  --tag <tag>                 Image tag override
+
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the generate command
