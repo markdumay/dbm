@@ -86,11 +86,8 @@ parse_deploy_args() {
         [ -n "$1" ] && shift
     done
 
-    # Remove leading and trailing spaces
-    arg_services=$(echo "${arg_services}" | awk '{$1=$1};1') 
-
     # Validate arguments
-    [ -z "${arg_target}" ] && error="Expected target" && arg_services=''
+    [ -z "${arg_target}" ] && error="Expected target"
     [ -n "${error}" ] && usage_deploy 'true' && err "${error}" && return 1
     return 0
 }
