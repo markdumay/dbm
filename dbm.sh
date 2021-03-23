@@ -87,7 +87,8 @@ main() {
         log "Environment:"    
         log "${app_exported_vars}" | sed 's/^export//g'
         log "Targeted images:"
-        log "${app_images}"
+        display_images=$(echo "${app_images}" | sed 's/^/ /')
+        log "${display_images}"
     fi
 
     # Execute commands
