@@ -18,6 +18,7 @@ Describe 'lib/docker.sh' docker
 
     # shellcheck disable=SC2034
     setup() { 
+        set_log_color 'false'
         app_basedir=$(get_absolute_path "${PWD}")
         arg_config='test/dbm.ini'
         arg_target='dev'
@@ -86,7 +87,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Describe 'build_cross_platform_image()' test
+    Describe 'build_cross_platform_image()'
         Parameters
             # shellcheck disable=SC2154
             "${app_compose_file}" ''         'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
@@ -118,7 +119,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Describe 'deploy_stack()'
+    Describe 'deploy_stack() and remove_stack()'
         setup_local() {
             mute 'true'
             build_image "${app_compose_file}" 'dbm-test' 'false'
@@ -127,23 +128,25 @@ Describe 'lib/docker.sh' docker
 
         cleanup_local() { 
             mute 'true'
-            docker stack rm 'shellspec'
+            docker stack rm 'shellspec' || true
             mute 'false'
         }
         
-        Before 'setup_local'
-        After 'cleanup_local'
-
-        Parameters
-            "${app_compose_file}" 'shellspec' '' success
-        End
+        BeforeAll 'setup_local'
+        AfterAll 'cleanup_local'
 
         It 'deploys a stack with correct service name'
-            When call deploy_stack "$1" "$2"
-            The status should be "$4"
+            When call deploy_stack "${app_compose_file}" 'shellspec'
+            The status should be success
             The output should match pattern '*Creating service shellspec_alpine-test*'
             The output should match pattern '*Creating service shellspec_dbm-test*'
             The error should match pattern '*Ignoring unsupported options: build, restart*'
+        End
+
+        It 'removes a stack'
+            When call remove_stack 'shellspec' 'true'
+            The status should be success
+            The output should match pattern 'Waiting for Docker Stack to be removed*done'
         End
     End
 
@@ -233,13 +236,13 @@ Describe 'lib/docker.sh' docker
     Describe 'validate_platforms()'
         Parameters
             "${app_host_os}/${app_host_arch}" '' success
-            "invalid/invalid" 'Target platforms not supported: invalid/invalid' failure
+            "invalid/invalid" 'ERROR: Target platforms not supported: invalid/invalid' failure
         End
 
-        It 'builds a cross-platform development image'
+        It 'correctly validates platforms'
             When call validate_platforms "$1"
             The status should be "$3"
-            The output should equal "$2"
+            The error should equal "$2"
         End
     End
 End
