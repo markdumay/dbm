@@ -141,9 +141,9 @@ bring_container_up() {
     if [ "${terminal}" = 'true' ] ; then
         id=$(eval "${base_cmd} ps -q ${services}")
         # shellcheck disable=SC2181
-        { [ "$?" != 0 ] || [ -z "${id}" ]; } && echo "Container ID not found" && return 1
+        { [ "$?" != 0 ] || [ -z "${id}" ]; } && err "Container ID not found" && return 1
         count=$(echo "${id}" | wc -l)
-        [ "${count}" -gt 1 ] && echo "Terminal supports one container only" && return 1
+        [ "${count}" -gt 1 ] && err "Terminal supports one container only" && return 1
         eval "${DOCKER_EXEC} ${id} ${shell}" # start shell terminal
     fi
 
@@ -179,11 +179,11 @@ build_cross_platform_image() {
     if [ -z "${available}" ]; then
         log "Initializing buildx builder '${DBM_BUILDX_BUILDER}'"
         eval "${DOCKER_BUILDX} create --name '${DBM_BUILDX_BUILDER}' > /dev/null" || \
-            { echo "Cannot create buildx instance"; return 1; }
+            { err "Cannot create buildx instance"; return 1; }
     fi
 
     # use the dedicated buildx builder
-    eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || { echo "Cannot use buildx instance"; return 1; }
+    eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || { err "Cannot use buildx instance"; return 1; }
 
     # set and run the buildx command
     base_cmd="${DOCKER_BUILDX} bake -f '${compose_file}' --push --set '*.platform=${docker_platforms}' ${services}"
@@ -364,14 +364,14 @@ validate_platforms() {
 
     # Validate Docker Buildx plugin is present
     if ! docker info | grep -q buildx; then
-        echo "Docker Buildx plugin required"
+        err "Docker Buildx plugin required"
         return 1
     fi
 
     # Identify supported platforms
     supported=$(eval "${DOCKER_BUILDX} inspect default | grep 'Platforms:' | sed 's/^Platforms: //g'")
     if [ -z "${supported}" ]; then
-        echo "No information about supported platforms found"
+        err "Cannot find information about supported platforms"
         return 1
     fi
 
@@ -386,9 +386,9 @@ validate_platforms() {
 
     # Return missing platforms, if any
     if [ -n "${missing}" ]; then
-        echo "Target platforms not supported: ${missing}" | sed 's/, $//g' # remove trailing ', '
-        return 1
-    else
-        return 0
+        msg=$(echo "Target platforms not supported: ${missing}" | sed 's/, $//g') # remove trailing ', '
+        err "${msg}" && return 1
     fi
+
+    return 0
 }

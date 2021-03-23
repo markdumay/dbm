@@ -32,7 +32,7 @@ generate_compose_string() {
     tag="$3"
 
     if ! config=$(eval "${DOCKER_RUN} ${compose_files} config"); then
-        echo "${config}"
+        err "${config}"
         return 1
     fi
     # fix incorrect CPU value (see https://github.com/docker/compose/issues/7771)
@@ -72,7 +72,7 @@ generate_compose_file() {
 
     [ -z "${config_file}" ] && config_file=$(mktemp -t "dbm_temp.XXXXXXXXX")
     if ! config=$(generate_compose_string "${compose_files}" "${context}" "${tag}"); then
-        echo "Cannot generate Docker Compose file: ${config_file}; error='${config}'"
+        err "Cannot generate Docker Compose file: ${config_file}"
         return 1
     else
         printf '%s' "${config}" > "${config_file}"
@@ -99,13 +99,13 @@ list_images() {
     images=''
 
     # Parse the generated Docker Compose file
-    yaml=$(parse_yaml "${config_file}") || { echo "Cannot parse configuration file: ${config_file}"; return 1; }
+    yaml=$(parse_yaml "${config_file}") || { err "Cannot parse configuration file: ${config_file}"; return 1; }
     
     # Show targeted images information, filtered for services if applicable
     if [ -n "${services}" ] ; then
         for service in $services; do
             image=$(echo "${yaml}" | grep "^services_${service}_image=" | sed 's/^services_/ /' | sed 's/=/: /')
-            [ -z "${image}" ] && echo "Service '${service}' not found" && return 1
+            [ -z "${image}" ] && err "Service '${service}' not found" && return 1
             name=$(echo "${image}" | awk -F'"' '{print $2}')
             images="${images}${name}\n"
         done

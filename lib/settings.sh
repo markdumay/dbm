@@ -91,11 +91,11 @@ stage_env() {
 
     # Identify repository version and optional image name suffix
     build_version=$(cat "${config_version_file}" 2> /dev/null) || \
-        { echo "Cannot find VERSION: ${config_version_file}"; return 1; }
+        { err "Cannot find VERSION: ${config_version_file}"; return 1; }
     [ "${target}" = 'dev' ] && image_suffix='-debug' 
 
     # Export environment variables as script
-    staged=$(export_env_values) || { echo "${staged}"; return 1; }
+    staged=$(export_env_values) || { err "${staged}"; return 1; }
     staged="${staged}\nexport BUILD_VERSION=${build_version}"
     staged="${staged}\nexport IMAGE_SUFFIX=${image_suffix}"
 

@@ -73,12 +73,12 @@ _get_docker_digest() {
     # Retrieve authorization token for targeted repository
     token=$(curl -sSL "${DOCKER_AUTH}/token?service=registry.docker.io&scope=repository:${owner}/${repository}:pull" \
             | jq --raw-output .token 2> /dev/null)
-    [ -z "${token}" ] && echo "Cannot retrieve authorization token" && return 1
+    [ -z "${token}" ] && err "Cannot retrieve authorization token" && return 1
 
     # Request a "fat manifest" by default, HEAD only
     response=$(curl --HEAD -sH "Authorization: Bearer ${token}" \
         -H "Accept: ${DOCKER_MANIFEST_HEADER}" "${DOCKER_REGISTRY_DOMAIN}/v2/${owner}/${repository}/manifests/${tag}")
-    [ -z "${response}" ] && echo "Cannot retrieve manifest data" && return 1
+    [ -z "${response}" ] && err "Cannot retrieve manifest data" && return 1
     response=$(echo "${response}" | tr -d '\r') # remove special character '\r'
 
     if echo "${response}" | grep -q "${DOCKER_MANIFEST_HEADER}"; then
@@ -90,7 +90,7 @@ _get_docker_digest() {
     fi
 
     # Return the retrieved digest
-    [ -z "${digest}" ] && echo "Cannot retrieve digest" && return 1 
+    [ -z "${digest}" ] && err "Cannot retrieve digest" && return 1 
     echo "${digest}"
     return 0
 }
@@ -116,15 +116,15 @@ _get_github_digest() {
 
     # Get all tags
     tags=$(curl -sH "Accept: ${GITHUB_HEADER}" "${GITHUB_API}/repos/${owner}/${repository}/tags")
-    [ -z "${tags}" ] && echo "Cannot retrieve tags" && return 1
+    [ -z "${tags}" ] && err "Cannot retrieve tags" && return 1
     
     # Get the digest matching the tag (with optional 'v' prefix)
     digest=$(echo "${tags}" | jq -r ".[] | select(.name | test(\"^[vV]?${tag}\$\")) | .commit.sha" 2> /dev/null)
 
     # Validate the retrieved digest
-    [ -z "${digest}" ] && echo "Cannot retrieve digest" && return 1 
+    [ -z "${digest}" ] && err "Cannot retrieve digest" && return 1 
     count=$(echo "${digest}" | wc -l)
-    [ "${count}" -gt 1 ] && echo "Received multiple matches" && return 1
+    [ "${count}" -gt 1 ] && err "Received multiple matches" && return 1
 
     # Return the retrieved digest
     [ "${short}" = 'true' ] && digest=$(echo "${digest}" | cut -c1-7)

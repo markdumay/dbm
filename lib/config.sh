@@ -72,7 +72,7 @@ clean_digest_file() {
 #=======================================================================================================================
 # shellcheck disable=SC2059
 export_env_values() {
-    [ ! -f "${config_file}" ] && echo "Cannot find config file: ${config_file}" && return 1
+    [ ! -f "${config_file}" ] && err "Cannot find config file: ${config_file}" && return 1
     
     # retrieve all custom variables from the DBM config file
     # remove all comments and trailing spaces; separate each dependency by a ';'
@@ -91,7 +91,7 @@ export_env_values() {
             entry=$(echo "${item}" | sed 's/=/ /g' | awk  '{print $1, $3}' | sed 's/ /=/g')
             results="${results}export ${entry}\n"
         else
-            echo "Invalid entry in '${config_file}': ${item}"
+            err "Invalid entry in '${config_file}': ${item}"
             return 1
         fi
     done
@@ -113,7 +113,7 @@ export_env_values() {
 get_dependency_name() {
     item="$1"
     name=$(echo "${item}" | awk -F' ' '{print $1}' | awk -F':' '{print $2}')
-    [ -z "${name}" ] && echo "Cannot read dependency name" && return 1
+    [ -z "${name}" ] && err "Cannot read dependency name" && return 1
     echo "${name}" && return 0
 }
 
@@ -130,7 +130,7 @@ get_dependency_name() {
 get_dependency_provider() {
     item="$1"
     provider=$(echo "${item}" | awk -F' ' '{print $2}' | tr '[:upper:]' '[:lower:]') # make case insensitive
-    [ -z "${provider}" ] && echo "Cannot read dependency provider" && return 1
+    [ -z "${provider}" ] && err "Cannot read dependency provider" && return 1
     echo "${provider}" && return 0
 }
 
@@ -146,7 +146,7 @@ get_dependency_provider() {
 get_dependency_owner() {
     item="$1"
     owner=$(echo "${item}" | awk -F' ' '{print $3}')
-    [ -z "${owner}" ] && echo "Cannot read dependency owner" && return 1
+    [ -z "${owner}" ] && err "Cannot read dependency owner" && return 1
     echo "${owner}" && return 0
 }
 
@@ -163,7 +163,7 @@ get_dependency_owner() {
 get_dependency_repository() {
     item="$1"
     repository=$(echo "${item}" | awk -F' ' '{print $4}')
-    [ -z "${repository}" ] && echo "Cannot read dependency repository" && return 1
+    [ -z "${repository}" ] && err "Cannot read dependency repository" && return 1
     echo "${repository}" && return 0
 }
 
@@ -179,7 +179,7 @@ get_dependency_repository() {
 get_dependency_tag() {
     item="$1"
     tag=$(echo "${item}" | awk -F' ' '{print $5}')
-    [ -z "${tag}" ] && echo "Cannot read dependency tag" && return 1
+    [ -z "${tag}" ] && err "Cannot read dependency tag" && return 1
     echo "${tag}" && return 0
 }
 
@@ -199,7 +199,7 @@ get_dependency_version() {
 
     count=$(echo "${item}" | wc -w) # identify number of parsed arguments (should be 2 or 5)
     if [ "${count}" -eq 2 ]; then
-        get_dependency_provider "${item}" || { echo "Cannot read dependency version"; return 1; }
+        get_dependency_provider "${item}" || { err "Cannot read dependency version"; return 1; }
         return 0
     fi
 
@@ -208,7 +208,7 @@ get_dependency_version() {
     version=$(echo "${version}" | sed 's/^v//g;s/^V//g;') # strip 'v' or 'V' prefix
     version=$(_expand_version "${version}") # expand version info if needed with minor and patch
 
-    [ -z "${version}" ] && echo "Cannot read dependency version" && return 1
+    [ -z "${version}" ] && err "Cannot read dependency version" && return 1
     echo "${version}" && return 0
 }
 
@@ -302,7 +302,7 @@ init_config_value() {
         value="${value#${quote}}"
     elif [ "${left}" = "'" ] || [ "${left}" = "\"" ] || [ "${right}" = "'" ] || [ "${right}" = "\"" ]; then
         [ -n "${line}" ] && echo "Invalid character found in config file line ${line}: ${value}" || \
-            echo "Invalid character found in default value for variable '$1': $2"
+            err "Invalid character found in default value for variable '$1': $2"
         return 1
     fi
 
@@ -451,7 +451,7 @@ read_update_stored_digest() {
     version="$2"
     digest="$3"
 
-    { [ -z "${url}" ] || [ -z "${version}" ]; } &&  { echo "Missing url and version"; return 1; }
+    { [ -z "${url}" ] || [ -z "${version}" ]; } &&  { err "Missing url and version"; return 1; }
 
     # read the digest from the local digest file
     match=$(grep -in "^${url} ${version}" "${config_digest_file}" 2> /dev/null) # read entry from digest file
@@ -461,7 +461,7 @@ read_update_stored_digest() {
     if [ -z "${value}" ] && [ -n "${digest}" ]; then
         value="${digest}"
         echo "${url} ${version} ${digest}" >> "${config_digest_file}"
-        test -w "${config_digest_file}" || { echo "Digest file not writable: ${config_digest_file}"; return 1; }
+        test -w "${config_digest_file}" || { err "Digest file not writable: ${config_digest_file}"; return 1; }
     fi
 
     # write value to stdout

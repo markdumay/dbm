@@ -53,7 +53,7 @@ execute_generate() {
 
     # Verify the input file exists
     if [ ! -f "${temp_file}" ]; then
-        echo "Cannot find temporary Docker Compose file: ${temp_file}"
+        err "Cannot find temporary Docker Compose file: ${temp_file}"
         return 1
     fi
 

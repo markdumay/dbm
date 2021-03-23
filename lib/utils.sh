@@ -130,10 +130,10 @@ validate_dependencies() {
     missing=$(echo "${missing}" | sed 's/, $//g') # remove trailing ', '
     count=$(echo "${missing}" | wc -w)
     if [ "${count}" -eq 1 ]; then
-        echo "Required command not found: ${missing}"
+        err "Required command not found: ${missing}"
         return 1
     else
-        echo "Required commands not found: ${missing}"
+        err "Required commands not found: ${missing}"
         return 1
     fi
 }
