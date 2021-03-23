@@ -19,6 +19,10 @@ Describe 'lib/utils.sh' utils
     Todo 'get_absolute_path()'
 
     Describe 'validate_dependencies()'
+        random1() { value1=$(uuidgen); }
+        random2() { value2=$(uuidgen); }
+        BeforeAll 'random1' 'random2'
+
         Parameters
             'echo printf' '' success
         End
@@ -28,23 +32,12 @@ Describe 'lib/utils.sh' utils
             The status should be "$3"
             The output should equal "$2"
         End
-    End
-
-    Describe 'validate_dependencies()'
-        random1() { value1=$(uuidgen); }
-        Before 'random1'
         
         It 'confirms a missing command'
             When call validate_dependencies "${value1}"
             The status should be failure
             The error should start with 'ERROR: Required command not found: '
         End
-    End
-
-    Describe 'validate_dependencies()'
-        random1() { value1=$(uuidgen); }
-        random2() { value2=$(uuidgen); }
-        Before 'random1' 'random2'
         
         It 'confirms multiple missing commands'
             When call validate_dependencies "${value1} ${value2}"
