@@ -17,7 +17,7 @@ services:
     networks:
       - dbm-test
   alpine-test:
-    image: "alpine:${ALPINE_DIGEST}"
+    image: "alpine@${ALPINE_DIGEST}"
     container_name: "alpine-test"
     restart: unless-stopped
     command: >
