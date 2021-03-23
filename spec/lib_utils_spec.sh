@@ -6,7 +6,11 @@
 #=======================================================================================================================
 
 Describe 'lib/utils.sh' utils
+    Include lib/log.sh
     Include lib/utils.sh
+
+    prepare() { set_log_color 'false'; }
+    BeforeAll 'prepare'
 
     Todo 'confirm_operation()'
     Todo 'escape_string()'
@@ -33,7 +37,7 @@ Describe 'lib/utils.sh' utils
         It 'confirms a missing command'
             When call validate_dependencies "${value1}"
             The status should be failure
-            The output should start with 'Required command not found: '
+            The error should start with 'ERROR: Required command not found: '
         End
     End
 
@@ -45,7 +49,7 @@ Describe 'lib/utils.sh' utils
         It 'confirms multiple missing commands'
             When call validate_dependencies "${value1} ${value2}"
             The status should be failure
-            The output should start with 'Required commands not found: '
+            The error should start with 'ERROR: Required commands not found: '
         End
     End
 End
