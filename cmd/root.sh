@@ -29,6 +29,7 @@ Commands:
   down                        Stop running container(s) and network(s)
   generate                    Generate a merged Docker Compose file
   info                        Display current system information
+  remove                      Remove Docker Stack
   stop                        Stop running container(s)
   up                          Run Docker image(s) as container(s)
   version                     Show version information
@@ -102,6 +103,7 @@ parse_args() {
         down )         arg_command="$1"; parse_down_args "$@" || exit 1;;
         generate )     arg_command="$1"; parse_generate_args "$@" || exit 1;;
         info )         arg_command="$1"; parse_info_args "$@" || exit 1;;
+        remove )       arg_command="$1"; parse_remove_args "$@" || exit 1;;
         stop )         arg_command="$1"; parse_stop_args "$@" || exit 1;;
         up )           arg_command="$1"; parse_up_args "$@" || exit 1;;
         version )      arg_command="$1"; parse_version_args "$@" || exit 1;;

@@ -53,6 +53,8 @@ app_basedir=$(dirname "${app_script_path}")
 . "${app_basedir}"/cmd/down.sh
 # shellcheck source=cmd/info.sh
 . "${app_basedir}"/cmd/info.sh
+# shellcheck source=cmd/remove.sh
+. "${app_basedir}"/cmd/remove.sh
 # shellcheck source=cmd/stop.sh
 . "${app_basedir}"/cmd/stop.sh
 # shellcheck source=cmd/up.sh
@@ -100,6 +102,7 @@ main() {
             down)     execute_down "${app_compose_file}" "${arg_services}" || result=1;;
             generate) execute_generate "${app_compose_file}" "${arg_compose_file}" || result=1;;
             info)     execute_show_info "${app_script_version}" "${app_host_os}" "${app_host_arch}" && exit || result=1;;
+            remove)   execute_remove "${config_docker_service}" || result=1;;
             stop)     execute_stop "${app_compose_file}" "${arg_services}" || result=1;;
             up)       execute_up "${app_compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
             version ) execute_show_version "${app_script_version}" && exit || result=1;;
