@@ -364,7 +364,7 @@ remove_stack() {
 
     # wait for both services and networks to have been removed, or a timeout occurred
     i=0
-    msg "Waiting for Docker Stack to be removed...  "
+    message "Waiting for Docker Stack to be removed...  "
     while [ "${services_removed}" != 'true' ] || [ "${networks_removed}" != 'true' ]; do
         # print spinner
         i=$(((i + 1) % 4))

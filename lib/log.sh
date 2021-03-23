@@ -177,7 +177,7 @@ info() {
 # Outputs:
 #   Writes message to STDOUT and optionally appends log file.
 #=======================================================================================================================
-msg() {
+message() {
     msg="$1"
     _show_and_write_log "${LOG_INFO}" '' "${msg}" 'false' 'false' && return 0 || return 1
 }
