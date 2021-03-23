@@ -25,7 +25,10 @@ Examples:
  
   dbm stop prod myservice
   Stops the production container identified by 'myservice'
- 
+
+Flags:
+  --tag <tag>                 Image tag override
+
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the stop command

@@ -31,6 +31,7 @@ Flags:
   -d, --detached              Run in detached mode
   -t, --terminal              Start terminal (if supported by image)
       --shell                 Shell to invoke for terminal (defaults to 'sh')
+      --tag <tag>             Image tag override
 
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
