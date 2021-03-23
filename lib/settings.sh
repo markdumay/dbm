@@ -62,7 +62,7 @@ prepare_environment() {
     app_compose_file=$(generate_compose_file "${app_docker_compose_flags}" "${docker_dir}" '' "${arg_services}" "${arg_tag}") \
         || { err "${app_compose_file}"; return 1; }
 
-    # # Validate targeted images
+    # Validate targeted images
     app_images=$(list_images "${app_compose_file}" "${arg_services}") || { err "${app_images}"; return 1; }
     count=$(echo "${app_images}" | wc -l)
     [ "${count}" -gt 1 ] && [ "${arg_terminal}" = 'true' ] && err "Terminal mode supports one service only" && return 1
