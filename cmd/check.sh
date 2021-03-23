@@ -21,6 +21,13 @@ The version string needs to adhere to semantic versioning standards, with
 MAJOR.MINOR as required fields and PATCH optional. The prefix 'v' is also
 optional.
 
+Next to the version information, the check commands also validates the digests
+of the defined dependencies. The digest retrieved from the repository or image
+source is compared to the locally stored digest (typically in the dbm.digest
+file). A warning is displayed if the two digests differ. If no local digest is
+availabe, the retrieved digest is appended to the local digest file. Obsolete
+local digests are removed.
+
 ${usage_check_msg_short}
 
 Examples:
@@ -28,6 +35,7 @@ Examples:
   Check for dependency upgrades and display the findings
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the check command
 
 "
@@ -58,9 +66,9 @@ execute_check_upgrades() {
 # Outputs:
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
+# shellcheck disable=SC2034
 parse_check_args() {
     error=''
-    show_help='false'
     
     # Ignore first argument, which is the 'check' command
     shift 
@@ -68,13 +76,13 @@ parse_check_args() {
     # Capture any additional flags
     while [ -n "$1" ]; do
         case "$1" in
-            -h | --help ) show_help='true';;
-            *           ) error="Argument not supported: $1"
+            --config )    shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
+            -h | --help ) usage_check 'false'; exit;;
+            * )           error="Argument not supported: $1"
         esac
         shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_check 'false' && return 1
     [ -n "${error}" ] && usage_check 'true' && err "${error}" && return 1
     return 0
 }

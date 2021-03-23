@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/up.sh'
+Describe 'cmd/up.sh' cmd up
     Include lib/log.sh
     Include cmd/root.sh
     Include cmd/up.sh
@@ -174,12 +174,12 @@ Describe 'cmd/up.sh'
 
         Describe 'help'
             Parameters
-                up -h failure '?Up*'
-                up --help failure '?Up*'
+                up -h success '?Up*'
+                up --help success '?Up*'
             End
 
             It 'displays help'
-                When call parse_up_args "$1" "$2"
+                When run parse_up_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -193,7 +193,7 @@ Describe 'cmd/up.sh'
 
     Describe 'usage_up()'
         It 'displays usage for up command'
-            When call usage_up
+            When run usage_up
             The output should match pattern '?Up*'
         End
     End

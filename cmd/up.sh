@@ -31,8 +31,10 @@ Flags:
   -d, --detached              Run in detached mode
   -t, --terminal              Start terminal (if supported by image)
       --shell                 Shell to invoke for terminal (defaults to 'sh')
+      --tag <tag>             Image tag override
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the up command
 
 "
@@ -76,7 +78,6 @@ execute_up() {
 # shellcheck disable=SC2034
 parse_up_args() {
     error=''
-    show_help='false'
 
     # Ignore first argument, which is the 'up' command
     shift
@@ -87,7 +88,8 @@ parse_up_args() {
             dev | prod )        arg_target="$1";;
             -d | --detached )   arg_detached='true';;
             -t | --terminal )   arg_terminal='true';;
-            -h | --help )       show_help='true';;
+            -h | --help )       usage_up 'false'; exit;;
+            --config )          shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             --shell )           shift; [ -n "$1" ] && arg_shell="$1" || error="Missing shell argument";;
             --tag )             shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             * )                 service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
@@ -108,7 +110,6 @@ parse_up_args() {
     [ "${arg_terminal}" = 'true' ] && [ "${service_count}" -gt 1 ] && [ -z "${error}" ] && \
         error="Terminal mode supports one service only"
 
-    [ "${show_help}" = 'true' ] && usage_up 'false' && return 1
     [ -n "${error}" ] && usage_up 'true' && err "${error}" && return 1
     return 0
 }

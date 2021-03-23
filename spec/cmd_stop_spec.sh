@@ -5,24 +5,24 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/deploy.sh'
+Describe 'cmd/stop.sh' cmd stop
     Include lib/log.sh
     Include cmd/root.sh
-    Include cmd/deploy.sh
+    Include cmd/stop.sh
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_deploy()'
+    Todo 'execute_stop()'
 
-    Describe 'parse_deploy_args()'
+    Describe 'parse_stop_args()'
         Describe 'target'
             Parameters
-                deploy dev success
-                deploy prod success
+                stop dev success
+                stop prod success
             End
 
             It 'parses supported targets'
-                When call parse_deploy_args "$1" "$2"
+                When call parse_stop_args "$1" "$2"
                 The status should be "$3"
                 The variable arg_target should equal "$2"
                 The variable arg_tag should be blank
@@ -32,11 +32,11 @@ Describe 'cmd/deploy.sh'
 
         Describe 'target'
             Parameters
-                deploy unknown failure 'ERROR: Expected target'
+                stop unknown failure 'ERROR: Expected target'
             End
 
             It 'rejects unsupported targets'
-                When call parse_deploy_args "$1" "$2"
+                When call parse_stop_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern '?Usage*'
                 The error should equal "$4"
@@ -48,11 +48,11 @@ Describe 'cmd/deploy.sh'
 
         Describe 'tag'
             Parameters
-                deploy dev --tag custom success
+                stop dev --tag custom success
             End
 
             It 'parses --tag flag'
-                When call parse_deploy_args "$1" "$2" "$3" "$4"
+                When call parse_stop_args "$1" "$2" "$3" "$4"
                 The status should be "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_tag should equal "$4"
@@ -62,11 +62,11 @@ Describe 'cmd/deploy.sh'
 
         Describe 'tag'
             Parameters
-                deploy dev --tag failure 'ERROR: Missing tag argument'
+                stop dev --tag failure 'ERROR: Missing tag argument'
             End
 
             It 'rejects --tag flag without argument'
-                When call parse_deploy_args "$1" "$2" "$3"
+                When call parse_stop_args "$1" "$2" "$3"
                 The status should be "$4"
                 The output should match pattern '?Usage*'
                 The error should equal "$5"
@@ -78,11 +78,11 @@ Describe 'cmd/deploy.sh'
 
         Describe 'services'
             Parameters
-                deploy dev SERVICE1 SERVICE2 success
+                stop dev SERVICE1 SERVICE2 success
             End
 
             It 'parses --tag flag'
-                When call parse_deploy_args "$1" "$2" "$3" "$4"
+                When call parse_stop_args "$1" "$2" "$3" "$4"
                 The status should be "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_tag should be blank
@@ -92,12 +92,12 @@ Describe 'cmd/deploy.sh'
 
         Describe 'help'
             Parameters
-                deploy -h failure '?Deploy*'
-                deploy --help failure '?Deploy*'
+                stop -h success '?Stop*'
+                stop --help success '?Stop*'
             End
 
             It 'displays help'
-                When call parse_deploy_args "$1" "$2"
+                When run parse_stop_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -107,10 +107,10 @@ Describe 'cmd/deploy.sh'
         End
     End
 
-    Describe 'usage_deploy()'
-        It 'displays usage for deploy command'
-            When call usage_deploy
-            The output should match pattern "?Deploy*"
+    Describe 'usage_stop()'
+        It 'displays usage for stop command'
+            When run usage_stop
+            The output should match pattern '?Stop*'
         End
     End
 End

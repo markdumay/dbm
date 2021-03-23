@@ -5,8 +5,10 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/repository.sh'
-    Include lib/repository.sh
+Describe 'lib/compose' compose
+    Include lib/compose.sh
 
-    Todo 'check_upgrades()'
+    Todo 'generate_compose_string()'
+    Todo 'generate_compose_file()'
+    Todo 'list_images()'
 End

@@ -25,15 +25,17 @@ ${usage_msg_short}
 Commands:
   build                       Build a Docker image
   check                       Check for dependency upgrades
-  config                      Generate a merged Docker Compose file
   deploy                      Deploy Docker Stack service(s)
   down                        Stop running container(s) and network(s)
+  generate                    Generate a merged Docker Compose file
   info                        Display current system information
+  remove                      Remove Docker Stack
   stop                        Stop running container(s)
   up                          Run Docker image(s) as container(s)
   version                     Show version information
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for a command
 
 "
@@ -44,7 +46,8 @@ Global Flags:
 #=======================================================================================================================
 arg_command=''
 arg_target=''
-arg_config_file=''
+arg_config=''
+arg_compose_file=''
 arg_detached='false'
 arg_no_cache='false'
 arg_platforms=''
@@ -96,14 +99,15 @@ parse_args() {
     case "$1" in
         build )        arg_command="$1"; parse_build_args "$@" || exit 1;;
         check )        arg_command="$1"; parse_check_args "$@" || exit 1;;
-        config )       arg_command="$1"; parse_config_args "$@" || exit 1;;
         deploy )       arg_command="$1"; parse_deploy_args "$@" || exit 1;;
         down )         arg_command="$1"; parse_down_args "$@" || exit 1;;
+        generate )     arg_command="$1"; parse_generate_args "$@" || exit 1;;
         info )         arg_command="$1"; parse_info_args "$@" || exit 1;;
+        remove )       arg_command="$1"; parse_remove_args "$@" || exit 1;;
         stop )         arg_command="$1"; parse_stop_args "$@" || exit 1;;
         up )           arg_command="$1"; parse_up_args "$@" || exit 1;;
         version )      arg_command="$1"; parse_version_args "$@" || exit 1;;
-        -h | --help )  usage 'false' && exit 1;;
+        -h | --help )  usage 'false' && exit;;
         * )            usage 'true' && fail "Command not supported: $1"
     esac
 }

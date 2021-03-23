@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/version.sh'
+Describe 'cmd/version.sh' cmd version
     Include lib/log.sh
     Include cmd/root.sh
     Include cmd/version.sh
@@ -47,12 +47,12 @@ Describe 'cmd/version.sh'
 
         Describe 'help'
             Parameters
-                version -h failure '?Version*'
-                version --help failure '?Version*'
+                version -h success '?Version*'
+                version --help success '?Version*'
             End
 
             It 'displays help'
-                When call parse_version_args "$1" "$2"
+                When run parse_version_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
             End
@@ -61,7 +61,7 @@ Describe 'cmd/version.sh'
 
     Describe 'usage_version()'
         It 'displays usage for version command'
-            When call usage_version
+            When run usage_version
             The output should match pattern '?Version*'
         End
     End

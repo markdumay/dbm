@@ -19,6 +19,7 @@ Info displays the current system information.
 ${usage_info_msg_short}
 
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the info command
 
 "
@@ -69,6 +70,7 @@ execute_show_info() {
 # Outputs:
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
+# shellcheck disable=SC2034
 parse_info_args() {
     error=''
     show_help='false'
@@ -79,13 +81,13 @@ parse_info_args() {
     # Capture any additional flags
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
-            -h | --help )  show_help='true';;
+            --config )     shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
+            -h | --help )  usage_info 'false'; exit;;
             * )            error="Argument not supported: $1"
         esac
-        shift
+        [ -n "$1" ] && shift
     done
 
-    [ "${show_help}" = 'true' ] && usage_info 'false' && return 1
     [ -n "${error}" ] && usage_info 'true' && err "${error}" && return 1
     return 0
 }

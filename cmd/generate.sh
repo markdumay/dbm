@@ -8,30 +8,30 @@
 #=======================================================================================================================
 # Constants
 #=======================================================================================================================
-readonly usage_stop_msg_short="
+readonly usage_generate_msg_short="
 Usage:
-  dbm stop <dev|prod> [flags] [service...]
+  dbm generate <dev|prod> <output> [flags]
 "
 
-readonly usage_stop_msg_full="
-Stop pauses the execution of running Docker containers for the targeted
-environment. It does not stop or remove deployed Docker Stack services.
+readonly usage_generate_msg_full="
+Generate creates a consolidated Docker Compose file for the targeted environment
+and writes the output to a specified file.
 
-${usage_stop_msg_short}
+${usage_generate_msg_short}
 
 Examples:
-  dbm stop dev
-  Stops all containers associated with the development environment
- 
-  dbm stop prod myservice
-  Stops the production container identified by 'myservice'
+  dbm generate dev output.yml
+  Generate output.yml using docker-compose.yml and docker-compose.dev.yml
+
+  dbm generate prod output.yml
+  Generate output.yml using docker-compose.yml and docker-compose.prod.yml
 
 Flags:
   --tag <tag>                 Image tag override
 
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
-  -h, --help                  Help for the stop command
+  -h, --help                  Help for the generate command
 
 "
 
@@ -41,25 +41,42 @@ Global Flags:
 #=======================================================================================================================
 
 #=======================================================================================================================
-# Stop a running container.
+# Generate a Docker Compose file.
 #=======================================================================================================================
 # Arguments:
-#   $1 - Docker Compose configuration file
-#   $2 - Services
+#   $1 - Generated temporary Docker Compose file.
+#   $2 - Output file.
 # Outputs:
-#   Stopped Docker container, terminates on error.
+#   Docker Compose file.
 #=======================================================================================================================
-execute_stop() {
-    compose_file="$1"
-    services="$2"
+execute_generate() {
+    print_status "Generating Docker Compose file"
+    temp_file="$1"
+    output_file="$2"
 
-    print_status "Stopping containers and networks"
-    stop_container "${compose_file}" "${services}" && return 0 || return 1
+    # Verify the input file exists
+    if [ ! -f "${temp_file}" ]; then
+        err "Cannot find temporary Docker Compose file: ${temp_file}"
+        return 1
+    fi
+
+    # Warn if output file exists
+    if [ -f "${output_file}" ]; then
+        echo
+        echo "WARNING! The file '${output_file}' will be overwritten"
+        echo
+        confirm_operation || return 1
+    fi
+
+    # Make a copy from the temp file
+    cp "${temp_file}" "${output_file}"
+    
+    log "Generated '${output_file}'"
+    return 0
 }
 
-
 #=======================================================================================================================
-# Parse and validate the command-line arguments for the stop command.
+# Parse and validate the command-line arguments for the generate command.
 #=======================================================================================================================
 # Arguments:
 #   $@ - All available command-line arguments.
@@ -67,10 +84,11 @@ execute_stop() {
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
 # shellcheck disable=SC2034
-parse_stop_args() {
+parse_generate_args() {
     error=''
+    show_help='false'
 
-    # Ignore first argument, which is the 'stop' command
+    # Ignore first argument, which is the 'generate' command
     shift
 
     # Capture any additional flags
@@ -78,30 +96,28 @@ parse_stop_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
-            -h | --help )   usage_stop 'false'; exit;;
-            * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
-                                error="Argument not supported: ${service}"
+            --tag )             shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
+            -h | --help )   usage_generate 'false'; exit;;
+            * )             [ -z "${arg_compose_file}" ] && arg_compose_file="$1" || \
+                                error="Argument not supported: $1"
         esac
         [ -n "$1" ] && shift
     done
 
-    # Remove leading and trailing spaces
-    arg_services=$(echo "${arg_services}" | awk '{$1=$1};1') 
-
-    # Validate arguments
-    [ -z "${arg_target}" ] && error="Expected target" && arg_services=''
-    [ -n "${error}" ] && usage_stop 'true' && err "${error}" && return 1
+    [ -z "${arg_target}" ] && error="Expected target" && arg_compose_file=''
+    [ -z "${arg_compose_file}" ] && [ -z "${error}" ] && error="Expected output file"
+    [ -n "${error}" ] && usage_generate 'true' && err "${error}" && return 1
     return 0
 }
 
 #=======================================================================================================================
-# Display usage message for the deploy command.
+# Display usage message for the check command.
 #=======================================================================================================================
 # Outputs:
 #   Writes message to stdout.
 #=======================================================================================================================
-usage_stop() {
+# TODO: check SERVICE support
+usage_generate() {
     short="$1"
-    [ "${short}" = 'true' ] && echo "${usage_stop_msg_short}" || echo "${usage_stop_msg_full}"
+    [ "${short}" = 'true' ] && echo "${usage_generate_msg_short}" || echo "${usage_generate_msg_full}"
 }

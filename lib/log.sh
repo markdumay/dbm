@@ -88,6 +88,7 @@ _msg() {
 #   $2 - Log coloring, 'true' (default) or 'false'.
 #   $3 - Log message.
 #   $4 - Redirect message to STDERR when 'true', defaults to 'STDOUT' ('false').
+#   $5 - Add a newline, 'true' (default) or 'false'.
 # Outputs:
 #   Writes message to STDOUT and optionally appends log file.
 #=======================================================================================================================
@@ -97,19 +98,21 @@ _show_and_write_log() {
     msg="$3"
     redirect="$4"
     formatted=$(_msg "${log_format}" "${log_timestamp}" "${log_prefix}" "${level}" "${msg}") || return 1
+    { [ "$5" = 'true' ] || [ -z "$5" ]; } && nl='\n' || nl=''
+
 
     # display log message
     if [ "${log_color}" = 'true' ] && [ -n "${color}" ]; then
         if [ "${redirect}" = 'true' ]; then
-            >&2 printf "${color}${BOLD}%s${NC}\n" "${formatted}"
+            >&2 printf "${color}${BOLD}%s${NC}${nl}" "${formatted}"
         else
-            printf "${color}${BOLD}%s${NC}\n" "${formatted}"
+            printf "${color}${BOLD}%s${NC}${nl}" "${formatted}"
         fi
     else
         if [ "${redirect}" = 'true' ]; then
-            >&2 echo "${formatted}"
+            >&2 printf "%s${nl}" "${formatted}"
         else
-            echo "${formatted}"
+            printf "%s${nl}" "${formatted}"
         fi
     fi
 
@@ -136,7 +139,7 @@ _show_and_write_log() {
 #=======================================================================================================================
 debug() {
     msg="$1"
-    _show_and_write_log "${LOG_DEBUG}" "${BLUE}" "${msg}" 'false' && return 0 || return 1
+    _show_and_write_log "${LOG_DEBUG}" "${BLUE}" "${msg}" 'false' 'true' && return 0 || return 1
 }
 
 #=======================================================================================================================
@@ -150,7 +153,7 @@ debug() {
 #=======================================================================================================================
 log() {
     msg="$1"
-    _show_and_write_log "${LOG_INFO}" '' "${msg}" 'false' && return 0 || return 1
+    _show_and_write_log "${LOG_INFO}" '' "${msg}" 'false' 'true' && return 0 || return 1
 }
 
 #=======================================================================================================================
@@ -163,7 +166,20 @@ log() {
 #=======================================================================================================================
 info() {
     msg="$1"
-    _show_and_write_log "${LOG_INFO}" "${GREEN}" "${msg}" 'false' && return 0 || return 1
+    _show_and_write_log "${LOG_INFO}" "${GREEN}" "${msg}" 'false' 'true' && return 0 || return 1
+}
+
+#=======================================================================================================================
+# Display a message on the console and append the message to the log file, if defined. It does not add a new line.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Log message to display.
+# Outputs:
+#   Writes message to STDOUT and optionally appends log file.
+#=======================================================================================================================
+message() {
+    msg="$1"
+    _show_and_write_log "${LOG_INFO}" '' "${msg}" 'false' 'false' && return 0 || return 1
 }
 
 #=======================================================================================================================
@@ -176,7 +192,7 @@ info() {
 #=======================================================================================================================
 warn() {
     msg="$1"
-    _show_and_write_log "${LOG_WARN}" "${YELLOW}" "${msg}" 'false' && return 0 || return 1
+    _show_and_write_log "${LOG_WARN}" "${YELLOW}" "${msg}" 'true' 'true' && return 0 || return 1
 }
 
 #=======================================================================================================================
@@ -189,7 +205,7 @@ warn() {
 #=======================================================================================================================
 err() {
     msg="$1"
-    _show_and_write_log "${LOG_ERROR}" "${RED}" "${msg}" 'true' && return 0 || return 1
+    _show_and_write_log "${LOG_ERROR}" "${RED}" "${msg}" 'true' 'true' && return 0 || return 1
 }
 
 #=======================================================================================================================
@@ -203,7 +219,7 @@ err() {
 #=======================================================================================================================
 fail() {
     msg="$1"
-    _show_and_write_log "${LOG_ERROR}" "${RED}" "${msg}" 'true'
+    _show_and_write_log "${LOG_ERROR}" "${RED}" "${msg}" 'true' 'true'
     exit 1
 }
 

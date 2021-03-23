@@ -12,28 +12,115 @@ readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_RUN='docker-compose'
 readonly DOCKER_BUILDX='docker buildx'
 readonly DBM_BUILDX_BUILDER='dbm_buildx'
+readonly STACK_REMOVAL_TIMEOUT='60'  # timeout in seconds
+# Defines the platforms supported by Docker buildx and the registry manifest
+# See 'platform' in https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list
+# Derived from '$GOOS and $GOARCH' in https://golang.org/doc/install/source#environment
+readonly SUPPORTED_PLATFORMS=\
+"aix/ppc64
+android/386
+android/amd64
+android/arm
+android/arm64
+darwin/amd64
+darwin/arm64
+dragonfly/amd64
+freebsd/386
+freebsd/amd64
+freebsd/arm
+illumos/amd64
+ios/arm64
+js/wasm
+linux/386
+linux/amd64
+linux/arm
+linux/arm64
+linux/ppc64
+linux/ppc64le
+linux/mips
+linux/mipsle
+linux/mips64
+linux/mips64le
+linux/riscv64
+linux/s390x
+netbsd/386
+netbsd/amd64
+netbsd/arm
+openbsd/386
+openbsd/amd64
+openbsd/arm
+openbsd/arm64
+plan9/386
+plan9/amd64
+plan9/arm
+solaris/amd64
+windows/386
+windows/amd64"
 
+# Derived from SUPPORTED_PLATFORMS: echo "${SUPPORTED_PLATFORMS}" | grep -o '/\S*$' | sed 's|/||g' | sort -u
+readonly SUPPORTED_ARCH=\
+"386
+amd64
+arm
+arm64
+mips
+mips64
+mips64le
+mipsle
+ppc64
+ppc64le
+riscv64
+s390x
+wasm"
+
+# Derived from SUPPORTED_PLATFORMS: echo "${SUPPORTED_PLATFORMS}" | grep -o '^\S*/' | sed 's|/||g' | sort -u
+readonly SUPPORTED_OS=\
+"aix
+android
+darwin
+dragonfly
+freebsd
+illumos
+ios
+js
+linux
+netbsd
+openbsd
+plan9
+solaris
+windows"
 
 #=======================================================================================================================
 # Functions
 #=======================================================================================================================
 
+#=======================================================================================================================
+# Brings a running Docker container down for the targeted environment. Once stopped, the container and related networks
+# are removed. The referenced image(s) are untouched. It does not stop or remove deployed Docker Stack services. By
+# convention, all running containers referencing to a service defined in the specified Docker Compose file are stopped.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+# Outputs:
+#   Stopped Docker container, terminates on error.
+#=======================================================================================================================
 bring_container_down() {
     # init arguments
     compose_file="$1"
-    services="$2"
 
-    eval "${DOCKER_RUN} -f '${compose_file}' down ${services}" && return 0 || return 1
+    eval "${DOCKER_RUN} -f '${compose_file}' down" && return 0 || return 1
 }
 
 #=======================================================================================================================
-# Run a Docker image as container.
+# Initiates and starts the containers for the targeted environment. The referenced images need to be available either
+# locally or remotely. Build the images prior to the up operation if needed.
 #=======================================================================================================================
 # Arguments:
-#   $1 - Docker Compose configuration file
-#   $2 - Services
-#   $3 - detached
-#   $4 - terminal
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to bring up.
+#   $3 - Flag to run container in detached mode (defaults to 'false')
+#   $4 - Flag to run container in terminal mode (defaults to 'false')
+#   $5 - Specific terminal shell to run (defaults to 'sh')
 # Outputs:
 #   New Docker container, terminates on error.
 #=======================================================================================================================
@@ -55,17 +142,32 @@ bring_container_up() {
     if [ "${terminal}" = 'true' ] ; then
         id=$(eval "${base_cmd} ps -q ${services}")
         # shellcheck disable=SC2181
-        { [ "$?" != 0 ] || [ -z "${id}" ]; } && echo "Container ID not found" && return 1
+        { [ "$?" != 0 ] || [ -z "${id}" ]; } && err "Container ID not found" && return 1
         count=$(echo "${id}" | wc -l)
-        [ "${count}" -gt 1 ] && echo "Terminal supports one container only" && return 1
+        [ "${count}" -gt 1 ] && err "Terminal supports one container only" && return 1
         eval "${DOCKER_EXEC} ${id} ${shell}" # start shell terminal
     fi
 
     # bring container down when done and not detached or if in terminal mode
     { [ "${detached}" = 'false' ] || [ "${terminal}" = 'true' ]; } && \
-        bring_container_down "${compose_file}" "${services}"
+        bring_container_down "${compose_file}"
+
+    return 0
 }
 
+#=======================================================================================================================
+# Builds a multi-architecture image instead of a regular image. The resulting image(s) are pushed to a central Docker
+# registry (typically docker.io). The build command invokes Docker buildx, which needs to be enabled on the host (and is
+# currently an experimental Docker feature).
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to build (defaults to all).
+#   $3 - Flag to build image without using cache (defaults to 'false')
+#   $4 - Comma-separated target platforms, e.g. 'linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64'
+# Outputs:
+#   New Docker image(s) pushed to Docker registry, terminates on error.
+#=======================================================================================================================
 build_cross_platform_image() {
     # init arguments
     compose_file="$1"
@@ -78,24 +180,31 @@ build_cross_platform_image() {
     if [ -z "${available}" ]; then
         log "Initializing buildx builder '${DBM_BUILDX_BUILDER}'"
         eval "${DOCKER_BUILDX} create --name '${DBM_BUILDX_BUILDER}' > /dev/null" || \
-            { echo "Cannot create buildx instance"; return 1; }
+            { err "Cannot create buildx instance"; return 1; }
     fi
 
     # use the dedicated buildx builder
-    eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || { echo "Cannot use buildx instance"; return 1; }
+    eval "${DOCKER_BUILDX} use '${DBM_BUILDX_BUILDER}'" || { err "Cannot use buildx instance"; return 1; }
 
-    # set the build command
-    # TODO: check if TARGET can be used for SERVICES
-    base_cmd="${DOCKER_BUILDX} bake -f '${compose_file}' --push --set '*.platform=${docker_platforms}'"
-
+    # set and run the buildx command
+    base_cmd="${DOCKER_BUILDX} bake -f '${compose_file}' --push --set '*.platform=${docker_platforms}' ${services}"
     [ "${no_cache}" = 'true' ] && base_cmd="${base_cmd} --no-cache"
     eval "${base_cmd}" || return 1
 
     # restore builder instance
-    eval "${DOCKER_BUILDX} use default"
+    eval "${DOCKER_BUILDX} use default" && return 0 || return 1
 }
 
-
+#=======================================================================================================================
+# Builds regular image(s) and store them locally. Use the 'services' argument to build selected images only.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to build (defaults to all).
+#   $3 - Flag to build image without using cache (defaults to 'false')
+# Outputs:
+#   New Docker image(s) built locally, terminates on error.
+#=======================================================================================================================
 build_image() {
     # init arguments
     compose_file="$1"
@@ -107,7 +216,16 @@ build_image() {
     eval "${cmd}" && return 0 || return 1
 }
 
-
+#=======================================================================================================================
+# Deploys the defined services as a Docker Stack. The referenced images need to be available either locally or remotely.
+# Build the images prior to the deploy operation if needed.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Service name to use for the Docker stack.
+# Outputs:
+#   New Docker image(s) built locally, terminates on error.
+#=======================================================================================================================
 deploy_stack() {
     # init arguments
     compose_file="$1"
@@ -115,7 +233,6 @@ deploy_stack() {
 
     eval "docker stack deploy -c ${compose_file} ${service_name}" && return 0 || return 1
 }
-
 
 #=======================================================================================================================
 # Returns the CPU architecture of the Docker Engine. If unavailable, the architecture of the host is returned instead.
@@ -145,6 +262,57 @@ get_os() {
     echo "${host_os}"
 }
 
+#=======================================================================================================================
+# Validates if a given CPU architecture is supported by Docker. The validation is case sensitive. See 
+# is_valid_platform() for more details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Architecture to validate, e.g. 'amd64'.
+# Outputs:
+#   Return 0 is valid, returns 1 otherwise.
+#=======================================================================================================================
+is_valid_arch() {
+    [ -n "$1" ] && arch="$1" || return 1
+    echo "${SUPPORTED_ARCH}" | grep -q "^${arch}\$"
+}
+
+#=======================================================================================================================
+# Validates if a given OS is supported by Docker. The validation is case sensitive. See is_valid_platform() for more
+# details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Architecture to validate, e.g. 'amd64'.
+# Outputs:
+#   Return 0 is valid, returns 1 otherwise.
+#=======================================================================================================================
+is_valid_os() {
+    [ -n "$1" ] && os="$1" || return 1
+    echo "${SUPPORTED_OS}" | grep -q "^${os}\$"
+}
+
+#=======================================================================================================================
+# Validates if a given platform is supported by Docker. The platform consists of the operating system and the CPU
+# architecture. The validation is case sensitive. 
+# See https://docs.docker.com/registry/spec/manifest-v2-2/#manifest-list for more details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Platform to validate, e.g. 'linux/amd64'.
+# Outputs:
+#   Return 0 is valid, returns 1 otherwise.
+#=======================================================================================================================
+is_valid_platform() {
+    [ -n "$1" ] && platform="$1" || return 1
+    echo "${SUPPORTED_PLATFORMS}" | grep -q "^${platform}\$"
+}
+
+#=======================================================================================================================
+# Pushes locally built images to a central Docker repository (typically docker.io). 
+#=======================================================================================================================
+# Arguments:
+#   $1 - Images to push, separated by a newline '\n'.
+# Outputs:
+#   Docker image(s) pushed to registry, terminates on error.
+#=======================================================================================================================
 push_image() {
     # init arguments and variables
     images="$1"
@@ -164,6 +332,79 @@ push_image() {
     return "${result}"
 }
 
+#=======================================================================================================================
+# Removes a previously deployed Docker Stack. It waits for it to be finished, unless instructed otherwise.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Service name to use for the Docker stack.
+#   $2 - Wait for completion, defaults to 'true'.
+# Outputs:
+#   Removed Docker Stack, terminates on error.
+#=======================================================================================================================
+# TODO: add as command
+remove_stack() {
+    service_name="$1"
+    sync="${2:=true}"
+    services_removed='false'
+    networks_removed='false'
+    time_passed=0
+
+    [ -z "${service_name}" ] && err "No service name provided for Docker Stack" && return 1
+    docker stack services -q "${service_name}" 2>&1 | grep -q 'Nothing found in stack:' && \
+        { err "Cannot find Docker Stack: ${service_name}"; return 1; }
+
+    # ask Docker to remove the stack
+    results=$(docker stack rm "${service_name}" 2>&1) || { err "Cannot remove Docker Stack: ${service_name}"; return 1; }
+    [ "${sync}" != 'true' ] && return 0
+
+    # capture the names of the embedded networks
+    networks=$(echo "${results}" | grep 'Removing network ' | sed 's/Removing network //g')
+    networks=$(echo "${networks}" | sed 'H;1h;$!d;x;y/\n/|/') # replace newline with '|'
+    [ -z "${networks}" ] && networks_removed='true'
+
+    # wait for both services and networks to have been removed, or a timeout occurred
+    i=0
+    message "Waiting for Docker Stack to be removed...  "
+    while [ "${services_removed}" != 'true' ] || [ "${networks_removed}" != 'true' ]; do
+        # print spinner
+        i=$(((i + 1) % 4))
+        spinner=$(echo '/-\|' | cut -c "$((i + 1))")
+        printf "\b%s" "${spinner}"
+
+        # check services
+        if [ "${services_removed}" != 'true' ]; then
+            docker stack services -q "${service_name}" 2>&1 | grep -q 'Nothing found in stack:' && services_removed='true'
+        fi
+
+        # check networks
+        if [ "${networks_removed}" != 'true' ]; then
+            ! docker network ls | grep -Eq "${networks}" && networks_removed='true'
+        fi
+
+        # exit the loop when a timeout occurred
+        time_passed=$((time_passed + 1))
+        [ "${time_passed}" -gt "${STACK_REMOVAL_TIMEOUT}" ] && printf "\b%s\n" "timeout" && break
+        
+        sleep 1
+    done
+
+    [ "${services_removed}" != 'true' ] && err "Cannot remove Docker Stack services: ${service_name}" && return 1
+    [ "${networks_removed}" != 'true' ] && err "Cannot remove Docker Stack networks: ${service_name}" && return 1
+
+    printf "\b%s\n" "done"
+    return 0
+}
+
+#=======================================================================================================================
+# Pauses the execution of running Docker containers for the targeted environment. It does not stop or remove deployed
+# Docker Stack services.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Docker Compose configuration file.
+#   $2 - Services to stop (defaults to all).
+# Outputs:
+#   Stopped Docker containers, terminates on error.
+#=======================================================================================================================
 stop_container() {
     # init arguments
     compose_file="$1"
@@ -187,14 +428,14 @@ validate_platforms() {
 
     # Validate Docker Buildx plugin is present
     if ! docker info | grep -q buildx; then
-        echo "Docker Buildx plugin required"
+        err "Docker Buildx plugin required"
         return 1
     fi
 
     # Identify supported platforms
     supported=$(eval "${DOCKER_BUILDX} inspect default | grep 'Platforms:' | sed 's/^Platforms: //g'")
     if [ -z "${supported}" ]; then
-        echo "No information about supported platforms found"
+        err "Cannot find information about supported platforms"
         return 1
     fi
 
@@ -209,9 +450,9 @@ validate_platforms() {
 
     # Return missing platforms, if any
     if [ -n "${missing}" ]; then
-        echo "Target platforms not supported: ${missing}" | sed 's/, $//g' # remove trailing ', '
-        return 1
-    else
-        return 0
+        msg=$(echo "Target platforms not supported: ${missing}" | sed 's/, $//g') # remove trailing ', '
+        err "${msg}" && return 1
     fi
+
+    return 0
 }

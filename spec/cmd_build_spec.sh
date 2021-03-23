@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/build.sh'
+Describe 'cmd/build.sh' cmd build
     Include lib/log.sh
     Include cmd/root.sh
     Include cmd/build.sh
@@ -210,12 +210,12 @@ Describe 'cmd/build.sh'
 
         Describe 'help'
             Parameters
-                build -h failure '?Build*'
-                build --help failure '?Build*'
+                build -h success '?Build*'
+                build --help success '?Build*'
             End
 
             It 'displays help'
-                When call parse_build_args "$1" "$2"
+                When run parse_build_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -230,7 +230,7 @@ Describe 'cmd/build.sh'
 
     Describe 'usage_build()'
         It 'displays usage for build command'
-            When call usage_build
+            When run usage_build
             The output should match pattern '?Build*'
         End
     End

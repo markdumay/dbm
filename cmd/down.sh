@@ -31,6 +31,7 @@ Examples:
   'myservice' associated with the production environment
  
 Global Flags:
+      --config <file>         Config file to use (defaults to dbm.ini)
   -h, --help                  Help for the stop command
 
 "
@@ -68,7 +69,6 @@ execute_down() {
 # shellcheck disable=SC2034
 parse_down_args() {
     error=''
-    show_help='false'
 
     # Ignore first argument, which is the 'down' command
     shift
@@ -77,8 +77,9 @@ parse_down_args() {
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
             dev | prod )    arg_target="$1";;
-            -h | --help )   show_help='true';;
+            --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
             --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
+            -h | --help )   usage_down 'false'; exit;;
             * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac
@@ -89,7 +90,6 @@ parse_down_args() {
     arg_services=$(echo "${arg_services}" | awk '{$1=$1};1') 
 
     # Validate arguments
-    [ "${show_help}" = 'true' ] && usage_down 'false' && return 1
     [ -z "${arg_target}" ] && error="Expected target" && arg_services=''
     [ -n "${error}" ] && usage_down 'true' && err "${error}" && return 1
     return 0

@@ -5,24 +5,24 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'cmd/stop.sh'
+Describe 'cmd/down.sh' cmd down
     Include lib/log.sh
     Include cmd/root.sh
-    Include cmd/stop.sh
+    Include cmd/down.sh
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_stop()'
+    Todo 'execute_down()'
 
-    Describe 'parse_stop_args()'
+    Describe 'parse_down_args()'
         Describe 'target'
             Parameters
-                stop dev success
-                stop prod success
+                down dev success
+                down prod success
             End
 
             It 'parses supported targets'
-                When call parse_stop_args "$1" "$2"
+                When call parse_down_args "$1" "$2"
                 The status should be "$3"
                 The variable arg_target should equal "$2"
                 The variable arg_tag should be blank
@@ -32,11 +32,11 @@ Describe 'cmd/stop.sh'
 
         Describe 'target'
             Parameters
-                stop unknown failure 'ERROR: Expected target'
+                down unknown failure 'ERROR: Expected target'
             End
 
             It 'rejects unsupported targets'
-                When call parse_stop_args "$1" "$2"
+                When call parse_down_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern '?Usage*'
                 The error should equal "$4"
@@ -48,11 +48,11 @@ Describe 'cmd/stop.sh'
 
         Describe 'tag'
             Parameters
-                stop dev --tag custom success
+                down dev --tag custom success
             End
 
             It 'parses --tag flag'
-                When call parse_stop_args "$1" "$2" "$3" "$4"
+                When call parse_down_args "$1" "$2" "$3" "$4"
                 The status should be "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_tag should equal "$4"
@@ -62,11 +62,11 @@ Describe 'cmd/stop.sh'
 
         Describe 'tag'
             Parameters
-                stop dev --tag failure 'ERROR: Missing tag argument'
+                down dev --tag failure 'ERROR: Missing tag argument'
             End
 
             It 'rejects --tag flag without argument'
-                When call parse_stop_args "$1" "$2" "$3"
+                When call parse_down_args "$1" "$2" "$3"
                 The status should be "$4"
                 The output should match pattern '?Usage*'
                 The error should equal "$5"
@@ -78,11 +78,11 @@ Describe 'cmd/stop.sh'
 
         Describe 'services'
             Parameters
-                stop dev SERVICE1 SERVICE2 success
+                down dev SERVICE1 SERVICE2 success
             End
 
             It 'parses --tag flag'
-                When call parse_stop_args "$1" "$2" "$3" "$4"
+                When call parse_down_args "$1" "$2" "$3" "$4"
                 The status should be "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_tag should be blank
@@ -92,12 +92,12 @@ Describe 'cmd/stop.sh'
 
         Describe 'help'
             Parameters
-                stop -h failure '?Stop*'
-                stop --help failure '?Stop*'
+                down -h success '?Down*'
+                down --help success '?Down*'
             End
 
             It 'displays help'
-                When call parse_stop_args "$1" "$2"
+                When run parse_down_args "$1" "$2"
                 The status should be "$3"
                 The output should match pattern "$4"
                 The variable arg_target should be blank
@@ -107,10 +107,10 @@ Describe 'cmd/stop.sh'
         End
     End
 
-    Describe 'usage_stop()'
-        It 'displays usage for stop command'
-            When call usage_stop
-            The output should match pattern '?Stop*'
+    Describe 'usage_down()'
+        It 'displays usage for down command'
+            When run usage_down
+            The output should match pattern "?Down*"
         End
     End
 End

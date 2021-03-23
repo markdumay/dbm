@@ -5,17 +5,15 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/docker.sh'
-    Include lib/docker.sh
+Describe 'cmd/info.sh' cmd info
+    Include lib/log.sh
+    Include cmd/root.sh
+    Include cmd/info.sh
 
-    Todo 'bring_container_down()'
-    Todo 'bring_container_up()'
-    Todo 'build_cross_platform_image()'
-    Todo 'build_image()'
-    Todo 'deploy_stack()'
-    Todo 'get_arch()'
-    Todo 'get_os()'
-    Todo 'push_image()'
-    Todo 'stop_container()'
-    Todo 'validate_platforms()'
+    prepare() { set_log_color 'false'; }
+    BeforeAll 'prepare'
+
+    Todo 'execute_show_info'
+    Todo 'parse_info_args'
+    Todo 'usage_info'
 End

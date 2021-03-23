@@ -38,6 +38,27 @@ escape_string() {
 }
 
 #=======================================================================================================================
+# Retrieves the absolute path for a given path. If the provided path is relative it is appended to the provided base
+# directory.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Base directory.
+#   $2 - Path, either relative or absolute.
+# Outputs:
+#   Absolute path, terminates with non-zero exit code on fatal error.
+#=======================================================================================================================
+get_absolute_path() {
+    basedir="$1"
+    path="$2"
+    result=''
+
+    start=$(echo "${path}" | cut -c-1)
+    [ "${start}" = '/' ] && result="${path}" || result="${basedir}/${path}"
+    
+    realpath "${result}" 2> /dev/null && return 0 || return 1
+}
+
+#=======================================================================================================================
 # Validates if a variable is a valid positive integer.
 #=======================================================================================================================
 # Arguments:
@@ -47,6 +68,41 @@ escape_string() {
 #=======================================================================================================================
 is_number() {
     [ -n "$1" ] && [ -z "${1##[0-9]*}" ] && return 0 || return 1
+}
+
+#======================================================================================================================
+# Mutes stdout and error by redirecting the streams (stream 3 and stream 4). Set to 'false' to undo the mute.
+#======================================================================================================================
+# Arguments:
+#   $1 - Mute 'true' or 'false'.
+# Outputs:
+#   Redirected stdout and error streams.
+#======================================================================================================================
+mute() {
+    case "$1" in
+        true ) 
+            exec 3>&1-
+            exec 4>&2-
+            ;;
+        false ) 
+            exec 1>&3-
+            exec 2>&4-
+            ;;
+        *)
+    esac
+}
+
+#======================================================================================================================
+# Encodes a variable to a url-safe variable using jq. For example, the string 'encode this' is encoded to 
+# 'encode%20this'.
+#======================================================================================================================
+# Arguments:
+#   $1 - Variable to encode.
+# Outputs:
+#   Url-encoded variable.
+#======================================================================================================================
+url_encode() {
+    printf '%s' "$1" | jq -sRr @uri
 }
 
 #=======================================================================================================================
@@ -74,10 +130,10 @@ validate_dependencies() {
     missing=$(echo "${missing}" | sed 's/, $//g') # remove trailing ', '
     count=$(echo "${missing}" | wc -w)
     if [ "${count}" -eq 1 ]; then
-        echo "Required command not found: ${missing}"
+        err "Required command not found: ${missing}"
         return 1
     else
-        echo "Required commands not found: ${missing}"
+        err "Required commands not found: ${missing}"
         return 1
     fi
 }
