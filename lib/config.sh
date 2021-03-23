@@ -63,9 +63,53 @@ clean_digest_file() {
     return 0
 }
 
+# shellcheck disable=SC2059
 #=======================================================================================================================
-# Reads all key/value pairs beginning with 'DBM_*' from the default config file. The output is written to stdout with
-# the prefix 'export ' for each line.
+# Finds and exports the local digest for each dependency defined in the default config file. The local digest is
+# retrieved from the file 'dbm.digest' in the same folder as the 'dbm.ini' file. The export is skipped if no digest is
+# found, however, the function then returns the exit value 1. 
+# For example, the entry 'DBM_ALPINE_VERSION=hub.docker.com/_/alpine 3.13.2' in the file 'dbm.ini' is returned as
+# 'export ALPINE_DIGEST=sha256:a75afd8b57e7f34e4dad8d65e2c7ba2e1975c795ce1ee22fa34f8cf46f96a3be'.
+#=======================================================================================================================
+# Outputs:
+#   Writes image digests to stdout.
+#=======================================================================================================================
+export_digest_values() {
+    dependencies=$(read_dependencies)
+    results=''
+    flag=0
+
+    { [ -z "${dependencies}" ] || [ "${dependencies}" = ';' ]; } && return 0
+
+    IFS=';' # initialize dependency separator
+    for item in $dependencies; do
+        # validate if the item has the expected number of tokens
+        is_valid_dependency "${item}" || { flag=1; continue; }
+
+        # retrieve key fields
+        {
+            name=$(get_dependency_name "${item}") && \
+            provider=$(get_dependency_provider "${item}") && \
+            owner=$(get_dependency_owner "${item}") && \
+            repo=$(get_dependency_repository "${item}") && \
+            version=$(get_dependency_version "${item}") && \
+            extension=$(get_dependency_extension "${item}")
+        } || { flag=1; continue; }
+
+        # read local digest
+        local_digest=$(read_stored_digest "${provider}/${owner}/${repo}" "v${version}${extension}") || \
+            { flag=1; continue; }
+        results="${results}export ${name}_DIGEST=${local_digest}\n"
+    done
+
+    printf "${results}"
+    return "${flag}"
+}
+
+#=======================================================================================================================
+# Exports all key/value pairs beginning with 'DBM_*' from the default config file. The output is written to stdout with
+# the prefix 'export ' for each line. For example, the entry 'DBM_ALPINE_VERSION=hub.docker.com/_/alpine 3.13.2' in the
+# file 'dbm.ini' is returned as 'export ALPINE_VERSION=3.13.2'.
 #=======================================================================================================================
 # Outputs:
 #   Writes matching key/value pairs to stdout.
@@ -99,7 +143,6 @@ export_env_values() {
     printf "${results}"
     return 0
 }
-
 
 #=======================================================================================================================
 # Reads the name of a dependency normalized by read_dependencies(). The name is the first item on the provided line
@@ -432,6 +475,32 @@ read_dependencies() {
     dependencies=$(echo "${dependencies}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
     dependencies=$(echo "${dependencies}" | sed -e 's/http:  //g;s/https:  //g;')
     printf "%s\n\n" "${dependencies}" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/;/g'
+    return 0
+}
+
+#=======================================================================================================================
+# Reads the digest associated with a repository link and version from a local digest file. If no digest is found, the
+# default value is used instead. In this case, the local digest file is updated too.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Normalized source repository link, e.g. 'hub.docker.com/_/alpine'
+#   $2 - Fully expanded dependency version, e.g. 'v3.13.2'
+# Outputs:
+#   Writes setting to stdout.
+#=======================================================================================================================
+read_stored_digest() {
+    url="$1"
+    version="$2"
+
+    { [ -z "${url}" ] || [ -z "${version}" ]; } &&  { err "Missing url and version"; return 1; }
+
+    # read the digest from the local digest file
+    match=$(grep -in "^${url} ${version}" "${config_digest_file}" 2> /dev/null) # read entry from digest file
+    digest=$(echo "${match}" | awk -F' ' '{print $3}' | sed 's/[\n\r]//g') # read stored digest
+
+    # write value to stdout
+    [ -z "${digest}" ] && return 1
+    printf '%s' "${digest}"
     return 0
 }
 
