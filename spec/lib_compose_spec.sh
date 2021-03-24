@@ -16,8 +16,10 @@ Describe 'lib/compose' compose
 
     # shellcheck disable=SC2034
     setup() { 
+        echo "PWD: ${PWD}"
         set_log_color 'false'
         app_basedir=$(get_absolute_path "${PWD}")
+        echo "BASEDIR: ${app_basedir}"
         arg_config='test/dbm.ini'
         arg_target='dev'
         init_global_settings
@@ -35,7 +37,7 @@ Describe 'lib/compose' compose
         app_exported_vars=$(stage_env "${arg_target}") || { err "${app_exported_vars}"; return 1; }
         eval "${app_exported_vars}"
 
-        echo "DIR: ${docker_dir}"
+        echo "DOCKER DIR: ${docker_dir}"
     }
 
     # shellcheck disable=SC2154
