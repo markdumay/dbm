@@ -38,6 +38,7 @@ Describe 'lib/compose' compose
         eval "${app_exported_vars}"
 
         echo "DOCKER DIR: ${docker_dir}"
+        echo "DEBUG: generate_compose_file '${app_docker_compose_flags}' '${docker_dir}' '' '${arg_services}' '${arg_tag}'"
     }
 
     # shellcheck disable=SC2154
