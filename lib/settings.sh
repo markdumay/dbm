@@ -48,10 +48,8 @@ init_global_settings() {
 # Outputs:
 #   Writes version information to stdout, returns 'unknown' in case of errors.
 #=======================================================================================================================
-# TODO: move to config/settings
 init_script_version() {
-    script_dir=$(dirname "$0")
-    script_version=$(cat "${script_dir}/VERSION" 2> /dev/null)
+    script_version=$(cat "${app_basedir}/VERSION" 2> /dev/null)
     echo "${script_version:-unknown}"
 }
 
