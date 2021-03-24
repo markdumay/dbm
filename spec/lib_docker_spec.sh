@@ -15,7 +15,6 @@ Describe 'lib/docker.sh' docker
     Include lib/utils.sh
     Include lib/yaml.sh
     Include cmd/root.sh
-    Include cmd/version.sh
 
     # shellcheck disable=SC2034
     setup() { 

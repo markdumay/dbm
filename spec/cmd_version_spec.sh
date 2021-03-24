@@ -65,6 +65,4 @@ Describe 'cmd/version.sh' cmd version
             The output should match pattern '?Version*'
         End
     End
-
-    Todo 'init_script_version()'
 End
