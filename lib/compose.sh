@@ -21,7 +21,6 @@ generate_compose_string() {
     context="$2"
     tag="$3"
 
-    debug "${DOCKER_RUN} ${compose_files} config"
     if ! config=$(eval "${DOCKER_RUN} ${compose_files} config"); then
         err "${config}"
         return 1
