@@ -42,6 +42,19 @@ init_global_settings() {
     return 0
 }
 
+#=======================================================================================================================
+# Retrieves the version of the Docker Build Manager script.
+#=======================================================================================================================
+# Outputs:
+#   Writes version information to stdout, returns 'unknown' in case of errors.
+#=======================================================================================================================
+# TODO: move to config/settings
+init_script_version() {
+    script_dir=$(dirname "$0")
+    script_version=$(cat "${script_dir}/VERSION" 2> /dev/null)
+    echo "${script_version:-unknown}"
+}
+
 # TODO: add header
 # shellcheck disable=SC2154
 prepare_environment() {

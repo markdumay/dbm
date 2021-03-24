@@ -44,18 +44,6 @@ execute_show_version() {
 }
 
 #=======================================================================================================================
-# Retrieves the version of the Docker Build Manager script.
-#=======================================================================================================================
-# Outputs:
-#   Writes version information to stdout, returns 'unknown' in case of errors.
-#=======================================================================================================================
-init_script_version() {
-    script_dir=$(dirname "$0")
-    script_version=$(cat "${script_dir}/VERSION" 2> /dev/null)
-    echo "${script_version:-unknown}"
-}
-
-#=======================================================================================================================
 # Parse and validate the command-line arguments for the version command.
 #=======================================================================================================================
 # Arguments:
