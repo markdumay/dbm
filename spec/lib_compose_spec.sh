@@ -23,7 +23,10 @@ Describe 'lib/compose' compose
         echo "BASEDIR: ${app_basedir}"
         arg_config='test/dbm.ini'
         arg_target='dev'
-        init_global_settings
+
+        echo "DEBUG: init_config '${app_basedir}' '${arg_config}'"
+
+        init_global_settings || { err "Cannot init settings"; return 1; }
         # prepare_environment
         # Change to working directory
         {
