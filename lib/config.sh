@@ -344,7 +344,7 @@ init_config_value() {
         value="${value%${quote}}"
         value="${value#${quote}}"
     elif [ "${left}" = "'" ] || [ "${left}" = "\"" ] || [ "${right}" = "'" ] || [ "${right}" = "\"" ]; then
-        [ -n "${line}" ] && echo "Invalid character found in config file line ${line}: ${value}" || \
+        { [ -n "${line}" ] && echo "Invalid character found in config file line ${line}: ${value}"; } || \
             err "Invalid character found in default value for variable '$1': $2"
         return 1
     fi
