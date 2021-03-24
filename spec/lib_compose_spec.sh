@@ -25,6 +25,8 @@ Describe 'lib/compose' compose
         arg_target='dev'
 
         echo "DEBUG: init_config '${app_basedir}' '${arg_config}'"
+        file="${app_basedir}/${arg_config}"
+        [ -f "${file}" ] && echo "File exists: ${file}" || echo "ERROR: File MISSING: ${file}"
 
         init_global_settings || { err "Cannot init settings"; return 1; }
         # prepare_environment
