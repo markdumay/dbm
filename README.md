@@ -87,17 +87,18 @@ $ dbm <command> [flags]
 ### Commands
 **DBM** supports the following commands. The Wiki contains a more extensive overview of the [available commands][wiki_commands] and their options.
 
-| Command       | Description |
-|---------------|-------------|
-| **`build`**   | Build a Docker image |
-| **`check`**   | Check for dependency upgrades |
-| **`config`**  | Generate a merged Docker Compose file |
-| **`deploy`**  | Deploy Docker Stack service(s) |
-| **`down`**    | Stop running container(s) and network(s) |
-| **`info`**    | Display current system information |
-| **`stop`**    | Stop running container(s) |
-| **`up`**      | Run Docker image(s) as container(s) |
-| **`version`** | Show version information |
+| Command        | Description |
+|----------------|-------------|
+| **`build`**    | Build a Docker image |
+| **`check`**    | Check for dependency upgrades |
+| **`deploy`**   | Deploy Docker Stack service(s) |
+| **`down`**     | Stop running container(s) and network(s) |
+| **`generate`** | Generate a merged Docker Compose file |
+| **`info`**     | Display current system information |
+| **`remove`**   | Remove Docker Stack |
+| **`stop`**     | Stop running container(s) |
+| **`up`**       | Run Docker image(s) as container(s) |
+| **`version`**  | Show version information |
 
 
 ### Configuration
