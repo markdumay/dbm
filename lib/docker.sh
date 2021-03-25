@@ -344,7 +344,7 @@ push_image() {
 # TODO: add as command
 remove_stack() {
     service_name="$1"
-    sync="${2:=true}"
+    sync="${2:-true}"
     services_removed='false'
     networks_removed='false'
     time_passed=0
