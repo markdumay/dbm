@@ -42,10 +42,8 @@ Describe 'lib/docker.sh' docker
 
     Describe 'bring_container_down()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            bring_container_up "${app_compose_file}" 'dbm-test' 'true' 'false' 'sh'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            bring_container_up "${app_compose_file}" 'dbm-test' 'true' 'false' 'sh' > /dev/null 2>&1
         }
 
         BeforeCall 'setup_local'
@@ -60,15 +58,11 @@ Describe 'lib/docker.sh' docker
 
     Describe 'bring_container_up()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            bring_container_down "${app_compose_file}"
-            mute 'false'
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
         }
         
         Before 'setup_local'
@@ -120,21 +114,17 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Describe 'deploy_stack() and remove_stack()'
+    Describe 'deploy_stack()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            docker stack rm 'shellspec' || true
-            mute 'false'
+            remove_stack 'shellspec' 'true' > /dev/null 2>&1
         }
         
-        BeforeAll 'setup_local'
-        AfterAll 'cleanup_local'
+        Before 'setup_local'
+        After 'cleanup_local'
 
         It 'deploys a stack with correct service name'
             When call deploy_stack "${app_compose_file}" 'shellspec'
@@ -171,15 +161,11 @@ Describe 'lib/docker.sh' docker
 
     Describe 'push_image()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            bring_container_down "${app_compose_file}"
-            mute 'false'
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
         }
         
         Before 'setup_local'
@@ -220,16 +206,12 @@ Describe 'lib/docker.sh' docker
 
     Describe 'stop_container()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            bring_container_up "${app_compose_file}" '' 'true' 'false' 'sh'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            bring_container_up "${app_compose_file}" '' 'true' 'false' 'sh' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            bring_container_down "${app_compose_file}"
-            mute 'false'
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
         }
         
         Before 'setup_local'
