@@ -30,7 +30,7 @@ jobs:
 
       - name: Install Docker and dependencies
         run: |  
-          brew install docker-machine docker jq coreutils
+          brew install docker-machine docker docker-compose coreutils
           brew services start docker-machine
 
       - name: Install shell packages
