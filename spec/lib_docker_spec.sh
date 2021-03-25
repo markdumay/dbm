@@ -106,16 +106,16 @@ Describe 'lib/docker.sh' docker
 
     Describe 'build_image()'
         Parameters
-            "${app_compose_file}" ''         'false' 'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
-            "${app_compose_file}" ''         'true'  'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
-            "${app_compose_file}" 'dbm-test' 'false' 'Successfully built' 'Building dbm-test*' success
-            "${app_compose_file}" 'invalid'  'false' ''                   'No such service: invalid' failure
+            "${app_compose_file}" ''         'false' '*Successfully built*' 'alpine-test uses an image, skipping*Building dbm-test*' success
+            "${app_compose_file}" ''         'true'  '*Successfully built*' 'alpine-test uses an image, skipping*Building dbm-test*' success
+            "${app_compose_file}" 'dbm-test' 'false' '*Successfully built*' '*Building dbm-test*' success
+            "${app_compose_file}" 'invalid'  'false' '*'                    'No such service: invalid' failure
         End
 
         It 'builds a regular development image'
             When call build_image "$1" "$2" "$3"
             The status should be "$6"
-            The output should start with "$4"
+            The output should match pattern "$4"
             The error should match pattern "$5"
         End
     End
