@@ -39,8 +39,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Install shellspec
+      - name: Install shell packages
         run: sudo apt-get install -y ${{ matrix.shells.package }}
-      
+
+      - name: Install shellspec
+        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
+
       - name: Run unit tests
         run: sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec
