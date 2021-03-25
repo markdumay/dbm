@@ -1,0 +1,50 @@
+
+name: macOS Homebrew
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  macos-brew:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        shells:
+          - {shell: dash, package: dash}
+          - {shell: bash, package: bash}
+          - {shell: ksh,  package: ksh}
+          - {shell: mksh, package: mksh}
+          - {shell: yash, package: yash}
+          - {shell: zsh,  package: zsh}
+       fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Upgrade brew
+        run: brew upgrade
+
+      - name: Install shell packages
+        run:  brew install ${{ matrix.shells.package }}
+
+      - name: Install shellspec
+        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
+
+      - name: Run unit tests
+        run: sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}"
