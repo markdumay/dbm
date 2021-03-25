@@ -36,6 +36,7 @@ Describe 'lib/docker.sh' docker
         fi
     }
 
+    # TODO: check scope 
     BeforeAll 'setup'
     AfterAll 'cleanup'
 
