@@ -29,8 +29,8 @@ app_script_version=''
 # shellcheck disable=SC2034,SC2154
 init_global_settings() {
     # Initialize global settings
-    init_config "${app_basedir}" "${arg_config}" || return 1
-    app_script_version=$(init_script_version) || return 1
+    init_config "${app_basedir}" "${arg_config}" || { err "Cannot initialize configuration"; return 1; }
+    app_script_version=$(init_script_version) || { err "Cannot initialize script version"; return 1; }
     app_host_os=$(get_os)
     app_host_arch=$(get_arch)
     app_docker_compose_flags="-f ${config_docker_base_yml}"

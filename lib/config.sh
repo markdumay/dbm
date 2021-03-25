@@ -446,12 +446,18 @@ init_config() {
     fi
     
     # initialize settings and/or default values 
-    config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || return 1
-    config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || return 1
-    config_docker_prod_yml=$(init_config_value 'DOCKER_PROD_YML' 'docker-compose.prod.yml') || return 1
-    config_docker_dev_yml=$(init_config_value 'DOCKER_DEV_YML' 'docker-compose.dev.yml') || return 1
-    config_docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}") || return 1
-    config_docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '') || return 1
+    config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || \
+        { err "Cannot read config value DOCKER_WORKING_DIR"; return 1; }
+    config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || \
+        { err "Cannot read config value DOCKER_BASE_YML"; return 1; }
+    config_docker_prod_yml=$(init_config_value 'DOCKER_PROD_YML' 'docker-compose.prod.yml') || \
+        { err "Cannot read config value DOCKER_PROD_YML"; return 1; }
+    config_docker_dev_yml=$(init_config_value 'DOCKER_DEV_YML' 'docker-compose.dev.yml') || \
+        { err "Cannot read config value DOCKER_DEV_YML"; return 1; }
+    config_docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}") || \
+        { err "Cannot read config value DOCKER_SERVICE_NAME"; return 1; }
+    config_docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '') || \
+        { err "Cannot read config value DOCKER_TARGET_PLATFORM"; return 1; }
 
     return 0
 }
