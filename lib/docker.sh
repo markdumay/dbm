@@ -344,7 +344,7 @@ push_image() {
 # TODO: add as command
 remove_stack() {
     service_name="$1"
-    sync="${2:=true}"
+    sync="${2:-true}"
     services_removed='false'
     networks_removed='false'
     time_passed=0
@@ -427,7 +427,7 @@ validate_platforms() {
     platforms="$1,"
 
     # Validate Docker Buildx plugin is present
-    if ! docker info | grep -q buildx; then
+    if ! docker info 2> /dev/null | grep -q buildx; then
         err "Docker Buildx plugin required"
         return 1
     fi

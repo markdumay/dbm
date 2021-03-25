@@ -36,15 +36,14 @@ Describe 'lib/docker.sh' docker
         fi
     }
 
+    # TODO: check scope 
     BeforeAll 'setup'
     AfterAll 'cleanup'
 
     Describe 'bring_container_down()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            bring_container_up "${app_compose_file}" 'dbm-test' 'true' 'false' 'sh'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            bring_container_up "${app_compose_file}" 'dbm-test' 'true' 'false' 'sh' > /dev/null 2>&1
         }
 
         BeforeCall 'setup_local'
@@ -59,15 +58,11 @@ Describe 'lib/docker.sh' docker
 
     Describe 'bring_container_up()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            bring_container_down "${app_compose_file}"
-            mute 'false'
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
         }
         
         Before 'setup_local'
@@ -105,35 +100,31 @@ Describe 'lib/docker.sh' docker
 
     Describe 'build_image()'
         Parameters
-            "${app_compose_file}" ''         'false' 'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
-            "${app_compose_file}" ''         'true'  'Successfully built' 'alpine-test uses an image, skipping?Building dbm-test*' success
-            "${app_compose_file}" 'dbm-test' 'false' 'Successfully built' 'Building dbm-test*' success
-            "${app_compose_file}" 'invalid'  'false' ''                   'No such service: invalid' failure
+            "${app_compose_file}" ''         'false' '*Successfully built*' 'alpine-test uses an image, skipping*Building dbm-test*' success
+            "${app_compose_file}" ''         'true'  '*Successfully built*' 'alpine-test uses an image, skipping*Building dbm-test*' success
+            "${app_compose_file}" 'dbm-test' 'false' '*Successfully built*' '*Building dbm-test*' success
+            "${app_compose_file}" 'invalid'  'false' '*'                    'No such service: invalid' failure
         End
 
         It 'builds a regular development image'
             When call build_image "$1" "$2" "$3"
             The status should be "$6"
-            The output should start with "$4"
+            The output should match pattern "$4"
             The error should match pattern "$5"
         End
     End
 
-    Describe 'deploy_stack() and remove_stack()'
+    Describe 'deploy_stack()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            docker stack rm 'shellspec' || true
-            mute 'false'
+            remove_stack 'shellspec' 'true' > /dev/null 2>&1
         }
         
-        BeforeAll 'setup_local'
-        AfterAll 'cleanup_local'
+        Before 'setup_local'
+        After 'cleanup_local'
 
         It 'deploys a stack with correct service name'
             When call deploy_stack "${app_compose_file}" 'shellspec'
@@ -141,12 +132,6 @@ Describe 'lib/docker.sh' docker
             The output should match pattern '*Creating service shellspec_alpine-test*'
             The output should match pattern '*Creating service shellspec_dbm-test*'
             The error should match pattern '*Ignoring unsupported options: build, restart*'
-        End
-
-        It 'removes a stack'
-            When call remove_stack 'shellspec' 'true'
-            The status should be success
-            The output should match pattern 'Waiting for Docker Stack to be removed*done'
         End
     End
 
@@ -176,15 +161,11 @@ Describe 'lib/docker.sh' docker
 
     Describe 'push_image()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            bring_container_down "${app_compose_file}"
-            mute 'false'
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
         }
         
         Before 'setup_local'
@@ -203,18 +184,34 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Describe 'stop_container()'
+    Describe 'remove_stack()'
         setup_local() {
-            mute 'true'
-            build_image "${app_compose_file}" 'dbm-test' 'false'
-            bring_container_up "${app_compose_file}" '' 'true' 'false' 'sh'
-            mute 'false'
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            deploy_stack "${app_compose_file}" 'shellspec' > /dev/null 2>&1
         }
 
         cleanup_local() { 
-            mute 'true'
-            bring_container_down "${app_compose_file}"
-            mute 'false'
+            docker stack rm 'shellspec' > /dev/null 2>&1 || true 
+        }
+        
+        Before 'setup_local'
+        After 'cleanup_local'
+
+        It 'removes a stack'
+            When call remove_stack 'shellspec' 'true'
+            The status should be success
+            The output should match pattern 'Waiting for Docker Stack to be removed*done'
+        End
+    End
+
+    Describe 'stop_container()'
+        setup_local() {
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            bring_container_up "${app_compose_file}" '' 'true' 'false' 'sh' > /dev/null 2>&1
+        }
+
+        cleanup_local() { 
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
         }
         
         Before 'setup_local'
