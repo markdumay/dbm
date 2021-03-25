@@ -28,9 +28,9 @@ jobs:
       - name: Upgrade brew
         run: brew upgrade
 
-      - name: Install Docker
+      - name: Install Docker and dependencies
         run: |  
-          brew install docker-machine docker
+          brew install docker-machine docker jq realpath
           brew services start docker-machine
 
       - name: Install shell packages
