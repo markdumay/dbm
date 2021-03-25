@@ -427,7 +427,7 @@ validate_platforms() {
     platforms="$1,"
 
     # Validate Docker Buildx plugin is present
-    if ! docker info | grep -q buildx; then
+    if ! docker info 2> /dev/null | grep -q buildx; then
         err "Docker Buildx plugin required"
         return 1
     fi
