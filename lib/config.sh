@@ -331,10 +331,13 @@ has_dependency_version() {
 #   Writes setting to stdout.
 #=======================================================================================================================
 init_config_value() {
-    match=$(grep -in "^$1=" "${config_file}" 2> /dev/null) # read entry from config file
-    line=$(echo "${match}" | awk -F':' '{print $1}') # read line number
-    value=$(echo "${match}" | awk -F'=' '{print $2}') # read setting value
-    value="${value:-$2}" # assign a default value if needed
+    # read entry from config file
+    if match=$(grep -in "^$1=" "${config_file}" 2> /dev/null); then
+        line=$(echo "${match}" | awk -F':' '{print $1}') # read line number
+        value=$(echo "${match}" | awk -F'=' '{print $2}') # read setting value
+    else
+        value="$2" # assign a default value if needed
+    fi
 
     # remove / validate quotes
     left=$(echo "${value}" | cut -c1)
@@ -344,7 +347,7 @@ init_config_value() {
         value="${value%${quote}}"
         value="${value#${quote}}"
     elif [ "${left}" = "'" ] || [ "${left}" = "\"" ] || [ "${right}" = "'" ] || [ "${right}" = "\"" ]; then
-        { [ -n "${line}" ] && echo "Invalid character found in config file line ${line}: ${value}"; } || \
+        { [ -n "${line}" ] && err "Invalid character found in config file line ${line}: ${value}"; } || \
             err "Invalid character found in default value for variable '$1': $2"
         return 1
     fi
@@ -456,6 +459,7 @@ init_config() {
         { err "Cannot read config value DOCKER_DEV_YML"; return 1; }
     config_docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}") || \
         { err "Cannot read config value DOCKER_SERVICE_NAME"; return 1; }
+    # TODO: fix on Ubuntu
     config_docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '') || \
         { err "Cannot read config value DOCKER_TARGET_PLATFORM"; return 1; }
 
