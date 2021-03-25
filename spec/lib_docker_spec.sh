@@ -83,6 +83,7 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix build_cross_platform_image on GitHub CI
+    # TODO: make build_cross_platform_image inclusion optional (only include on linux)
     # Describe 'build_cross_platform_image()'
     #     Parameters
     #         # shellcheck disable=SC2154
@@ -164,6 +165,7 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix push_image on GitHub CI
+    # TODO: make push optional (only include on linux)
     # Describe 'push_image()'
     #     setup_local() {
     #         build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
