@@ -8,7 +8,7 @@
 #=======================================================================================================================
 # Constants
 #=======================================================================================================================
-readonly CORE_DEPENDENCIES='awk cut date docker docker-compose grep realpath sed sort tr uname wc'
+readonly CORE_DEPENDENCIES='awk cut date docker docker-compose grep realpath rev sed sort tr uname wc'
 readonly REPOSITORY_DEPENDENCIES='curl jq'
 readonly VERSION_DEPENDENCIES='basename cat dirname'
 # readonly TRUST_DEPENDENCIES='notary openssl'
