@@ -28,11 +28,14 @@ jobs:
       - name: Upgrade brew
         run: brew upgrade
 
+      - name: Install Docker
+        run:  brew install docker-machine docker
+
       - name: Install shell packages
         run:  brew install ${{ matrix.shells.package }}
 
       - name: Install shellspec
-        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
+        run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
 
       - name: Run unit tests
-        run: sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}"
+        run:  sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}"
