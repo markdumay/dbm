@@ -14,12 +14,12 @@ jobs:
     strategy:
       matrix:
         shells:
-          - {shell: dash, package: dash}
+#           - {shell: dash, package: dash}
           - {shell: bash, package: bash}
-          - {shell: ksh,  package: ksh}
-          - {shell: mksh, package: mksh}
-          - {shell: yash, package: yash}
-          - {shell: zsh,  package: zsh}
+#           - {shell: ksh,  package: ksh}
+#           - {shell: mksh, package: mksh}
+#           - {shell: yash, package: yash}
+#           - {shell: zsh,  package: zsh}
       fail-fast: false
     steps:
       - name: Checkout
@@ -29,7 +29,9 @@ jobs:
         run: brew upgrade
 
       - name: Install Docker
-        run:  brew install docker-machine docker
+        run: |  
+          brew install docker-machine docker
+          brew services start docker-machine
 
       - name: Install shell packages
         run:  brew install ${{ matrix.shells.package }}
@@ -38,4 +40,4 @@ jobs:
         run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
 
       - name: Run unit tests
-        run:  sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}"
+        run:  sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}" --tag compose
