@@ -46,4 +46,4 @@ jobs:
         run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
 
       - name: Run unit tests
-        run: sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec
+        run: sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}"
