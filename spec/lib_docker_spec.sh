@@ -143,12 +143,6 @@ Describe 'lib/docker.sh' docker
             The output should match pattern '*Creating service shellspec_dbm-test*'
             The error should match pattern '*Ignoring unsupported options: build, restart*'
         End
-
-        It 'removes a stack'
-            When call remove_stack 'shellspec' 'true'
-            The status should be success
-            The output should match pattern 'Waiting for Docker Stack to be removed*done'
-        End
     End
 
     Describe 'get_arch()'
@@ -201,6 +195,26 @@ Describe 'lib/docker.sh' docker
             When call push_image 'invalid/invalid'
             The status should be failure
             The error should match pattern "*WARN:  Cannot push, image not found: invalid/invalid*"
+        End
+    End
+
+    Describe 'remove_stack()'
+        setup_local() {
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            deploy_stack "${app_compose_file}" 'shellspec' > /dev/null 2>&1
+        }
+
+        cleanup_local() { 
+            docker stack rm 'shellspec' > /dev/null 2>&1 || true 
+        }
+        
+        Before 'setup_local'
+        After 'cleanup_local'
+
+        It 'removes a stack'
+            When call remove_stack 'shellspec' 'true'
+            The status should be success
+            The output should match pattern 'Waiting for Docker Stack to be removed*done'
         End
     End
 
