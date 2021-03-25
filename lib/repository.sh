@@ -221,6 +221,8 @@ _get_latest_docker_tag() {
 #   The repository did not return any tags matching the (optional) extension.
 # - Up to date
 #   The current version is the latest.
+# - Different digest found
+#   The local digest does not match the remote digest.
 # - Different version found
 #   The repository returned a different version as latest (which might be newer).
 #=======================================================================================================================
