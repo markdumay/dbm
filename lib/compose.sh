@@ -60,6 +60,7 @@ generate_compose_file() {
     service="$4"
     tag="$5"
 
+    [ -z "${compose_files}" ] && err "Docker Compose file required" && return 1
     [ -z "${config_file}" ] && config_file=$(mktemp -t "dbm_temp.XXXXXXXXX")
     if ! config=$(generate_compose_string "${compose_files}" "${context}" "${tag}"); then
         err "Cannot generate Docker Compose file: ${config_file}"

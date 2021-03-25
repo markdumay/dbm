@@ -13,6 +13,7 @@ Describe 'lib/compose' compose
     Include lib/repository.sh
     Include lib/settings.sh
     Include lib/utils.sh
+    Include cmd/root.sh
 
     # shellcheck disable=SC2034
     setup() { 
@@ -22,7 +23,12 @@ Describe 'lib/compose' compose
         echo "BASEDIR: ${app_basedir}"
         arg_config='test/dbm.ini'
         arg_target='dev'
-        init_global_settings
+
+        echo "DEBUG: init_config '${app_basedir}' '${arg_config}'"
+        file="${app_basedir}/${arg_config}"
+        [ -f "${file}" ] && echo "File exists: ${file}" || echo "ERROR: File MISSING: ${file}"
+
+        init_global_settings || { err "Cannot init settings"; return 1; }
         # prepare_environment
         # Change to working directory
         {
@@ -38,6 +44,30 @@ Describe 'lib/compose' compose
         eval "${app_exported_vars}"
 
         echo "DOCKER DIR: ${docker_dir}"
+        echo "DEBUG: generate_compose_file '${app_docker_compose_flags}' '${docker_dir}' '' '${arg_services}' '${arg_tag}'"
+
+
+        echo "app_compose_file: ${app_compose_file}"
+        echo "app_docker_compose_flags: ${app_docker_compose_flags}"
+        echo "app_exported_vars: ${app_exported_vars}"
+        echo "app_host_arch: ${app_host_arch}"
+        echo "app_host_os: ${app_host_os}"
+        echo "app_images: ${app_images}"
+        echo "app_script_version: ${app_script_version}"
+
+        echo "arg_command: ${arg_command}"
+        echo "arg_target: ${arg_target}"
+        echo "arg_config: ${arg_config}"
+        echo "arg_compose_file: ${arg_compose_file}"
+        echo "arg_detached: ${arg_detached}"
+        echo "arg_no_cache: ${arg_no_cache}"
+        echo "arg_platforms: ${arg_platforms}"
+        echo "arg_push: ${arg_push}"
+        echo "arg_tag: ${arg_tag}"
+        echo "arg_terminal: ${arg_terminal}"
+        echo "arg_services: ${arg_services}"
+        echo "arg_shell: ${arg_shell}"
+
     }
 
     # shellcheck disable=SC2154
