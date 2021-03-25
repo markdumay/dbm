@@ -19,9 +19,9 @@ jobs:
           - {shell: busybox ash, package: busybox}
           - {shell: ksh,         package: ksh}
           - {shell: mksh,        package: mksh}
-          - {shell: posh,        package: posh}
+#           - {shell: posh,        package: posh}
           - {shell: yash,        package: yash}
-          - {shell: zsh,         package: zsh}
+#           - {shell: zsh,         package: zsh}
       fail-fast: false
     steps:
       - name: Checkout
