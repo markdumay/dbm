@@ -43,4 +43,4 @@ jobs:
         run: sudo apt-get install -y ${{ matrix.shells.package }}
       
       - name: Run unit tests
-        run: sudo ${{ matrix.shells.shell }} ./shellspec
+        run: sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec
