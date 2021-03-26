@@ -14,11 +14,11 @@ jobs:
     strategy:
       matrix:
         shells:
-#           - {shell: sh}
-#           - {shell: dash}
+          - {shell: sh}
+          - {shell: dash}
           - {shell: bash}
-#           - {shell: ksh}
-#           - {shell: zsh}
+          - {shell: ksh}
+          - {shell: zsh}
       fail-fast: false
     steps:
       - name: Checkout
