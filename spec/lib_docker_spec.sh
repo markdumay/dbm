@@ -96,7 +96,6 @@ Describe 'lib/docker.sh' docker
         It 'builds a cross-platform development image'
             When call build_cross_platform_image "$1" "$2" "$3" "$4"
             The status should be "$6"
-            # TODO: address stdout: Initializing buildx builder 'dbm_buildx'
             The output should match pattern '*'
             The error should match pattern "$5"
         End
@@ -164,7 +163,6 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    # TODO fix push_image on GitHub CI
     Describe 'push_image()' test
         setup_local() {
             build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
