@@ -19,7 +19,7 @@ jobs:
           - {shell: ksh,  package: ksh}
           - {shell: mksh, package: mksh}
           - {shell: yash, package: yash}
-          - {shell: zsh,  package: zsh}
+#           - {shell: zsh,  package: zsh}
       fail-fast: false
     steps:
       - name: Checkout
