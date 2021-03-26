@@ -181,11 +181,11 @@ validate_host_dependencies() {
     # TODO: add trust: TRUST_DEPENDENCIES='notary'
     # TODO: verify if daemon is needed for config
     case "${command}" in
-        build )                     check_daemon='true'; [ -n "${platforms}" ] && check_buildx='true';;
-        deploy | down | stop | up ) check_daemon='true';;
-        config )                    ;;
-        check )                     host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES}";;
-        version )                   host_dependencies="${VERSION_DEPENDENCIES}";;
+        build )                              check_daemon='true'; [ -n "${platforms}" ] && check_buildx='true';;
+        deploy | down | remove | stop | up ) check_daemon='true';;
+        generate )                           ;;
+        check )                              host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES}";;
+        version )                            host_dependencies="${VERSION_DEPENDENCIES}";;
         * )                    
             # test everything when command is not specified (e.g. unit testing)  
             host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES} ${VERSION_DEPENDENCIES}"
