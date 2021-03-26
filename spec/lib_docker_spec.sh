@@ -87,23 +87,23 @@ Describe 'lib/docker.sh' docker
 
     # TODO fix build_cross_platform_image on GitHub CI
     # TODO: make build_cross_platform_image inclusion optional (only include on linux)
-    # Describe 'build_cross_platform_image()'
-    #     Parameters
-    #         # shellcheck disable=SC2154
-    #         "${app_compose_file}" ''         'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
-    #         "${app_compose_file}" ''         'true'  "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
-    #         "${app_compose_file}" 'dbm-test' 'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
-    #         "${app_compose_file}" 'invalid'  'false' "${app_host_os}/${app_host_arch}" 'error: failed to find target invalid' failure
-    #     End
+    Describe 'build_cross_platform_image()' test
+        Parameters
+            # shellcheck disable=SC2154
+            "${app_compose_file}" ''         'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
+            "${app_compose_file}" ''         'true'  "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
+            "${app_compose_file}" 'dbm-test' 'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
+            "${app_compose_file}" 'invalid'  'false' "${app_host_os}/${app_host_arch}" 'error: failed to find target invalid' failure
+        End
 
-    #     It 'builds a cross-platform development image'
-    #         When call build_cross_platform_image "$1" "$2" "$3" "$4"
-    #         The status should be "$6"
-    #         # TODO: address stdout: Initializing buildx builder 'dbm_buildx'
-    #         The output should match pattern '*'
-    #         The error should match pattern "$5"
-    #     End
-    # End
+        It 'builds a cross-platform development image'
+            When call build_cross_platform_image "$1" "$2" "$3" "$4"
+            The status should be "$6"
+            # TODO: address stdout: Initializing buildx builder 'dbm_buildx'
+            The output should match pattern '*'
+            The error should match pattern "$5"
+        End
+    End
 
     Describe 'build_image()'
         Parameters
