@@ -32,7 +32,7 @@ jobs:
           brew install docker docker-machine docker-compose coreutils
           docker-machine create --driver virtualbox default
           docker-machine env default
-          eval "$(docker-machine env default)"
+          ${{ matrix.shells.shell }} eval "$(docker-machine env default)"
 
       - name: Install shellspec
         run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
