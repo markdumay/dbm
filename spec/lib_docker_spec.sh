@@ -117,8 +117,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    # TODO fix deploy_stack on GitHub CI
-    Describe 'deploy_stack()' test
+    Describe 'deploy_stack()'
         setup_local() {
             build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
@@ -136,7 +135,6 @@ Describe 'lib/docker.sh' docker
             The output should match pattern '*Creating service shellspec_alpine-test*'
             The output should match pattern '*Creating service shellspec_dbm-test*'
             The error should match pattern '*Ignoring unsupported options: build, restart*'
-            Dump
         End
     End
 
@@ -164,7 +162,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Describe 'push_image()' test
+    Describe 'push_image()'
         setup_local() {
             build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
         }
@@ -189,7 +187,6 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    # TODO fix remove_stack on GitHub CI
     Describe 'remove_stack()'
         setup_local() {
             build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
