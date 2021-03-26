@@ -9,6 +9,9 @@
 
 <!-- Badges -->
 <p align="center">
+    <a href="https://www.codefactor.io/repository/github/markdumay/dbm" alt="CodeFactor">
+        <img src="https://img.shields.io/codefactor/grade/github/markdumay/dbm" />
+    </a>
     <a href="https://github.com/markdumay/dbm/commits/main" alt="Last commit">
         <img src="https://img.shields.io/github/last-commit/markdumay/dbm.svg" />
     </a>
