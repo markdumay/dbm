@@ -9,13 +9,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-brew:
-    runs-on: macos-latest
+#   macos-brew:
+  macos-catalina:
+    runs-on: macos-10.15
     strategy:
       matrix:
         shells:
-#           - {shell: dash, package: dash}
-          - {shell: bash, package: bash}
+#           - {shell: sh}
+#           - {shell: dash}
+          - {shell: bash}
+#           - {shell: ksh}
+#           - {shell: zsh}
+# runs-on: macos-latest
+#     strategy:
+#       matrix:
+#         shells:
+# #           - {shell: dash, package: dash}
+#           - {shell: bash, package: bash}
 #           - {shell: ksh,  package: ksh}
 #           - {shell: mksh, package: mksh}
 #           - {shell: yash, package: yash}
