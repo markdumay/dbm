@@ -31,7 +31,6 @@ jobs:
       - name: Install Docker and dependencies
         run: |  
           brew install docker docker-machine docker-compose coreutils
-          brew cask install virtualbox
           docker-machine create --driver virtualbox default
           docker-machine env default
 
