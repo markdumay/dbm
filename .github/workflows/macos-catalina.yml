@@ -1,5 +1,5 @@
 
-name: macOS Homebrew
+name: macOS Catalina
 
 on:
   push:
@@ -20,16 +20,6 @@ jobs:
           - {shell: bash}
 #           - {shell: ksh}
 #           - {shell: zsh}
-# runs-on: macos-latest
-#     strategy:
-#       matrix:
-#         shells:
-# #           - {shell: dash, package: dash}
-#           - {shell: bash, package: bash}
-#           - {shell: ksh,  package: ksh}
-#           - {shell: mksh, package: mksh}
-#           - {shell: yash, package: yash}
-#           - {shell: zsh,  package: zsh}
       fail-fast: false
     steps:
       - name: Checkout
@@ -43,14 +33,7 @@ jobs:
           brew install docker docker-machine docker-compose coreutils
           docker-machine create --driver virtualbox default
           docker-machine env default
-
-#       - name: Install Docker and dependencies
-#         run: |  
-#           brew install docker-machine docker docker-compose coreutils
-#           brew services start docker-machine
-
-      - name: Install shell packages
-        run:  brew install ${{ matrix.shells.package }}
+          eval "$(docker-machine env default)"
 
       - name: Install shellspec
         run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
