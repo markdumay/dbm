@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ubuntu-focal:
+  docker@ubuntu-focal:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -28,6 +28,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Initialize Docker Swarm
+        run: docker swarm init
 
       - name: Install shellspec
         run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
