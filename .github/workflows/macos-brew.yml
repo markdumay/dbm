@@ -1,5 +1,5 @@
 
-name: macOS Brew
+name: macOS Homebrew
 
 on:
   push:
