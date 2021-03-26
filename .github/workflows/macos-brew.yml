@@ -30,8 +30,15 @@ jobs:
 
       - name: Install Docker and dependencies
         run: |  
-          brew install docker-machine docker docker-compose coreutils
-          brew services start docker-machine
+          brew install docker docker-machine docker-compose coreutils
+          brew cask install virtualbox
+          docker-machine create --driver virtualbox default
+          docker-machine env default
+
+#       - name: Install Docker and dependencies
+#         run: |  
+#           brew install docker-machine docker docker-compose coreutils
+#           brew services start docker-machine
 
       - name: Install shell packages
         run:  brew install ${{ matrix.shells.package }}
@@ -41,3 +48,6 @@ jobs:
 
       - name: Run unit tests
         run:  sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}" --tag compose
+
+      - name: Stop Docker daemon
+        run:  docker-machine stop default
