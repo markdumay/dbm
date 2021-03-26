@@ -341,7 +341,6 @@ push_image() {
 # Outputs:
 #   Removed Docker Stack, terminates on error.
 #=======================================================================================================================
-# TODO: add as command
 remove_stack() {
     service_name="$1"
     sync="${2:-true}"
