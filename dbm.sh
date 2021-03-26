@@ -17,50 +17,50 @@
 # Application variables
 #=======================================================================================================================
 app_script_path=$(realpath "$0")
-app_basedir=$(dirname "${app_script_path}")
+app_sourcedir=$(dirname "${app_script_path}")
 
 
 #=======================================================================================================================
 # Dependencies
 #=======================================================================================================================
 # shellcheck source=lib/config.sh
-. "${app_basedir}"/lib/config.sh
+. "${app_sourcedir}"/lib/config.sh
 # shellcheck source=lib/compose.sh
-. "${app_basedir}"/lib/compose.sh
+. "${app_sourcedir}"/lib/compose.sh
 # shellcheck source=lib/docker.sh
-. "${app_basedir}"/lib/docker.sh
+. "${app_sourcedir}"/lib/docker.sh
 # shellcheck source=lib/log.sh
-. "${app_basedir}"/lib/log.sh
+. "${app_sourcedir}"/lib/log.sh
 # shellcheck source=lib/repository.sh
-. "${app_basedir}"/lib/repository.sh
+. "${app_sourcedir}"/lib/repository.sh
 # shellcheck source=lib/settings.sh
-. "${app_basedir}"/lib/settings.sh
+. "${app_sourcedir}"/lib/settings.sh
 # shellcheck source=lib/utils.sh
-. "${app_basedir}"/lib/utils.sh
+. "${app_sourcedir}"/lib/utils.sh
 # shellcheck source=lib/yaml.sh
-. "${app_basedir}"/lib/yaml.sh
+. "${app_sourcedir}"/lib/yaml.sh
 # shellcheck source=cmd/root.sh
-. "${app_basedir}"/cmd/root.sh
+. "${app_sourcedir}"/cmd/root.sh
 # shellcheck source=cmd/build.sh
-. "${app_basedir}"/cmd/build.sh
+. "${app_sourcedir}"/cmd/build.sh
 # shellcheck source=cmd/check.sh
-. "${app_basedir}"/cmd/check.sh
+. "${app_sourcedir}"/cmd/check.sh
 # shellcheck source=cmd/generate.sh
-. "${app_basedir}"/cmd/generate.sh
+. "${app_sourcedir}"/cmd/generate.sh
 # shellcheck source=cmd/deploy.sh
-. "${app_basedir}"/cmd/deploy.sh
+. "${app_sourcedir}"/cmd/deploy.sh
 # shellcheck source=cmd/down.sh
-. "${app_basedir}"/cmd/down.sh
+. "${app_sourcedir}"/cmd/down.sh
 # shellcheck source=cmd/info.sh
-. "${app_basedir}"/cmd/info.sh
+. "${app_sourcedir}"/cmd/info.sh
 # shellcheck source=cmd/remove.sh
-. "${app_basedir}"/cmd/remove.sh
+. "${app_sourcedir}"/cmd/remove.sh
 # shellcheck source=cmd/stop.sh
-. "${app_basedir}"/cmd/stop.sh
+. "${app_sourcedir}"/cmd/stop.sh
 # shellcheck source=cmd/up.sh
-. "${app_basedir}"/cmd/up.sh
+. "${app_sourcedir}"/cmd/up.sh
 # shellcheck source=cmd/version.sh
-. "${app_basedir}"/cmd/version.sh
+. "${app_sourcedir}"/cmd/version.sh
 
 
 #=======================================================================================================================
@@ -118,4 +118,5 @@ main() {
 }
 
 ${__SOURCED__:+return} # avoid calling the main function from within shellspec context
+app_basedir=$(get_absolute_path "${PWD}")
 main "$@"

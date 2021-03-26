@@ -94,6 +94,7 @@ list_images() {
     
     # Show targeted images information, filtered for services if applicable
     if [ -n "${services}" ] ; then
+        IFS=' '
         for service in $services; do
             image=$(echo "${yaml}" | grep "^services_${service}_image=" | sed 's/^services_/ /' | sed 's/=/: /')
             [ -z "${image}" ] && err "Service '${service}' not found" && return 1
