@@ -219,7 +219,7 @@ err() {
 #=======================================================================================================================
 fail() {
     msg="$1"
-    _show_and_write_log "${LOG_ERROR}" "${RED}" "${msg}" 'true' 'true'
+    _show_and_write_log "${LOG_FATAL}" "${RED}" "${msg}" 'true' 'true'
     exit 1
 }
 
