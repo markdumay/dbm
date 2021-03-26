@@ -6,6 +6,9 @@
 #=======================================================================================================================
 
 Describe 'lib/docker.sh' docker
+    conditions() { [ "${SHELLSPEC_SKIP_DOCKER}" = 'true' ] && echo "skip"; }
+    Skip if 'function returns "skip"' [ "$(conditions)" = "skip" ]
+
     Include lib/config.sh
     Include lib/compose.sh
     Include lib/docker.sh
@@ -83,6 +86,7 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix build_cross_platform_image on GitHub CI
+    # TODO: make build_cross_platform_image inclusion optional (only include on linux)
     # Describe 'build_cross_platform_image()'
     #     Parameters
     #         # shellcheck disable=SC2154
@@ -164,6 +168,7 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix push_image on GitHub CI
+    # TODO: make push optional (only include on linux)
     # Describe 'push_image()'
     #     setup_local() {
     #         build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
@@ -239,6 +244,7 @@ Describe 'lib/docker.sh' docker
 
     Describe 'validate_platforms()'
         Parameters
+            # shellcheck disable=SC2154
             "${app_host_os}/${app_host_arch}" '' success
             "invalid/invalid" 'ERROR: Target platforms not supported: invalid/invalid' failure
         End
