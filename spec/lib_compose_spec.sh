@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/compose' compose
+Describe 'lib/compose' docker compose
     conditions() { [ "${SHELLSPEC_SKIP_DOCKER}" = 'true' ] && echo "skip"; }
     Skip if 'function returns "skip"' [ "$(conditions)" = "skip" ]
 
