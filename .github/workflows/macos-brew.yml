@@ -1,5 +1,5 @@
 
-name: macOS Catalina
+name: macOS Homebrew
 
 on:
   push:
@@ -9,16 +9,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-catalina:
+  macos-brew:
     runs-on: macos-10.15
     strategy:
       matrix:
         shells:
-          - {shell: sh}
-          - {shell: dash}
-          - {shell: bash}
-          - {shell: ksh}
-#           - {shell: zsh}
+          - {shell: dash, package: dash}
+          - {shell: bash, package: bash}
+          - {shell: ksh,  package: ksh}
+          - {shell: mksh, package: mksh}
+          - {shell: yash, package: yash}
+#           - {shell: zsh,  package: zsh}
       fail-fast: false
     steps:
       - name: Checkout
@@ -27,6 +28,7 @@ jobs:
       - name: Install dependencies
         run:  |
           brew upgrade
+          brew install ${{ matrix.shells.package }}
           brew install coreutils
 
       - name: Install shellspec
