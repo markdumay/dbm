@@ -9,7 +9,6 @@ on:
   workflow_dispatch:
 
 jobs:
-#   macos-brew:
   macos-catalina:
     runs-on: macos-10.15
     strategy:
@@ -39,7 +38,7 @@ jobs:
         run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
 
       - name: Run unit tests
-        run:  sudo ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}" --tag compose
+        run:  ${{ matrix.shells.shell }} ~/.local/bin/shellspec --shell "${{ matrix.shells.shell }}" --tag compose
 
       - name: Stop Docker daemon
         run:  docker-machine stop default
