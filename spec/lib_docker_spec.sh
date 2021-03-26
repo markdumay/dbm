@@ -136,6 +136,7 @@ Describe 'lib/docker.sh' docker
             The output should match pattern '*Creating service shellspec_alpine-test*'
             The output should match pattern '*Creating service shellspec_dbm-test*'
             The error should match pattern '*Ignoring unsupported options: build, restart*'
+            Dump
         End
     End
 
@@ -189,7 +190,7 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix remove_stack on GitHub CI
-    Describe 'remove_stack()' test
+    Describe 'remove_stack()'
         setup_local() {
             build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
             deploy_stack "${app_compose_file}" 'shellspec' > /dev/null 2>&1
