@@ -6,6 +6,9 @@
 #=======================================================================================================================
 
 Describe 'lib/docker.sh' docker
+    conditions() { [ "${SHELLSPEC_SKIP_DOCKER}" = 'true' ] && echo "skip"; }
+    Skip if 'function returns "skip"' [ "$(conditions)" = "skip" ]
+
     Include lib/config.sh
     Include lib/compose.sh
     Include lib/docker.sh
