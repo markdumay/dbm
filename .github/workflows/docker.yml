@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  docker@ubuntu-focal:
+  docker-ubuntu-focal:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
