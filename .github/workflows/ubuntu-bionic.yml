@@ -1,0 +1,37 @@
+
+name: Ubuntu Bionic Beaver
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  ubuntu-focal:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        shells:
+          - {shell: dash,        package: dash}
+          - {shell: bash,        package: bash}
+          - {shell: busybox ash, package: busybox}
+          - {shell: ksh,         package: ksh}
+          - {shell: mksh,        package: mksh}
+#           - {shell: posh,        package: posh}
+          - {shell: yash,        package: yash}
+#           - {shell: zsh,         package: zsh}
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install shell packages
+        run: sudo apt-get install -y ${{ matrix.shells.package }}
+
+      - name: Install shellspec
+        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
+
+      - name: Run unit tests w/o Docker
+        run:  ${{ matrix.shells.shell }} -c "SHELLSPEC_SKIP_DOCKER=true ~/.local/bin/shellspec --shell ${{ matrix.shells.shell }}"
