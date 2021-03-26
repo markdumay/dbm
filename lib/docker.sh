@@ -318,6 +318,7 @@ push_image() {
     images="$1"
     result=0
 
+    IFS=' '
     for image in $images; do
         match=$(echo "${image}" | sed 's/:/.*/g')
         if docker image ls | grep -qE "${match}"; then

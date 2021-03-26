@@ -99,6 +99,7 @@ validate_dependencies() {
     missing=''
 
     # Check if required commands are available
+    IFS=' '
     for dependency in $dependencies; do
         command -v "${dependency}" >/dev/null 2>&1 || missing="${missing}${dependency}, "
     done
