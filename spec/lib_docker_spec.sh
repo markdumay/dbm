@@ -39,7 +39,6 @@ Describe 'lib/docker.sh' docker
         fi
     }
 
-    # TODO: check scope 
     BeforeAll 'setup'
     AfterAll 'cleanup'
 
@@ -85,9 +84,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    # TODO fix build_cross_platform_image on GitHub CI
-    # TODO: make build_cross_platform_image inclusion optional (only include on linux)
-    Describe 'build_cross_platform_image()' test
+    Describe 'build_cross_platform_image()'
         Parameters
             # shellcheck disable=SC2154
             "${app_compose_file}" ''         'false' "${app_host_os}/${app_host_arch}" "${spec_xbuild_expected}" success
@@ -122,26 +119,26 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix deploy_stack on GitHub CI
-    # Describe 'deploy_stack()'
-    #     setup_local() {
-    #         build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
-    #     }
+    Describe 'deploy_stack()' test
+        setup_local() {
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+        }
 
-    #     cleanup_local() { 
-    #         remove_stack 'shellspec' 'true' > /dev/null 2>&1
-    #     }
+        cleanup_local() { 
+            remove_stack 'shellspec' 'true' > /dev/null 2>&1
+        }
         
-    #     Before 'setup_local'
-    #     After 'cleanup_local'
+        Before 'setup_local'
+        After 'cleanup_local'
 
-    #     It 'deploys a stack with correct service name'
-    #         When call deploy_stack "${app_compose_file}" 'shellspec'
-    #         The status should be success
-    #         The output should match pattern '*Creating service shellspec_alpine-test*'
-    #         The output should match pattern '*Creating service shellspec_dbm-test*'
-    #         The error should match pattern '*Ignoring unsupported options: build, restart*'
-    #     End
-    # End
+        It 'deploys a stack with correct service name'
+            When call deploy_stack "${app_compose_file}" 'shellspec'
+            The status should be success
+            The output should match pattern '*Creating service shellspec_alpine-test*'
+            The output should match pattern '*Creating service shellspec_dbm-test*'
+            The error should match pattern '*Ignoring unsupported options: build, restart*'
+        End
+    End
 
     Describe 'get_arch()'
         is_valid() {
@@ -168,52 +165,51 @@ Describe 'lib/docker.sh' docker
     End
 
     # TODO fix push_image on GitHub CI
-    # TODO: make push optional (only include on linux)
-    # Describe 'push_image()'
-    #     setup_local() {
-    #         build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
-    #     }
+    Describe 'push_image()' test
+        setup_local() {
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+        }
 
-    #     cleanup_local() { 
-    #         bring_container_down "${app_compose_file}" > /dev/null 2>&1
-    #     }
+        cleanup_local() { 
+            bring_container_down "${app_compose_file}" > /dev/null 2>&1
+        }
         
-    #     Before 'setup_local'
-    #     After 'cleanup_local'
+        Before 'setup_local'
+        After 'cleanup_local'
 
-    #     It 'pushes a specific image'
-    #         When call push_image "markdumay/dbm-test:${BUILD_VERSION}-debug"
-    #         The status should be success
-    #         The output should match pattern "*Pushing image to registry: markdumay/dbm-test:${BUILD_VERSION}-debug*"
-    #     End
+        It 'pushes a specific image'
+            When call push_image "markdumay/dbm-test:${BUILD_VERSION}-debug"
+            The status should be success
+            The output should match pattern "*Pushing image to registry: markdumay/dbm-test:${BUILD_VERSION}-debug*"
+        End
 
-    #     It 'pushes a specific image'
-    #         When call push_image 'invalid/invalid'
-    #         The status should be failure
-    #         The error should match pattern "*WARN:  Cannot push, image not found: invalid/invalid*"
-    #     End
-    # End
+        It 'pushes a specific image'
+            When call push_image 'invalid/invalid'
+            The status should be failure
+            The error should match pattern "*WARN:  Cannot push, image not found: invalid/invalid*"
+        End
+    End
 
     # TODO fix remove_stack on GitHub CI
-    # Describe 'remove_stack()'
-    #     setup_local() {
-    #         build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
-    #         deploy_stack "${app_compose_file}" 'shellspec' > /dev/null 2>&1
-    #     }
+    Describe 'remove_stack()' test
+        setup_local() {
+            build_image "${app_compose_file}" 'dbm-test' 'false' > /dev/null 2>&1
+            deploy_stack "${app_compose_file}" 'shellspec' > /dev/null 2>&1
+        }
 
-    #     cleanup_local() { 
-    #         docker stack rm 'shellspec' > /dev/null 2>&1 || true 
-    #     }
+        cleanup_local() { 
+            docker stack rm 'shellspec' > /dev/null 2>&1 || true 
+        }
         
-    #     Before 'setup_local'
-    #     After 'cleanup_local'
+        Before 'setup_local'
+        After 'cleanup_local'
 
-    #     It 'removes a stack'
-    #         When call remove_stack 'shellspec' 'true'
-    #         The status should be success
-    #         The output should match pattern 'Waiting for Docker Stack to be removed*done'
-    #     End
-    # End
+        It 'removes a stack'
+            When call remove_stack 'shellspec' 'true'
+            The status should be success
+            The output should match pattern 'Waiting for Docker Stack to be removed*done'
+        End
+    End
 
     Describe 'stop_container()'
         setup_local() {
