@@ -244,6 +244,7 @@ Describe 'lib/docker.sh' docker
 
     Describe 'validate_platforms()'
         Parameters
+            # shellcheck disable=SC2154
             "${app_host_os}/${app_host_arch}" '' success
             "invalid/invalid" 'ERROR: Target platforms not supported: invalid/invalid' failure
         End
