@@ -24,6 +24,7 @@ Describe 'cmd/check.sh' cmd check
             It 'parses without flags'
                 When call parse_check_args "$1"
                 The status should be "$2"
+                The variable arg_no_digest should equal 'false'
             End
         End
 
@@ -37,6 +38,18 @@ Describe 'cmd/check.sh' cmd check
                 The status should be "$3"
                 The output should match pattern '?Usage*'
                 The error should equal "ERROR: Argument not supported: $2"
+            End
+        End
+
+        Describe 'no-digest'
+            Parameters
+                check --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_check_args "$1" "$2"
+                The status should be "$3"
+                The variable arg_no_digest should equal 'true'
             End
         End
 
