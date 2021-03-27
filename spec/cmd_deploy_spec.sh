@@ -46,6 +46,18 @@ Describe 'cmd/deploy.sh' cmd deploy
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                deploy dev --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_deploy_args "$1" "$2" "$3"
+                The status should be "$4"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'tag'
             Parameters
                 deploy dev --tag custom success

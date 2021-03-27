@@ -104,6 +104,18 @@ Describe 'cmd/up.sh' cmd up
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                up dev --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_up_args "$1" "$2" "$3"
+                The status should be "$4"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'tag'
             Parameters
                 up dev --tag custom success

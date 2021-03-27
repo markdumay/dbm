@@ -34,6 +34,7 @@ Flags:
 
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
+      --no-digest             Skip validation of digests
   -h, --help                  Help for the deploy command
 
 "
@@ -80,6 +81,7 @@ parse_deploy_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
+            --no-digest )   arg_no_digest='true';;
             --tag )         shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             -h | --help )   usage_deploy 'false'; exit;;
             * )             error="Argument not supported: $1"

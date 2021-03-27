@@ -46,6 +46,18 @@ Describe 'cmd/stop.sh' cmd stop
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                stop dev --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_stop_args "$1" "$2" "$3"
+                The status should be "$4"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'tag'
             Parameters
                 stop dev --tag custom success

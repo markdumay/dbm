@@ -30,6 +30,7 @@ Examples:
 
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
+      --no-digest             Skip validation of digests
   -h, --help                  Help for the remove command
 
 "
@@ -75,6 +76,7 @@ parse_remove_args() {
         case "$1" in
             dev | prod )    arg_target="$1";;
             --config )      shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
+            --no-digest )   arg_no_digest='true';;
             -h | --help )   usage_remove 'false'; exit;;
             * )             error="Argument not supported: $1"
         esac

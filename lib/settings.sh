@@ -150,7 +150,9 @@ stage_env() {
     [ "${target}" = 'dev' ] && image_suffix='-debug' 
 
     # Export environment variables as script
-    digests=$(export_digest_values) || { digests=''; warn "Could not process all digests"; }
+    if [ "${arg_no_digest}" != 'true' ]; then
+        digests=$(export_digest_values) || { digests=''; warn "Could not process all digests"; }
+    fi
     staged=$(export_env_values) || { err "${staged}"; return 1; }
     staged="${staged}\nexport BUILD_VERSION=${build_version}"
     staged="${staged}\nexport IMAGE_SUFFIX=${image_suffix}"

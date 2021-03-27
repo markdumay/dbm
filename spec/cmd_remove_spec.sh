@@ -46,6 +46,18 @@ Describe 'cmd/remove.sh' cmd remove
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                remove dev --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_remove_args "$1" "$2" "$3"
+                The status should be "$4"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'help'
             Parameters
                 remove -h success '?Remove*'

@@ -46,6 +46,18 @@ Describe 'cmd/down.sh' cmd down
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                down dev --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_down_args "$1" "$2" "$3"
+                The status should be "$4"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'tag'
             Parameters
                 down dev --tag custom success

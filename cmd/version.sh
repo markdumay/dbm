@@ -20,6 +20,7 @@ ${usage_version_msg_short}
 
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
+      --no-digest             Skip validation of digests
   -h, --help                  Help for the version command
 
 "
@@ -62,7 +63,8 @@ parse_version_args() {
     while [ -n "$1" ] && [ -z "${error}" ] ; do
         case "$1" in
             --config )     shift; [ -n "$1" ] && arg_config="$1" || error="Missing config filename";;
-            -h | --help )   usage_version 'false'; exit;;
+            --no-digest )  arg_no_digest='true';;
+            -h | --help )  usage_version 'false'; exit;;
             * )            error="Argument not supported: $1"
         esac
         shift

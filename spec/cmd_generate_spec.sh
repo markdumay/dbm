@@ -74,6 +74,18 @@ Describe 'cmd/generate.sh' cmd generate
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                generate dev output.yml --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_generate_args "$1" "$2" "$3" "$4"
+                The status should be "$5"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'tag'
             Parameters
                 generate dev output.yml --tag custom success

@@ -34,11 +34,9 @@ Examples:
   dbm check
   Check for dependency upgrades and display the findings
 
-Flags:
-  --no-digest                 Skip validation of digests
-
 Global Flags:
       --config <file>         Config file to use (defaults to dbm.ini)
+      --no-digest             Skip validation of digests
   -h, --help                  Help for the check command
 
 "

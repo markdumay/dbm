@@ -83,6 +83,18 @@ Describe 'cmd/build.sh' cmd build
             End
         End
 
+        Describe 'no-digest'
+            Parameters
+                build dev --no-digest success
+            End
+
+            It 'parses --no-digest flag'
+                When call parse_build_args "$1" "$2" "$3"
+                The status should be "$4"
+                The variable arg_no_digest should equal 'true'
+            End
+        End
+
         Describe 'platforms'
             Parameters
                 build dev --push --platforms linux/amd64,linux/arm64 success
