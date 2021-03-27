@@ -231,11 +231,12 @@ _get_latest_docker_tag() {
 # Outputs:
 #   Writes matching key/value pairs to stdout. Returns 1 in case of potential updates, 0 otherwise.
 #=======================================================================================================================
-# shellcheck disable=SC2059
+# shellcheck disable=SC2059,SC2154
 check_upgrades() {
     dependencies="$1"
     logs=''
     latest=''
+    local_digest=''
     remote_digest=''
     flag=0
 
@@ -271,11 +272,11 @@ check_upgrades() {
         case "${provider}" in
             hub.docker.com )
                 latest=$(_get_latest_docker_tag "${owner}" "${repo}" "${extension}")
-                remote_digest=$(_get_docker_digest "${owner}" "${repo}" "${tag}")
+                [ "${arg_no_digest}" != 'true' ] && remote_digest=$(_get_docker_digest "${owner}" "${repo}" "${tag}")
                 ;;
             github.com )
                 latest=$(_get_latest_github_tag "${owner}" "${repo}" "${extension}")
-                remote_digest=$(_get_github_digest "${owner}" "${repo}" "${tag}" 'false')
+                [ "${arg_no_digest}" != 'true' ] && remote_digest=$(_get_github_digest "${owner}" "${repo}" "${tag}" 'false')
                 ;;
             * )
                 logs="${logs}${dependency}\t Provider '${provider}' not supported, skipping\n"
@@ -285,8 +286,10 @@ check_upgrades() {
         # compare digest and tag
         latest_base=$(echo "${latest}" | sed "s/${extension}$//g;s/^v//g;s/^V//g;")
         latest_expanded=$(_expand_version "${latest_base}" "${extension}")
-        local_digest=$(read_update_stored_digest "${provider}/${owner}/${repo}" "v${version}${extension}" \
-            "${remote_digest}") || { logs="${logs}${dependency}\t${local_digest}\n"; flag=1; break; }
+        if [ "${arg_no_digest}" != 'true' ]; then
+            local_digest=$(read_update_stored_digest "${provider}/${owner}/${repo}" "v${version}${extension}" \
+                "${remote_digest}") || { logs="${logs}${dependency}\t${local_digest}\n"; flag=1; break; }
+        fi
         if [ -z "${latest}" ]; then
             logs="${logs}${dependency}\t No tags found, skipping\n"
         elif [ "${local_digest}" != "${remote_digest}" ]; then
@@ -301,7 +304,7 @@ check_upgrades() {
     done
 
     # clean up digest file; remove all dependencies/version not present in configuration file
-    clean_digest_file "${dependencies}"
+    [ "${arg_no_digest}" != 'true' ] && clean_digest_file "${dependencies}"
 
     # format and display findings
     width=$((width + 2))

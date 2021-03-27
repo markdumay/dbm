@@ -459,7 +459,6 @@ init_config() {
         { err "Cannot read config value DOCKER_DEV_YML"; return 1; }
     config_docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}") || \
         { err "Cannot read config value DOCKER_SERVICE_NAME"; return 1; }
-    # TODO: fix on Ubuntu
     config_docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '') || \
         { err "Cannot read config value DOCKER_TARGET_PLATFORM"; return 1; }
 
