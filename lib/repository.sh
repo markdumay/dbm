@@ -231,7 +231,7 @@ _get_latest_docker_tag() {
 # Outputs:
 #   Writes matching key/value pairs to stdout. Returns 1 in case of potential updates, 0 otherwise.
 #=======================================================================================================================
-# shellcheck disable=SC2059
+# shellcheck disable=SC2059,SC2154
 check_upgrades() {
     dependencies="$1"
     logs=''
