@@ -235,6 +235,19 @@ deploy_stack() {
 }
 
 #=======================================================================================================================
+# Verify if the current user is logged in to the configured Docker registry (defaults to https://index.docker.io/v1/).
+# A user is considered to be logged in when an entry for the Docker registry is found in the Docker configuration file.
+#=======================================================================================================================
+# Outputs:
+#   Returns 0 if the user is logged in and returns 1 if the user is not logged in. Returns 2 in case of errors.
+#=======================================================================================================================
+docker_is_logged_in() {
+    [ ! -f "${DOCKER_CONFIG_FILE}" ] && err "Cannot find Docker configuration file: ${DOCKER_CONFIG_FILE}" && return 2
+
+    jq -e --arg url "${config_docker_registry}/" '.auths | has($url)' "${DOCKER_CONFIG_FILE}" > /dev/null
+}
+
+#=======================================================================================================================
 # Returns the CPU architecture of the Docker Engine. If unavailable, the architecture of the host is returned instead.
 # The architecture 'x86_64' is converted to 'amd64' for compatibility with the buildx plugin.
 #=======================================================================================================================
