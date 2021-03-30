@@ -28,10 +28,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Initialize Docker Swarm
-        run: docker swarm init
+        run:  docker swarm init
 
       - name: Install shellspec
-        run: curl -fsSL https://git.io/shellspec | sh -s -- --yes
+        run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
+
+      - name: Install notary client
+        run:  sudo apt-get install -qq -o=Dpkg::Use-Pty=0 notary
 
       - name: Run integration tests
-        run: ~/.local/bin/shellspec --tag docker
+        run:  ~/.local/bin/shellspec --tag docker
