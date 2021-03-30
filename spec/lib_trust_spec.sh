@@ -22,7 +22,7 @@ Describe 'lib/trust.sh' trust
 
     Describe '_get_username_from_key()'
         setup_local() {
-            dummy_file=$(mktemp -t "signer")
+            dummy_file=$(mktemp -t "signer.XXXXXXXXX")
             random_value=$(uuidgen)
         }
 
@@ -52,7 +52,7 @@ Describe 'lib/trust.sh' trust
 
     Describe 'generate_delegate_key()'
         setup_local() {
-            dummy_file=$(mktemp -t "delegate-test")
+            dummy_file=$(mktemp -t "delegate-test.XXXXXXXXX")
             path=$(dirname "${dummy_file}")
         }
 
@@ -76,7 +76,7 @@ Describe 'lib/trust.sh' trust
 
     Describe 'generate_signer_key()' test
         setup_local() {
-            dummy_file=$(mktemp -t "signer-test")
+            dummy_file=$(mktemp -t "signer-test.XXXXXXXXX")
             path=$(dirname "${dummy_file}")
         }
 
