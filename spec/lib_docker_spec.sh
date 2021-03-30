@@ -138,6 +138,8 @@ Describe 'lib/docker.sh' docker
         End
     End
 
+    Todo 'docker_is_logged_in()'
+
     Describe 'get_arch()'
         is_valid() {
             is_valid_arch "${is_valid:?}"
@@ -206,6 +208,8 @@ Describe 'lib/docker.sh' docker
             The output should match pattern 'Waiting for Docker Stack to be removed*done'
         End
     End
+
+    Todo 'sign_image_tag()'
 
     Describe 'stop_container()'
         setup_local() {
