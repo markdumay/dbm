@@ -11,11 +11,13 @@
 readonly DBM_CONFIG_FILE='dbm.ini'
 readonly DBM_DIGEST_FILE='dbm.digest'
 readonly DBM_VERSION_FILE='VERSION'
+readonly DOCKER_DEFAULT_REGISTRY='https://index.docker.io/v1'
 
 
 #=======================================================================================================================
 # Variables
 #=======================================================================================================================
+config_docker_registry=''
 config_docker_working_dir=''
 config_docker_base_yml=''
 config_docker_prod_yml=''
@@ -424,6 +426,7 @@ is_valid_dependency() {
 # Initializes the global settings.
 #=======================================================================================================================
 # Globals:
+#   - config_docker_registry
 #   - config_docker_working_dir
 #   - config_docker_base_yml
 #   - config_docker_prod_yml
@@ -447,8 +450,15 @@ init_config() {
         config_digest_file=$(echo "${dir}/${DBM_DIGEST_FILE}" | sed 's|//|/|g')
         config_version_file=$(echo "${dir}/${DBM_VERSION_FILE}" | sed 's|//|/|g')
     fi
-    
+
+    # identify Docker registry from Docker configuration 
+    docker_registry_url=$(docker info | grep 'Registry:' | awk -F': ' '{print $2}')
+    [ -z "${registry_url}" ] && registry_url="${DOCKER_DEFAULT_REGISTRY}"
+
     # initialize settings and/or default values 
+    config_docker_registry=$(init_config_value 'DOCKER_REGISTRY' "${docker_registry_url}") || \
+        { err "Cannot read config value DOCKER_REGISTRY"; return 1; }
+    config_docker_registry=$(echo "${config_docker_registry}" | sed 's|/$||g') # remove trailing '/'
     config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || \
         { err "Cannot read config value DOCKER_WORKING_DIR"; return 1; }
     config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || \
