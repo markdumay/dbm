@@ -409,6 +409,41 @@ remove_stack() {
 }
 
 #=======================================================================================================================
+# Sign an existing Docker image and update the Docker registry. The repository needs to have been initialized with
+# Docker Content Trust prior to the operation. The current user needs to be authorized for signing images too. See 
+# trust/add_repository_signer() for more details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Owner of the repository.
+#   $2 - Repository name.
+#   $3 - Image tag.
+#   $4 - Passphrase of the signer.
+# Outputs:
+#   Initialized Docker Content Trust and authorized signer for the specified repository. Returns 1 in case of errors.
+#=======================================================================================================================
+sign_image_tag() {
+    owner="$1"
+    repository="$2"
+    tag="$3"
+    passphrase="$4"
+
+    # Validate and init arguments
+    [ -z "${owner}" ] && err "Owner required" && return 1
+    [ -z "${repository}" ] && err "Owner required" && return 1
+    [ -z "${tag}" ] && err "Owner required" && return 1
+    [ -z "${passphrase}" ] && err "Owner required" && return 1
+    image="${owner}/${repository}:${tag}"
+
+    # Tag and push the image, setting Docker Content Trust forces signing of the image
+    docker tag "${image}" "${image}"|| return 1
+    export DOCKER_CONTENT_TRUST=1
+    export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE="${passphrase}"
+    docker push "${image}" || return 1
+
+    return 0
+}
+
+#=======================================================================================================================
 # Pauses the execution of running Docker containers for the targeted environment. It does not stop or remove deployed
 # Docker Stack services.
 #=======================================================================================================================
