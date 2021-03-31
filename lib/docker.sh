@@ -243,6 +243,7 @@ deploy_stack() {
 #=======================================================================================================================
 docker_is_logged_in() {
     [ ! -f "${DOCKER_CONFIG_FILE}" ] && err "Cannot find Docker configuration file: ${DOCKER_CONFIG_FILE}" && return 2
+    [ -z "${config_docker_registry}" ] && err "Docker Registry not defined" && return 2
 
     jq -e --arg url "${config_docker_registry}/" '.auths | has($url)' "${DOCKER_CONFIG_FILE}" > /dev/null
 }
