@@ -35,6 +35,8 @@ app_sourcedir=$(dirname "${app_script_path}")
 . "${app_sourcedir}"/lib/repository.sh
 # shellcheck source=lib/settings.sh
 . "${app_sourcedir}"/lib/settings.sh
+# shellcheck source=lib/trust.sh
+. "${app_sourcedir}"/lib/trust.sh
 # shellcheck source=lib/utils.sh
 . "${app_sourcedir}"/lib/utils.sh
 # shellcheck source=lib/yaml.sh
@@ -55,6 +57,8 @@ app_sourcedir=$(dirname "${app_script_path}")
 . "${app_sourcedir}"/cmd/info.sh
 # shellcheck source=cmd/remove.sh
 . "${app_sourcedir}"/cmd/remove.sh
+# shellcheck source=cmd/sign.sh
+. "${app_sourcedir}"/cmd/sign.sh
 # shellcheck source=cmd/stop.sh
 . "${app_sourcedir}"/cmd/stop.sh
 # shellcheck source=cmd/up.sh
@@ -103,6 +107,7 @@ main() {
             generate) execute_generate "${app_compose_file}" "${arg_compose_file}" || result=1;;
             info)     execute_show_info "${app_script_version}" "${app_host_os}" "${app_host_arch}" && exit || result=1;;
             remove)   execute_remove "${config_docker_service}" || result=1;;
+            sign)     execute_sign "${app_images}" || result=1;;
             stop)     execute_stop "${app_compose_file}" "${arg_services}" || result=1;;
             up)       execute_up "${app_compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
             version ) execute_show_version "${app_script_version}" && exit || result=1;;

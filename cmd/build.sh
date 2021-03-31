@@ -145,6 +145,7 @@ execute_build() {
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
 # shellcheck disable=SC2034
+# TODO: add sign flag
 parse_build_args() {
     error=''
 

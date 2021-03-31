@@ -30,6 +30,7 @@ Commands:
   generate                    Generate a merged Docker Compose file
   info                        Display current system information
   remove                      Remove Docker Stack
+  sign                        Sign a Docker image
   stop                        Stop running container(s)
   up                          Run Docker image(s) as container(s)
   version                     Show version information
@@ -105,6 +106,7 @@ parse_args() {
         generate )     arg_command="$1"; parse_generate_args "$@" || exit 1;;
         info )         arg_command="$1"; parse_info_args "$@" || exit 1;;
         remove )       arg_command="$1"; parse_remove_args "$@" || exit 1;;
+        sign )         arg_command="$1"; parse_sign_args "$@" || exit 1;;
         stop )         arg_command="$1"; parse_stop_args "$@" || exit 1;;
         up )           arg_command="$1"; parse_up_args "$@" || exit 1;;
         version )      arg_command="$1"; parse_version_args "$@" || exit 1;;

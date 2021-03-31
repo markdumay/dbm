@@ -411,36 +411,43 @@ remove_stack() {
 #=======================================================================================================================
 # Sign an existing Docker image and update the Docker registry. The repository needs to have been initialized with
 # Docker Content Trust prior to the operation. The current user needs to be authorized for signing images too. See 
-# trust/add_repository_signer() for more details.
+# trust/add_repository_signer() for more details. A passphrase is required if DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE
+# is not set.
 #=======================================================================================================================
 # Arguments:
-#   $1 - Owner of the repository.
-#   $2 - Repository name.
-#   $3 - Image tag.
-#   $4 - Passphrase of the signer.
+#   $1 - Images to push, separated by a newline '\n'.
+#   $2 - Passphrase of the signer, optional if DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE is set.
 # Outputs:
 #   Initialized Docker Content Trust and authorized signer for the specified repository. Returns 1 in case of errors.
 #=======================================================================================================================
-sign_image_tag() {
-    owner="$1"
-    repository="$2"
-    tag="$3"
-    passphrase="$4"
-
+sign_image() {
     # Validate and init arguments
-    [ -z "${owner}" ] && err "Owner required" && return 1
-    [ -z "${repository}" ] && err "Owner required" && return 1
-    [ -z "${tag}" ] && err "Owner required" && return 1
-    [ -z "${passphrase}" ] && err "Owner required" && return 1
-    image="${owner}/${repository}:${tag}"
+    images="$1"
+    passphrase="$2"
+    result=0
+    env_passphrase="${DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE}"
 
-    # Tag and push the image, setting Docker Content Trust forces signing of the image
-    docker tag "${image}" "${image}"|| return 1
-    export DOCKER_CONTENT_TRUST=1
-    export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE="${passphrase}"
-    docker push "${image}" || return 1
+    [ -z "${passphrase}" ] && [ -z "${env_passphrase}" ] && err "Passphrase required" && return 1
+    export DOCKER_CONTENT_TRUST=1 # Setting Docker Content Trust forces signing of the image
+    [ -n "${passphrase}" ] && export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE="${passphrase}"
 
-    return 0
+    # Sign each image
+    IFS=' '
+    for image in $images; do
+        match=$(echo "${image}" | sed 's/:/.*/g')
+        if docker image ls | grep -qE "${match}"; then
+            # Tag and push the image
+            log "Signing image: ${image}"
+            docker tag "${image}" "${image}" || result=1
+            docker push "${image}" || result=1
+        else
+            warn "Cannot sign, image not found: ${image}"
+            result=1
+        fi
+    done
+
+    export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=''
+    return "${result}"
 }
 
 #=======================================================================================================================

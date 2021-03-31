@@ -209,7 +209,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Todo 'sign_image_tag()'
+    Todo 'sign_image()'
 
     Describe 'stop_container()'
         setup_local() {
