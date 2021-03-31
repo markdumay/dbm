@@ -31,6 +31,7 @@ app_script_version=''
 # Used globals as input:
 #   - app_basedir
 #   - arg_config
+#   - app_sourcedir
 #   - arg_target
 #   - arg_terminal
 # Set globals:
@@ -46,7 +47,7 @@ app_script_version=''
 # shellcheck disable=SC2034,SC2154
 init_global_settings() {
     init_config "${app_basedir}" "${arg_config}" || { err "Cannot initialize configuration"; return 1; }
-    app_script_version=$(init_script_version) || { err "Cannot initialize script version"; return 1; }
+    app_script_version=$(init_script_version "${app_sourcedir}") || { err "Cannot initialize script version"; return 1; }
     app_host_os=$(get_os)
     app_host_arch=$(get_arch)
     app_docker_compose_flags="-f ${config_docker_base_yml}"
@@ -61,11 +62,14 @@ init_global_settings() {
 #=======================================================================================================================
 # Retrieves the version of the Docker Build Manager script.
 #=======================================================================================================================
+# Arguments:
+#   $1 - Path where the VERSION file is stored.
 # Outputs:
 #   Writes version information to stdout, returns 'unknown' in case of errors.
 #=======================================================================================================================
 init_script_version() {
-    script_version=$(cat "${app_basedir}/VERSION" 2> /dev/null)
+    path="$1"
+    script_version=$(cat "${path}/VERSION" 2> /dev/null)
     echo "${script_version:-unknown}"
 }
 
