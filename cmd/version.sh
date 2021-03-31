@@ -75,7 +75,7 @@ parse_version_args() {
 }
 
 #=======================================================================================================================
-# Display usage message for the deploy command.
+# Display usage message for the version command.
 #=======================================================================================================================
 # Outputs:
 #   Writes message to stdout.

@@ -113,7 +113,7 @@ parse_generate_args() {
 }
 
 #=======================================================================================================================
-# Display usage message for the check command.
+# Display usage message for the generate command.
 #=======================================================================================================================
 # Outputs:
 #   Writes message to stdout.
