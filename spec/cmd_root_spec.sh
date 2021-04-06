@@ -11,7 +11,7 @@ Describe 'cmd/root.sh' cmd
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'parse_service()'
+    Todo 'parse_arg()'
     Todo 'parse_args()'
 
     Describe 'usage()'
