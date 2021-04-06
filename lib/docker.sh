@@ -241,6 +241,7 @@ deploy_stack() {
 # Outputs:
 #   Returns 0 if the user is logged in and returns 1 if the user is not logged in. Returns 2 in case of errors.
 #=======================================================================================================================
+# shellcheck disable=SC2154
 docker_is_logged_in() {
     [ ! -f "${DOCKER_CONFIG_FILE}" ] && err "Cannot find Docker configuration file: ${DOCKER_CONFIG_FILE}" && return 2
     [ -z "${config_docker_registry}" ] && err "Docker Registry not defined" && return 2
