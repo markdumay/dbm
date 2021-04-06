@@ -32,6 +32,7 @@ Commands:
   remove                      Remove Docker Stack
   sign                        Sign a Docker image
   stop                        Stop running container(s)
+  trust                       Manage Docker Content Trust for the repository
   up                          Run Docker image(s) as container(s)
   version                     Show version information
 
@@ -46,9 +47,12 @@ Global Flags:
 # Variables
 #=======================================================================================================================
 arg_command=''
+arg_subcommand=''
 arg_target=''
 arg_config=''
 arg_compose_file=''
+arg_key_file=''
+arg_key_type=''
 arg_detached='false'
 arg_no_cache='false'
 arg_no_digest='false'
@@ -108,6 +112,7 @@ parse_args() {
         remove )       arg_command="$1"; parse_remove_args "$@" || exit 1;;
         sign )         arg_command="$1"; parse_sign_args "$@" || exit 1;;
         stop )         arg_command="$1"; parse_stop_args "$@" || exit 1;;
+        trust )        arg_command="$1"; parse_trust_args "$@" || exit 1;;
         up )           arg_command="$1"; parse_up_args "$@" || exit 1;;
         version )      arg_command="$1"; parse_version_args "$@" || exit 1;;
         -h | --help )  usage 'false' && exit;;
