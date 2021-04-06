@@ -65,15 +65,15 @@ arg_shell='sh'
 #=======================================================================================================================
 
 #=======================================================================================================================
-# Parse and validate the command-line arguments for a single service.
+# Parse and validate the command-line arguments for a single argument, such as a service or key.
 #=======================================================================================================================
 # Arguments:
 #   $@ - All available command-line arguments.
 # Outputs:
 #   Writes warning or error to stdout if applicable, returns 1 on fatal error.
 #=======================================================================================================================
-parse_service() {
-    # Validate and capture the service specification
+parse_arg() {
+    # Validate and capture the argument
     prefix=$(echo "$1" | cut -c1)
     [ "${prefix}" = "-" ] && return 1
     echo "$1" && return 0

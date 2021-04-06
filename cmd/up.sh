@@ -10,7 +10,7 @@
 #=======================================================================================================================
 readonly usage_up_msg_short="
 Usage:
-  dbm up <dev|prod> [flags] [service...]
+  dbm up <dev|prod> [flags] [SERVICE...]
 "
 
 readonly usage_up_msg_full="
@@ -94,7 +94,7 @@ parse_up_args() {
             --no-digest )       arg_no_digest='true';;
             --shell )           shift; [ -n "$1" ] && arg_shell="$1" || error="Missing shell argument";;
             --tag )             shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
-            * )                 service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
+            * )                 service=$(parse_arg "$1") && arg_services="${arg_services}${service} " || \
                                     error="Argument not supported: ${service}"
         esac
         [ -n "$1" ] && shift

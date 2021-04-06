@@ -10,7 +10,7 @@
 #=======================================================================================================================
 readonly usage_sign_msg_short="
 Usage:
-  dbm sign <dev|prod> [flags] [service...]
+  dbm sign <dev|prod> [flags] [SERVICE...]
 "
 
 readonly usage_sign_msg_full="
@@ -81,7 +81,7 @@ parse_sign_args() {
             --no-digest )   arg_no_digest='true';;
             --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             -h | --help )   usage_sign 'false'; exit;;
-            * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
+            * )             service=$(parse_arg "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac
         [ -n "$1" ] && shift

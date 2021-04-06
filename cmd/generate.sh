@@ -10,7 +10,7 @@
 #=======================================================================================================================
 readonly usage_generate_msg_short="
 Usage:
-  dbm generate <dev|prod> <output> [flags]
+  dbm generate <dev|prod> FILE [flags]
 "
 
 readonly usage_generate_msg_full="

@@ -10,7 +10,7 @@
 #=======================================================================================================================
 readonly usage_down_msg_short="
 Usage:
-  dbm stop <dev|prod> [flags] [service...]
+  dbm stop <dev|prod> [flags] [SERVICE...]
 "
 
 readonly usage_down_msg_full="
@@ -82,7 +82,7 @@ parse_down_args() {
             --no-digest )   arg_no_digest='true';;
             --tag       )   shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             -h | --help )   usage_down 'false'; exit;;
-            * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
+            * )             service=$(parse_arg "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac
         [ -n "$1" ] && shift

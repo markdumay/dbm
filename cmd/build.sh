@@ -10,7 +10,7 @@
 #=======================================================================================================================
 readonly usage_build_msg_short="
 Usage:
-  dbm build <dev|prod> [flags] [service...]
+  dbm build <dev|prod> [flags] [SERVICE...]
 "
 
 readonly usage_build_msg_full="
@@ -163,7 +163,7 @@ parse_build_args() {
             --push )        arg_push='true';;
             --tag )         shift; [ -n "$1" ] && arg_tag="$1" || error="Missing tag argument";;
             -h | --help )   usage_build 'false'; exit;;
-            * )             service=$(parse_service "$1") && arg_services="${arg_services}${service} " || \
+            * )             service=$(parse_arg "$1") && arg_services="${arg_services}${service} " || \
                                 error="Argument not supported: ${service}"
         esac
         [ -n "$1" ] && shift
