@@ -59,6 +59,7 @@ _get_username_from_key() {
 # Outputs:
 #   Initialized Docker Content Trust and authorized signer for the specified repository. Returns 1 in case of errors.
 #=======================================================================================================================
+# shellcheck disable=SC2154
 add_repository_signer() {
     owner="$1"
     repository="$2"
@@ -77,6 +78,39 @@ add_repository_signer() {
 }
 
 #=======================================================================================================================
+# Generate a public/private key for a signer or delegate. See generate_delegate_key() and generate_signer_key() for more
+# details.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Type of key to generate, either 'delegate' or 'signer'.
+#   $2 - Key file or user name, can include optional path where to move files to.
+#   $3 - Passphrase for the key, generated if omitted.
+#   $4 - Optional CSR fields to bypass interactive prompt, see openssl command.
+# Outputs:
+#   Generated keys, returns the passphrase when successful. Returns 1 in case of errors.
+#=======================================================================================================================
+generate_key() {
+    key_type="$1"
+    key_file="$2"
+    passphrase="$3"
+    subj="$4"
+
+    # Init username and path
+    user=$(basename "${key_file}" | sed 's/\(.*\)\..*/\1/') # derive user name from key file without extension
+    [ -z "${user}" ] && err "Cannot derive user name from key file: ${key_file}" && return 1
+    path=$(dirname "${key_file}")
+
+    # Generate the delegate or signer keys
+    case "${key_type}" in
+        delegate ) generate_delegate_key "${user}" "${passphrase}" "${path}" "${subj}" || return 1;;
+        signer ) generate_signer_key "${user}" "${passphrase}" "${path}" || return 1;;
+        * ) err "Expected delegate or signer as key type"; return 1
+    esac
+
+    return 0
+}
+
+#=======================================================================================================================
 # Generate a public/private key for a user ready to be exported. All files are saved in the current directory by
 # default. Existing files in the target directory are overwritten. Use add_repository_signer() to authorize the user
 # for signing a specific repository. The function import_delegation_key() can import the generated private key to the
@@ -89,16 +123,16 @@ add_repository_signer() {
 # Arguments:
 #   $1 - Name of the delegate signer.
 #   $2 - Passphrase for the key, generated if omitted.
-#   $3 - Optional CSR fields to bypass interactive prompt, see openssl command.
-#   $4 - Optional path where to move the files to, defaults to current directory.
+#   $3 - Optional path where to move the files to, defaults to current directory.
+#   $4 - Optional CSR fields to bypass interactive prompt, see openssl command.
 # Outputs:
-#   Generated delegate keys, returns the passphrase when successful. Returns 1 in case of errors.
+#   Generated delegate keys, returns the passphrase when successful (with a prefix). Returns 1 in case of errors.
 #=======================================================================================================================
 generate_delegate_key() {
     delegate="$1"
     passphrase="$2"
-    subj="$3"
-    path="$4"
+    path="$3"
+    subj="$4"
     key_path='./'
 
     # validate delegate name, initialize passphrase, and initialize target directory
@@ -118,14 +152,14 @@ generate_delegate_key() {
     cmd="openssl req -new -sha256 -key ${key_file} -out ${csr_file}"
     [ -n "${subj}" ] && cmd="${cmd} -subj '${subj}'"
     eval "${cmd}"
-    openssl x509 -req -sha256 -days 365 -in "${csr_file}" -signkey "${key_file}" -out "${crt_file}"
     [ ! -f "${csr_file}" ] && err "Cannot create Certificate Signing Request (.csr): ${csr_file}" \
         && return 1
+    openssl x509 -req -sha256 -days 365 -in "${csr_file}" -signkey "${key_file}" -out "${crt_file}"
     [ ! -f "${key_file}" ] && err "Cannot create private key (.key) ${key_file}" && return 1
     [ ! -f "${crt_file}" ] && err "Cannot create certificate (.crt): ${crt_file}" && return 1
 
     # return the passphrase when successful
-    echo "${passphrase}"
+    echo "Generated passphrase: ${passphrase}"
     return 0
 }
 
@@ -147,7 +181,6 @@ generate_signer_key() {
     path="$3"
     key_path='./'
 
-
     # validate signer name, initialize passphrase, and initialize target directory
     [ -z "${signer}" ] && err "Signer name required" && return 1
     [ -z "${passphrase}" ] && passphrase=$(openssl rand -base64 32)
@@ -161,19 +194,14 @@ generate_signer_key() {
     cmd="docker trust key generate ${signer}"
     [ -n "${key_path}" ] && cmd="${cmd} --dir ${key_path}"
     
-    # echo  "${cmd}" && return 1 
-    
     export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE="${passphrase}"
     eval "${cmd}" || { export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=''; return 1; }
     export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=''
     [ ! -f "${pub_file}" ] && err "Cannot find public key: ${pub_file}" && return 1
 
     # return the passphrase when successful
-    echo "${passphrase}"
+    echo "Generated passphrase: ${passphrase}"
     return 0
-
-    # move the public signer key to its destination if applicable
-    # [ -n "${key_path}" ] && mv "${signer}.pub" "${key_path}/"
 }
 
 #=======================================================================================================================
