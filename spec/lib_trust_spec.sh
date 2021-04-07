@@ -23,11 +23,13 @@ Describe 'lib/trust.sh' docker trust
     Describe '_get_username_from_key()'
         setup_local() {
             dummy_file=$(mktemp -t "signer.XXXXXXXXX")
+            dummy_file=$(echo "${dummy_file}" | sed 's|/signer.XXXXXXXXX.|/signer.|g') # macOS/mktemp fix
+            touch "${dummy_file}"
             random_value=$(uuidgen)
         }
 
         cleanup_local() {
-            [ -f "${dummy_file}" ] && rm -rf "${dummy_file}"
+            { [ -f "${dummy_file}" ] && rm -rf "dummy_file"; } || true
         }
         
         BeforeAll 'setup_local'
@@ -48,7 +50,7 @@ Describe 'lib/trust.sh' docker trust
     End
 
 
-    # Todo 'add_repository_signer()'
+    Todo 'add_repository_signer()'
 
     Describe 'generate_delegate_key()'
         setup_local_delegate() {
@@ -75,7 +77,6 @@ Describe 'lib/trust.sh' docker trust
             The status should be "$7"
             The error should match pattern "$5"
             The output should match pattern "$6"
-            Dump
         End
     End
 
@@ -104,7 +105,7 @@ Describe 'lib/trust.sh' docker trust
         End
     End
 
-    # Todo 'import_delegation_key()'
-    # Todo 'init_notary_config()'
-    # Todo 'remove_repository_signer()'
+    Todo 'import_delegation_key()'
+    Todo 'init_notary_config()'
+    Todo 'remove_repository_signer()'
 End
