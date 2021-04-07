@@ -12,7 +12,39 @@ Describe 'cmd/generate.sh' cmd generate
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_generate()'
+
+    Describe 'execute_generate()'
+        setup_local() {
+            dummy_file1=$(mktemp -t "real.XXXXXXXXX")
+            dummy_file2=$(mktemp -t "fake.XXXXXXXXX")
+            dummy_file3=$(mktemp -t "output.XXXXXXXXX")
+            dummy_file1=$(echo "${dummy_file1}" | sed 's|/real.XXXXXXXXX.|/real.|g') # macOS/mktemp fix
+            dummy_file2=$(echo "${dummy_file2}" | sed 's|/fake.XXXXXXXXX.|/fake.|g') # macOS/mktemp fix
+            dummy_file3=$(echo "${dummy_file3}" | sed 's|/output.XXXXXXXXX.|/output.|g') # macOS/mktemp fix
+            touch "${dummy_file1}"
+        }
+
+        cleanup_local() {
+            { [ -f "${dummy_file1}" ] && rm -rf "dummy_file1"; } || true
+            { [ -f "${dummy_file2}" ] && rm -rf "dummy_file2"; } || true
+            { [ -f "${dummy_file3}" ] && rm -rf "dummy_file3"; } || true
+        }
+        
+        BeforeAll 'setup_local'
+        AfterAll 'cleanup_local'
+
+        Parameters
+            "${dummy_file1}" "${dummy_file3}" "Generated '${dummy_file3}'" '' success
+            "${dummy_file2}" "${dummy_file3}" '' "ERROR: Cannot find temporary Docker Compose file: ${dummy_file2}" failure
+        End
+
+        It 'executes the generate command correctly'
+            When call execute_generate "$1" "$2"
+            The output should end with "$3"
+            The error should end with "$4"
+            The status should be "$5"
+        End
+    End
 
     Describe 'parse_generate_args()'
         Describe 'target'

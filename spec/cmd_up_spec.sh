@@ -12,8 +12,20 @@ Describe 'cmd/up.sh' cmd up
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_up()'
-    Todo '--shell'
+
+    Describe 'execute_up()'
+        bring_container_up() { printf '%s' 'bring_container_up '; echo "$@"; return 0; }
+
+        Parameters
+            compose-file services true true sh 'bring_container_up compose-file services true true sh' success
+        End
+
+        It 'executes the up command correctly'
+            When call execute_up "$1" "$2" "$3" "$4" "$5"
+            The output should end with "$6"
+            The status should be "$7"
+        End
+    End
 
     Describe 'parse_up_args()'
         Describe 'target'
@@ -27,6 +39,7 @@ Describe 'cmd/up.sh' cmd up
                 The status should be "$3"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank
@@ -45,6 +58,7 @@ Describe 'cmd/up.sh' cmd up
                 The error should equal "$4"
                 The variable arg_target should be blank
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank
@@ -62,6 +76,43 @@ Describe 'cmd/up.sh' cmd up
                 The status should be "$4"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'true'
+                The variable arg_shell should equal 'sh'
+                The variable arg_terminal should equal 'false'
+                The variable arg_tag should be blank
+                The variable arg_services should be blank
+            End
+        End
+
+        Describe 'shell' test
+            Parameters
+                up dev --shell custom success
+            End
+
+            It 'parses --shell flag'
+                When call parse_up_args "$1" "$2" "$3" "$4"
+                The status should be "$5"
+                The variable arg_target should equal "$2"
+                The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'custom'
+                The variable arg_terminal should equal 'false'
+                The variable arg_tag should be blank
+                The variable arg_services should be blank
+            End
+        End
+
+        Describe 'shell' test
+            Parameters
+                up dev --shell failure 'ERROR: Missing shell argument'
+            End
+
+            It 'rejects --shell flag without argument'
+                When call parse_up_args "$1" "$2" "$3"
+                The status should be "$4"
+                The output should match pattern '?Usage*'
+                The error should equal "$5"
+                The variable arg_target should equal "$2"
+                The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank
@@ -79,6 +130,7 @@ Describe 'cmd/up.sh' cmd up
                 The status should be "$4"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'true'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank
@@ -98,6 +150,7 @@ Describe 'cmd/up.sh' cmd up
                 The error should equal "$6"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'true'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank
@@ -126,6 +179,7 @@ Describe 'cmd/up.sh' cmd up
                 The status should be "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should equal "$4"
                 The variable arg_services should be blank
@@ -144,6 +198,7 @@ Describe 'cmd/up.sh' cmd up
                 The error should equal "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank
@@ -160,6 +215,7 @@ Describe 'cmd/up.sh' cmd up
                 The status should be "$5"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should be blank
                 The variable arg_services should equal "$3 $4"
@@ -178,6 +234,7 @@ Describe 'cmd/up.sh' cmd up
                 The error should equal "$7"
                 The variable arg_target should equal "$2"
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'true'
                 The variable arg_tag should be blank
                 The variable arg_services should equal "$4 $5"
@@ -196,6 +253,7 @@ Describe 'cmd/up.sh' cmd up
                 The output should match pattern "$4"
                 The variable arg_target should be blank
                 The variable arg_detached should equal 'false'
+                The variable arg_shell should equal 'sh'
                 The variable arg_terminal should equal 'false'
                 The variable arg_tag should be blank
                 The variable arg_services should be blank

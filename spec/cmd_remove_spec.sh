@@ -12,7 +12,20 @@ Describe 'cmd/remove.sh' cmd remove
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_remove()'
+
+    Describe 'execute_remove()'
+        remove_stack() { printf '%s' 'remove_stack '; echo "$@"; return 0; }
+
+        Parameters
+            stack 'remove_stack stack true' success
+        End
+
+        It 'executes the remove command correctly'
+            When call execute_remove "$1"
+            The output should end with "$2"
+            The status should be "$3"
+        End
+    End
 
     Describe 'parse_remove_args()'
         Describe 'target'

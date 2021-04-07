@@ -26,7 +26,23 @@ Describe 'cmd/build.sh' cmd build
         End
     End
 
-    Todo 'execute_build()'
+    Describe 'execute_build()'
+        build_image() { printf '%s' 'build_image '; echo "$@"; return 0; }
+        build_cross_platform_image() { printf '%s' 'build_cross_platform_image '; echo "$@"; return 0; }
+        push_image() { printf '%s' 'push_image '; echo "$@"; return 0; }
+
+        Parameters
+            compose-file services images true false '' '*build_image compose-file services true*' success
+            compose-file services images true true '' '*push_image images*' success
+            compose-file services images false false platform '*build_cross_platform_image compose-file services false platform*' success
+        End
+
+        It 'executes the build command correctly'
+            When call execute_build "$1" "$2" "$3" "$4" "$5" "$6"
+            The output should match pattern "$7" 
+            The status should be "$8"
+        End
+    End
 
     Describe 'parse_build_args()'
         Describe 'target'

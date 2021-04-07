@@ -13,7 +13,20 @@ Describe 'cmd/check.sh' cmd check
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
 
-    Todo 'execute_check_upgrades()'
+    Describe 'execute_check_upgrades()'
+        read_dependencies() { printf '%s' 'read_dependencies '; echo "$@"; return 0; }
+        check_upgrades() { printf '%s' 'check_upgrades '; echo "$@"; return 0; }
+
+        Parameters
+            'check_upgrades read_dependencies ' success
+        End
+
+        It 'executes the check command correctly'
+            When call execute_check_upgrades
+            The output should end with "$1" 
+            The status should be "$2"
+        End
+    End
 
     Describe 'parse_check_args()'
         Describe 'check'

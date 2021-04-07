@@ -12,7 +12,20 @@ Describe 'cmd/sign.sh' cmd sign
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_sign()'
+
+    Describe 'execute_sign()'
+        sign_image() { printf '%s' 'sign_image '; echo "$@"; return 0; }
+
+        Parameters
+            images 'sign_image images ' success
+        End
+
+        It 'executes the sign command correctly'
+            When call execute_sign "$1"
+            The output should end with "$2"
+            The status should be "$3"
+        End
+    End
 
     Describe 'parse_sign_args()'
         Describe 'target'

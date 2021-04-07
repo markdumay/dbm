@@ -12,7 +12,20 @@ Describe 'cmd/deploy.sh' cmd deploy
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_deploy()'
+
+    Describe 'execute_deploy()'
+        deploy_stack() { printf '%s' 'deploy_stack '; echo "$@"; return 0; }
+
+        Parameters
+            compose-file stack 'deploy_stack compose-file stack' success
+        End
+
+        It 'executes the deploy command correctly'
+            When call execute_deploy "$1" "$2"
+            The output should end with "$3" 
+            The status should be "$4"
+        End
+    End
 
     Describe 'parse_deploy_args()'
         Describe 'target'

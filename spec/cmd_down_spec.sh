@@ -12,7 +12,20 @@ Describe 'cmd/down.sh' cmd down
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_down()'
+
+    Describe 'execute_down()'
+        bring_container_down() { printf '%s' 'bring_container_down '; echo "$@"; return 0; }
+
+        Parameters
+            compose-file services 'bring_container_down compose-file services' success
+        End
+
+        It 'executes the down command correctly'
+            When call execute_down "$1" "$2"
+            The output should end with "$3" 
+            The status should be "$4"
+        End
+    End
 
     Describe 'parse_down_args()'
         Describe 'target'

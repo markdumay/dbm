@@ -12,7 +12,20 @@ Describe 'cmd/stop.sh' cmd stop
 
     prepare() { set_log_color 'false'; }
     BeforeAll 'prepare'
-    Todo 'execute_stop()'
+
+    Describe 'execute_stop()'
+        stop_container() { printf '%s' 'stop_container '; echo "$@"; return 0; }
+
+        Parameters
+            compose-file services 'stop_container compose-file services' success
+        End
+
+        It 'executes the stop command correctly'
+            When call execute_stop "$1" "$2"
+            The output should end with "$3"
+            The status should be "$4"
+        End
+    End
 
     Describe 'parse_stop_args()'
         Describe 'target'
