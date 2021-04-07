@@ -134,6 +134,8 @@ execute_build() {
     t2=$(date +%s)
     elapsed_string=$(display_time $((t2 - t1)))
     [ "${t2}" -gt "${t1}" ] && log "Total build time ${elapsed_string}"
+
+    return 0
 }
 
 #=======================================================================================================================
