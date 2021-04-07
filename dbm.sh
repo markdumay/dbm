@@ -61,6 +61,8 @@ app_sourcedir=$(dirname "${app_script_path}")
 . "${app_sourcedir}"/cmd/sign.sh
 # shellcheck source=cmd/stop.sh
 . "${app_sourcedir}"/cmd/stop.sh
+# shellcheck source=cmd/trust.sh
+. "${app_sourcedir}"/cmd/trust.sh
 # shellcheck source=cmd/up.sh
 . "${app_sourcedir}"/cmd/up.sh
 # shellcheck source=cmd/version.sh
@@ -109,6 +111,7 @@ main() {
             remove)   execute_remove "${config_docker_service}" || result=1;;
             sign)     execute_sign "${app_images}" || result=1;;
             stop)     execute_stop "${app_compose_file}" "${arg_services}" || result=1;;
+            trust)    execute_trust "${app_images}" "${arg_subcommand}" "${arg_key_type}" "${arg_key_file}" || result=1;;
             up)       execute_up "${app_compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
             version ) execute_show_version "${app_script_version}" && exit || result=1;;
         esac
