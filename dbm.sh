@@ -102,18 +102,22 @@ main() {
     # Execute commands
     if [ "${result}" -eq 0 ]; then
         case "${arg_command}" in
-            build)    execute_build "${app_compose_file}" "${arg_services}" "${app_images}" "${arg_no_cache}" "${arg_push}" "${arg_platforms}" || result=1;;
-            check )   execute_check_upgrades && exit || result=1;;
-            deploy)   execute_deploy "${app_compose_file}" "${config_docker_service}" || result=1;;
-            down)     execute_down "${app_compose_file}" "${arg_services}" || result=1;;
-            generate) execute_generate "${app_compose_file}" "${arg_compose_file}" || result=1;;
-            info)     execute_show_info "${app_script_version}" "${app_host_os}" "${app_host_arch}" && exit || result=1;;
-            remove)   execute_remove "${config_docker_service}" || result=1;;
-            sign)     execute_sign "${app_images}" || result=1;;
-            stop)     execute_stop "${app_compose_file}" "${arg_services}" || result=1;;
-            trust)    execute_trust "${app_images}" "${arg_subcommand}" "${arg_key_type}" "${arg_key_file}" || result=1;;
-            up)       execute_up "${app_compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" "${arg_shell}" || result=1;;
-            version ) execute_show_version "${app_script_version}" && exit || result=1;;
+            build )     execute_build "${app_compose_file}" "${arg_services}" "${app_images}" "${arg_no_cache}" \
+                            "${arg_push}" "${arg_platforms}" || result=1;;
+            check )     execute_check_upgrades && exit || result=1;;
+            deploy )    execute_deploy "${app_compose_file}" "${config_docker_service}" || result=1;;
+            down )      execute_down "${app_compose_file}" "${arg_services}" || result=1;;
+            generate )  execute_generate "${app_compose_file}" "${arg_compose_file}" || result=1;;
+            info )      execute_show_info "${app_script_version}" "${app_host_os}" "${app_host_arch}" && \
+                            exit || result=1;;
+            remove )    execute_remove "${config_docker_service}" || result=1;;
+            sign )      execute_sign "${app_images}" || result=1;;
+            stop )      execute_stop "${app_compose_file}" "${arg_services}" || result=1;;
+            trust )     execute_trust "${app_images}" "${arg_subcommand}" "${arg_key_type}" "${arg_key_file}" || \
+                            result=1;;
+            up )        execute_up "${app_compose_file}" "${arg_services}" "${arg_detached}" "${arg_terminal}" \
+                            "${arg_shell}" || result=1;;
+            version )   execute_show_version "${app_script_version}" && exit || result=1;;
         esac
     fi
 
