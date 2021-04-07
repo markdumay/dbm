@@ -23,6 +23,7 @@ Describe 'lib/docker.sh' docker
     setup() { 
         set_log_color 'false'
         app_basedir=$(get_absolute_path "${PWD}")
+        app_sourcedir="${app_basedir}"
         arg_config='test/dbm.ini'
         arg_target='dev'
         init_global_settings
