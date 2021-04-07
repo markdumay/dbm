@@ -5,7 +5,7 @@
 # Use of this source code is governed by The MIT License (MIT) that can be found in the LICENSE file.
 #=======================================================================================================================
 
-Describe 'lib/trust.sh' trust
+Describe 'lib/trust.sh' docker trust
     conditions() { [ "${SHELLSPEC_SKIP_DOCKER}" = 'true' ] && echo "skip"; }
     Skip if 'function returns "skip"' [ "$(conditions)" = "skip" ]
 
@@ -50,7 +50,7 @@ Describe 'lib/trust.sh' trust
 
     # Todo 'add_repository_signer()'
 
-    Describe 'generate_delegate_key()' test
+    Describe 'generate_delegate_key()'
         setup_local_delegate() {
             dummy_file=$(mktemp -t "delegate-test.XXXXXXXXX")
             dummy_file=$(echo "${dummy_file}" | sed 's|/delegate-test.XXXXXXXXX.|/delegate-test.|g') # macOS/mktemp fix
