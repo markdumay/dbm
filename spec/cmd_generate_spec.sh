@@ -24,6 +24,7 @@ Describe 'cmd/generate.sh' cmd generate
             dummy_file2=$(echo "${dummy_file2}" | sed 's|/fake.XXXXXXXXX.|/fake.|g') # macOS/mktemp fix
             dummy_file3=$(echo "${dummy_file3}" | sed 's|/output.XXXXXXXXX.|/output.|g') # macOS/mktemp fix
             touch "${dummy_file1}"
+            { [ -f "${dummy_file2}" ] && rm -rf "dummy_file2"; } || true # remove file if created to force error
         }
 
         cleanup_local() {
