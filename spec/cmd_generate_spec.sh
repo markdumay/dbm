@@ -14,6 +14,8 @@ Describe 'cmd/generate.sh' cmd generate
     BeforeAll 'prepare'
 
     Describe 'execute_generate()'
+        confirm_operation() { return 0; }
+
         setup_local() {
             dummy_file1=$(mktemp -t "real.XXXXXXXXX")
             dummy_file2=$(mktemp -t "fake.XXXXXXXXX")
