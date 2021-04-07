@@ -11,7 +11,7 @@
 readonly CORE_DEPENDENCIES='awk cut date docker docker-compose grep realpath rev sed sort tr uname wc'
 readonly REPOSITORY_DEPENDENCIES='curl jq'
 readonly VERSION_DEPENDENCIES='basename cat dirname'
-# readonly TRUST_DEPENDENCIES='notary openssl'
+readonly TRUST_DEPENDENCIES='jq notary openssl'
 
 
 #=======================================================================================================================
@@ -71,6 +71,7 @@ init_script_version() {
     path="$1"
     script_version=$(cat "${path}/VERSION" 2> /dev/null)
     echo "${script_version:-unknown}"
+    return 0
 }
 
 #=======================================================================================================================
@@ -184,17 +185,18 @@ validate_host_dependencies() {
     check_buildx='false'
 
     # Check if required commands are available
-    # TODO: add trust: TRUST_DEPENDENCIES='notary'
     # TODO: verify if daemon is needed for config
     case "${command}" in
         build )                                     check_daemon='true'; [ -n "${platforms}" ] && check_buildx='true';;
         deploy | down | remove | sign | stop | up ) check_daemon='true';;
         generate )                                  ;;
         check )                                     host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES}";;
+        trust )                                     host_dependencies="${TRUST_DEPENDENCIES}";;
         version )                                   host_dependencies="${VERSION_DEPENDENCIES}";;
         * )                    
             # test everything when command is not specified (e.g. unit testing)  
-            host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES} ${VERSION_DEPENDENCIES}"
+            host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES} ${TRUST_DEPENDENCIES}"
+            host_dependencies="${host_dependencies} ${VERSION_DEPENDENCIES}"
             check_daemon='true'
             check_buildx='true'
     esac
