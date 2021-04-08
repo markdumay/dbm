@@ -418,6 +418,8 @@ init_config() {
 #   Writes setting to stdout.
 #=======================================================================================================================
 init_config_value() {
+    [ -z "$1" ] && err "Config value required" && return 1
+
     # read entry from config file
     if match=$(grep -in "^$1=" "${config_file}" 2> /dev/null); then
         line=$(echo "${match}" | awk -F':' '{print $1}') # read line number
