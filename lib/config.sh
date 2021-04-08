@@ -282,6 +282,7 @@ get_dependency_version() {
 
     tag=$(echo "${item}" | awk -F' ' '{print $5}')
     version=$(echo "${tag}" | grep -Eo "^${VERSION_REGEX}")
+    # TODO: fix?
     version=$(echo "${version}" | sed 's/^v//g;s/^V//g;') # strip 'v' or 'V' prefix
     version=$(_expand_version "${version}") # expand version info if needed with minor and patch
 

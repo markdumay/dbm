@@ -62,18 +62,17 @@ Describe 'cmd/root.sh' cmd root
     End
 
     Describe 'parse_args()'
-        fail() { printf '%s' 'FATAL: '; echo "$@"; return 1; }
-
         Parameters
-            '-h' '?Docker Build Manager*' success
-            '--help' '?Docker Build Manager*' success
-            unknown '*FATAL: Command not supported: unknown*' failure
+            '-h' '?Docker Build Manager*' '*' success
+            '--help' '?Docker Build Manager*' '*' success
+            unknown '?Usage*' '*FATAL: Command not supported: unknown*' failure
         End
 
         It 'parses commands correctly'
             When run parse_args "$1" "$2"
             The output should match pattern "$2"
-            The status should be "$3"
+            The error should match pattern "$3"
+            The status should be "$4"
         End
     End
 
