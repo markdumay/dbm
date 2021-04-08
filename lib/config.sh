@@ -123,8 +123,8 @@ export_env_values() {
     # retrieve all custom variables from the DBM config file
     # remove all comments and trailing spaces; separate each dependency by a ';'
     vars=$(grep '^DBM_.*=.*' "${config_file}" | sed 's/^DBM_//g')
-    vars=$(printf "${vars}\n\n" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/;/g')
     vars=$(printf "${vars}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
+    vars=$(printf "${vars}\n\n" | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/;/g')
     results=''
 
     # remove the second argument if the line contains three arguments (such as the url for a dependency)
