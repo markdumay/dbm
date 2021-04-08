@@ -327,6 +327,59 @@ has_dependency_version() {
 }
 
 #=======================================================================================================================
+# Initializes the global settings.
+#=======================================================================================================================
+# Globals:
+#   - config_docker_registry
+#   - config_docker_working_dir
+#   - config_docker_base_yml
+#   - config_docker_prod_yml
+#   - config_docker_dev_yml
+#   - config_docker_service
+#   - config_docker_platforms
+# Arguments:
+#   $1 - Base directory of the config file.
+# Outputs:
+#   Initalized global config variables, terminates with non-zero exit code on fatal error.
+#=======================================================================================================================
+# shellcheck disable=SC2034
+init_config() {
+    basedir="${1:-$PWD}"
+    config_file_override="${2:-${DBM_CONFIG_FILE}}"
+    
+    # continue if file(s) do not exist
+    config_file=$(get_absolute_path "${basedir}" "${config_file_override}")
+    if [ -n "${config_file}" ]; then
+        dir=$(dirname "${config_file}")
+        config_digest_file=$(echo "${dir}/${DBM_DIGEST_FILE}" | sed 's|//|/|g')
+        config_version_file=$(echo "${dir}/${DBM_VERSION_FILE}" | sed 's|//|/|g')
+    fi
+
+    # identify Docker registry from Docker configuration 
+    docker_registry_url=$(docker info | grep 'Registry:' | awk -F': ' '{print $2}')
+    [ -z "${registry_url}" ] && registry_url="${DOCKER_DEFAULT_REGISTRY}"
+
+    # initialize settings and/or default values 
+    config_docker_registry=$(init_config_value 'DOCKER_REGISTRY' "${docker_registry_url}") || \
+        { err "Cannot read config value DOCKER_REGISTRY"; return 1; }
+    config_docker_registry=$(echo "${config_docker_registry}" | sed 's|/$||g') # remove trailing '/'
+    config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || \
+        { err "Cannot read config value DOCKER_WORKING_DIR"; return 1; }
+    config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || \
+        { err "Cannot read config value DOCKER_BASE_YML"; return 1; }
+    config_docker_prod_yml=$(init_config_value 'DOCKER_PROD_YML' 'docker-compose.prod.yml') || \
+        { err "Cannot read config value DOCKER_PROD_YML"; return 1; }
+    config_docker_dev_yml=$(init_config_value 'DOCKER_DEV_YML' 'docker-compose.dev.yml') || \
+        { err "Cannot read config value DOCKER_DEV_YML"; return 1; }
+    config_docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}") || \
+        { err "Cannot read config value DOCKER_SERVICE_NAME"; return 1; }
+    config_docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '') || \
+        { err "Cannot read config value DOCKER_TARGET_PLATFORM"; return 1; }
+
+    return 0
+}
+
+#=======================================================================================================================
 # Reads a setting from the configuration file.
 #=======================================================================================================================
 # Arguments:
@@ -421,59 +474,6 @@ is_valid_dependency() {
             fi
             return 3
     esac
-
-    return 0
-}
-
-#=======================================================================================================================
-# Initializes the global settings.
-#=======================================================================================================================
-# Globals:
-#   - config_docker_registry
-#   - config_docker_working_dir
-#   - config_docker_base_yml
-#   - config_docker_prod_yml
-#   - config_docker_dev_yml
-#   - config_docker_service
-#   - config_docker_platforms
-# Arguments:
-#   $1 - Base directory of the config file.
-# Outputs:
-#   Initalized global config variables, terminates with non-zero exit code on fatal error.
-#=======================================================================================================================
-# shellcheck disable=SC2034
-init_config() {
-    basedir="${1:-$PWD}"
-    config_file_override="${2:-${DBM_CONFIG_FILE}}"
-    
-    # continue if file(s) do not exist
-    config_file=$(get_absolute_path "${basedir}" "${config_file_override}")
-    if [ -n "${config_file}" ]; then
-        dir=$(dirname "${config_file}")
-        config_digest_file=$(echo "${dir}/${DBM_DIGEST_FILE}" | sed 's|//|/|g')
-        config_version_file=$(echo "${dir}/${DBM_VERSION_FILE}" | sed 's|//|/|g')
-    fi
-
-    # identify Docker registry from Docker configuration 
-    docker_registry_url=$(docker info | grep 'Registry:' | awk -F': ' '{print $2}')
-    [ -z "${registry_url}" ] && registry_url="${DOCKER_DEFAULT_REGISTRY}"
-
-    # initialize settings and/or default values 
-    config_docker_registry=$(init_config_value 'DOCKER_REGISTRY' "${docker_registry_url}") || \
-        { err "Cannot read config value DOCKER_REGISTRY"; return 1; }
-    config_docker_registry=$(echo "${config_docker_registry}" | sed 's|/$||g') # remove trailing '/'
-    config_docker_working_dir=$(init_config_value 'DOCKER_WORKING_DIR' 'docker') || \
-        { err "Cannot read config value DOCKER_WORKING_DIR"; return 1; }
-    config_docker_base_yml=$(init_config_value 'DOCKER_BASE_YML' 'docker-compose.yml') || \
-        { err "Cannot read config value DOCKER_BASE_YML"; return 1; }
-    config_docker_prod_yml=$(init_config_value 'DOCKER_PROD_YML' 'docker-compose.prod.yml') || \
-        { err "Cannot read config value DOCKER_PROD_YML"; return 1; }
-    config_docker_dev_yml=$(init_config_value 'DOCKER_DEV_YML' 'docker-compose.dev.yml') || \
-        { err "Cannot read config value DOCKER_DEV_YML"; return 1; }
-    config_docker_service=$(init_config_value 'DOCKER_SERVICE_NAME' "${PWD##*/}") || \
-        { err "Cannot read config value DOCKER_SERVICE_NAME"; return 1; }
-    config_docker_platforms=$(init_config_value 'DOCKER_TARGET_PLATFORM' '') || \
-        { err "Cannot read config value DOCKER_TARGET_PLATFORM"; return 1; }
 
     return 0
 }
