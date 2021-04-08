@@ -75,7 +75,9 @@ is_number() {
 
 #======================================================================================================================
 # Encodes a variable to a url-safe variable using jq. For example, the string 'encode this' is encoded to 
-# 'encode%20this'.
+# 'encode%20this'. The encoding does not recognize valid urls, so only provide parts that need to be encoded. For
+# example, 'http://example.com?arg=123&456' is encoded to 'http%3A%2F%2Fexample.com%3Farg%3D123%26456'. Instead, only
+# encode the portion '123&456' and append the result '123%26456' to the base url 'http://example.com?arg='.
 #======================================================================================================================
 # Arguments:
 #   $1 - Variable to encode.
