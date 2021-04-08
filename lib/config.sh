@@ -39,25 +39,28 @@ config_version_file="${DBM_VERSION_FILE}"
 #=======================================================================================================================
 # Arguments:
 #   $1 - Normalized dependencies, e.g. '9:ALPINE hub.docker.com _ alpine 3.13.2-rc;'
+#   $2 - Optional digest file, defaults to 'config_digest_file'.
 # Outputs:
 #   Cleaned digest file, or non-zero return code in case of errors.
 #=======================================================================================================================
 clean_digest_file() {
     dependencies="$1"
     [ -z "${dependencies}" ] && return 1
-    { [ -z "${config_digest_file}" ] || [ ! -f "${config_digest_file}" ]; } && return 1
+    current_digest_file="$2"
+    [ -z "${current_digest_file}" ] && current_digest_file="${config_digest_file}"
+    { [ -z "${current_digest_file}" ] || [ ! -f "${current_digest_file}" ]; } && return 1
 
     # read the dependencies and move the digest file to a temp location
     # note: an extra empty line is appended at the end to ensure the read loop captures all lines
     temp_digest_file=$(mktemp -t "dbm_temp_digest.XXXXXXXXX")
-    mv "${config_digest_file}" "${temp_digest_file}" && echo >> "${temp_digest_file}" || return 1
+    mv "${current_digest_file}" "${temp_digest_file}" && echo >> "${temp_digest_file}" || return 1
 
     # recreate digest file for all current digests with a matching dependency
     while read -r line; do
         url=$(echo "${line}" | awk -F' ' '{print $1}') # read stored url
         version=$(echo "${line}" | awk -F' ' '{print $2}') # read stored version
         if has_dependency_version "${url}" "${version}" "${dependencies}"; then
-            echo "${line}" >> "${config_digest_file}"
+            echo "${line}" >> "${current_digest_file}"
         fi
     done < "${temp_digest_file}"
 
