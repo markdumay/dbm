@@ -10,9 +10,9 @@
 #=======================================================================================================================
 # Source: https://gist.github.com/briantjacobs/7753bf850ca5e39be409
 # Arguments:
-#   $1 - YAML file to use as input
+#   $1 - YAML file to use as input.
 # Outputs:
-#   Writes flat variable list to stdout, returns 1 if not successful
+#   Writes flat variable list to stdout, returns 1 if not successful.
 #=======================================================================================================================
 parse_yaml() {
     [ ! -f "$1" ] && return 1
@@ -31,4 +31,6 @@ parse_yaml() {
             printf("%s%s=\"%s\"\n", vn, $2, $3);
         }
     }' | sed 's/_=/+=/g'
+
+    return 0
 }
