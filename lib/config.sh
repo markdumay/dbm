@@ -263,7 +263,8 @@ get_normalized_tag() {
 # Reads the semantic version of a dependency normalized by read_dependencies(). The version is the fith item on the
 # provided line input. For the version to be correctly identified, at least 'MAJOR.MINOR' is required, 'v' and PATCH are
 # optional. Any remaining characters are returned by get_dependency_extension() instead. As an example, the input line 
-# '9:ALPINE hub.docker.com _ alpine 3.13.2-rc' returns the version '3.13.2'. 
+# '9:ALPINE hub.docker.com _ alpine 3.13.2-rc' returns the version '3.13.2'. The version is expanded to
+# 'MAJOR.MINOR.PATCH', so '3.13' becomes '3.13.0'. Any 'v' or 'V' prefix is removed.
 #=======================================================================================================================
 # Arguments:
 #   $1 - Normalized dependency item, e.g. '9:ALPINE hub.docker.com _ alpine 3.13.2-rc'
