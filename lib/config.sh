@@ -304,6 +304,7 @@ get_dependency_extension() {
 
     count=$(echo "${item}" | wc -w) # identify number of parsed arguments (should be 2 or 5)
     [ "${count}" -eq 2 ] && echo '' && return 0
+    [ "${count}" -ne 5 ] && err 'Cannot read dependency version extension' && return 1
 
     extension=$(echo "${item}" | awk -F' ' '{print $5}')
     version=$(echo "${extension}" | grep -Eo "^${VERSION_REGEX}")
