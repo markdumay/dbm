@@ -525,7 +525,11 @@ read_dependencies() {
 
     # retrieve all dependendencies from the DBM config file with their line number
     # remove all comments, trailing spaces, and protocols; separate each dependency by a ';'
-    dependencies=$(grep -En '^DBM_.*VERSION=.*' "${config_file}" | sed -r 's/(^[0-9]*:)DBM_/\1/g;')
+    host_os=$(uname) # use 'sed -E' on macOS and 'sed -r' on other systems to enable capture groups
+    case "${host_os}" in
+        Darwin ) dependencies=$(grep -En '^DBM_.*VERSION=.*' "${config_file}" | sed -E 's/(^[0-9]*:)DBM_/\1/g;');;
+        *      ) dependencies=$(grep -En '^DBM_.*VERSION=.*' "${config_file}" | sed -r 's/(^[0-9]*:)DBM_/\1/g;');;
+    esac
     dependencies=$(echo "${dependencies}" | sed 's/hub.docker.com\/r\//hub.docker.com\//g')
     dependencies=$(echo "${dependencies}" | sed 's/_VERSION=/ /g;s/\// /g;')
     dependencies=$(echo "${dependencies}" | sed -e 's/\s*#.*$//;s/[[:space:]]*$//;')
