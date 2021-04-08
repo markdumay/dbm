@@ -62,7 +62,6 @@ Describe 'lib/utils.sh' utils
         Parameters
             'temp' "${PWD}/temp" success
             '/temp' '/temp' success
-            '//temp' '/temp' success
             './temp' "${PWD}/temp" success
             "/$(uuidgen)/$(uuidgen)/$(uuidgen)" '' failure
         End
