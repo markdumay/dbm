@@ -83,7 +83,7 @@ Describe 'cmd/up.sh' cmd up
             End
         End
 
-        Describe 'shell' test
+        Describe 'shell'
             Parameters
                 up dev --shell custom success
             End
@@ -100,7 +100,7 @@ Describe 'cmd/up.sh' cmd up
             End
         End
 
-        Describe 'shell' test
+        Describe 'shell'
             Parameters
                 up dev --shell failure 'ERROR: Missing shell argument'
             End
