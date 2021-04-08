@@ -232,6 +232,34 @@ get_dependency_tag() {
 }
 
 #=======================================================================================================================
+# Normalizes a tag by expanding the version and removing prefixes. For example, 'v3.13-rc' is normalized to '3.13.0-rc'.
+#=======================================================================================================================
+# Arguments:
+#   $1 - Dependency tag, e.g. 'v3.13-rc'
+# Outputs:
+#   Writes tag to stdout, returns 1 on error.
+#=======================================================================================================================
+get_normalized_tag() {
+    tag="$1"
+
+    [ -z "${tag}" ] && return 1
+
+    # normalize and expand version
+    version=$(echo "${version}" | grep -Eo "^${VERSION_REGEX}")
+    version=$(echo "${tag}" | sed 's/^v//g;s/^V//g;') # strip 'v' or 'V' prefix
+    version=$(_expand_version "${version}") # expand version info if needed with minor and patch
+
+    # retrieve extension
+    esc_version=$(echo "${tag}" | grep -Eo "^${VERSION_REGEX}")
+    esc_version=$(escape_string "${esc_version}")
+    extension=$(echo "${tag}" | sed "s/${esc_version}//g") # strip version information
+
+    # return normalized tag
+    echo "${version}${extension}"
+    return 0
+}
+
+#=======================================================================================================================
 # Reads the semantic version of a dependency normalized by read_dependencies(). The version is the fith item on the
 # provided line input. For the version to be correctly identified, at least 'MAJOR.MINOR' is required, 'v' and PATCH are
 # optional. Any remaining characters are returned by get_dependency_extension() instead. As an example, the input line 
@@ -302,6 +330,7 @@ has_dependency_version() {
     match=1
 
     { [ -z "${dependencies}" ] || [ -z "${input_url}" ] || [ -z "${input_tag}" ]; } && return 1
+    input_tag=$(get_normalized_tag "${input_tag}") || return 1
 
     # scan each dependency for a potential match
     IFS=';' # initialize dependency separator
@@ -319,7 +348,7 @@ has_dependency_version() {
 
         # compare url and tag with normalized dependency
         url="${provider}/${owner}/${repo}"
-        tag="v${version}${extension}"
+        tag="${version}${extension}"
         [ "${input_url}" = "${url}" ] && [ "${input_tag}" = "${tag}" ] && match=0 && break
     done
 
