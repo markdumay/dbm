@@ -79,7 +79,6 @@ Describe 'lib/config.sh' config
             When call export_digest_values
             The status should be "$2"
             The output should eq "$1"
-            Dump
         End
     End
 
