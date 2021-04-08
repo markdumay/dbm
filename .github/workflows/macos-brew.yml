@@ -35,4 +35,4 @@ jobs:
         run:  curl -fsSL https://git.io/shellspec | sh -s -- --yes
 
       - name: Run unit tests w/o Docker
-        run:  ${{ matrix.shells.shell }} -c "SHELLSPEC_SKIP_DOCKER=true ~/.local/bin/shellspec"
+        run:  ${{ matrix.shells.shell }} -c "SHELLSPEC_SKIP_DOCKER=true ~/.local/bin/shellspec --shell ${{ matrix.shells.shell }}"
