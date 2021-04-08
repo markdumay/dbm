@@ -467,15 +467,14 @@ init_config_value() {
 is_valid_dependency() {
     input="$1"    
     [ -z "${input}" ] && return 1
-    filename=$(basename "$1")
+    filename=$(basename "${config_file}")
 
     # validate number of arguments
-    count=$(echo "${item}" | wc -w) # identify number of parsed arguments (should be 2 or 5)
-    line_no=$(echo "${item}" | awk -F':' '{print $1}')
+    count=$(echo "${input}" | wc -w) # identify number of parsed arguments (should be 2 or 5)
+    line_no=$(echo "${input}" | awk -F':' '{print $1}')
     input=''
     status=''
-    [ "${count}" -eq 2 ] && status='no_link'
-    [ "${count}" -ne 5 ] && status='malformed'
+    { [ "${count}" -eq 2 ] && status='no_link'; } || { [ "${count}" -ne 5 ] && status='malformed'; }
 
     # get the original input, fallback to parsed input if needed
     if [ -n "${status}" ]; then
@@ -483,8 +482,10 @@ is_valid_dependency() {
             input=$(eval "awk 'NR==${line_no}' ${config_file}" 2> /dev/null)
             length=$(echo "${input}" | awk '{print length}')
             [ "${length}" -gt 80 ] && input=$(echo "${input}" | cut -c1-77) && input="${input}..."
+        else
+            line_no=''
         fi
-        [ -z "${input}" ] && input="${item}"
+        [ -z "${input}" ] && input="$1"
     fi
 
     # return an informative message in case of errors
@@ -493,7 +494,7 @@ is_valid_dependency() {
             if [ -n "${line_no}" ]; then
                 echo "Line ${line_no} of '${filename}' has no repository link, skipping item: ${input}"
             else 
-                echo "Dependency has no repository link, skipping item: ${item}"
+                echo "Dependency has no repository link, skipping item: ${input}"
             fi
             return 2
         ;;
@@ -501,7 +502,7 @@ is_valid_dependency() {
             if [ -n "${line_no}" ]; then
                 echo "Line ${line_no} of '${filename}' is malformed, skipping item: ${input}"
             else 
-                echo "Dependency is malformed, skipping item: ${item}"
+                echo "Dependency is malformed, skipping item: ${input}"
             fi
             return 3
     esac
