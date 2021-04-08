@@ -217,7 +217,7 @@ get_dependency_repository() {
 
 #=======================================================================================================================
 # Reads the tag of a dependency normalized by read_dependencies(). The tag is the fith item on the provided line input.
-# As an example, the input line '9:ALPINE hub.docker.com _ alpine 3.13.2' returns the tag '3.13.2'.
+# As an example, the input line '9:ALPINE hub.docker.com _ alpine 3.13.2-rc'' returns the tag '3.13.2-rc'.
 #=======================================================================================================================
 # Arguments:
 #   $1 - Normalized dependency item, e.g. '9:ALPINE hub.docker.com _ alpine 3.13.2-rc'
