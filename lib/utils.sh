@@ -39,7 +39,7 @@ escape_string() {
 
 #=======================================================================================================================
 # Retrieves the absolute path for a given path. If the provided path is relative it is appended to the provided base
-# directory.
+# directory. The path needs to exist, the filename does not need to exist.
 #=======================================================================================================================
 # Arguments:
 #   $1 - Base directory.
