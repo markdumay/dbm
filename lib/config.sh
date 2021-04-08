@@ -68,7 +68,6 @@ clean_digest_file() {
     return 0
 }
 
-# shellcheck disable=SC2059
 #=======================================================================================================================
 # Finds and exports the local digest for each dependency defined in the default config file. The local digest is
 # retrieved from the file 'dbm.digest' in the same folder as the 'dbm.ini' file. The export is skipped if no digest is
@@ -79,6 +78,7 @@ clean_digest_file() {
 # Outputs:
 #   Writes image digests to stdout.
 #=======================================================================================================================
+# shellcheck disable=SC2059
 export_digest_values() {
     dependencies=$(read_dependencies)
     results=''
