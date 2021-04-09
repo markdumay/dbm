@@ -16,6 +16,7 @@ Describe 'lib/compose' docker compose
     Include lib/repository.sh
     Include lib/settings.sh
     Include lib/utils.sh
+    Include lib/yaml.sh
     Include cmd/root.sh
 
     # shellcheck disable=SC2034,SC2154
@@ -51,7 +52,14 @@ Describe 'lib/compose' docker compose
     BeforeAll 'setup'
     AfterAll 'cleanup'
 
-    # Todo 'generate_compose_string()'
+    Describe 'generate_compose_string()'
+        It 'generates compose output'
+            # shellcheck disable=SC2154
+            When call generate_compose_string "${app_docker_compose_flags}" "${docker_dir}" "${arg_tag}"
+            The status should be success
+            The output should match pattern '*alpine@sha256*test/Dockerfile*'
+        End
+    End
 
     Describe 'generate_compose_file()'
         It 'generates a compose file'
@@ -62,5 +70,22 @@ Describe 'lib/compose' docker compose
         End
     End
 
-    # Todo 'list_images()'
+    Describe 'list_images()' test
+        setup_local() {
+            file=$(generate_compose_file "${app_docker_compose_flags}" "${docker_dir}" '' "${arg_services}" "${arg_tag}")
+        }
+
+        expected() { %text
+            #|alpine@sha256:a75afd8b57e7f34e4dad8d65e2c7ba2e1975c795ce1ee22fa34f8cf46f96a3be
+            #|markdumay/dbm-test:0.1.0-debug
+        }
+
+        BeforeAll 'setup_local'
+
+        It 'lists docker images'
+            When call list_images "${file}"
+            The status should be success
+            The output should eq "$(expected)"
+        End
+    End
 End
