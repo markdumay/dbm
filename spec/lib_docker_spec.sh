@@ -26,7 +26,7 @@ Describe 'lib/docker.sh' docker
         app_sourcedir="${app_basedir}"
         arg_config='test/dbm.ini'
         arg_target='dev'
-        init_global_settings
+        init_global_settings || { err "Cannot init settings"; return 1; }
         prepare_environment
 
         # variable used for xbuild validation
