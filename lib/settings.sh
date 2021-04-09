@@ -190,6 +190,7 @@ validate_host_dependencies() {
         build )                                     check_daemon='true'; [ -n "${platforms}" ] && check_buildx='true';;
         deploy | down | remove | sign | stop | up ) check_daemon='true';;
         generate )                                  ;;
+        info )                                      host_dependencies='';;
         check )                                     host_dependencies="${CORE_DEPENDENCIES} ${REPOSITORY_DEPENDENCIES}";;
         trust )                                     host_dependencies="${TRUST_DEPENDENCIES}";;
         version )                                   host_dependencies="${VERSION_DEPENDENCIES}";;
