@@ -119,7 +119,10 @@ Describe 'lib/settings.sh' settings
         End
     End
 
-    Describe 'stage_env()'
+    Describe 'stage_env()' docker
+        conditions() { [ "${SHELLSPEC_SKIP_DOCKER}" = 'true' ] && echo "skip"; }
+        Skip if 'function returns "skip"' [ "$(conditions)" = "skip" ]
+
         setup_local() { 
             init_global_settings || { err "Cannot init settings"; return 1; }
         }
