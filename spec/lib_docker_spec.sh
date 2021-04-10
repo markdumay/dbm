@@ -139,7 +139,62 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Todo 'docker_is_logged_in()'
+    Describe 'docker_is_logged_in()' test
+        input_logged_in() { %text
+            #|{
+            #|  "stackOrchestrator" : "swarm",
+            #|  "experimental" : "disabled",
+            #|  "credsStore" : "desktop",
+            #|  "auths" : {
+            #|    "https://index.docker.io/v1/" : {
+            #|
+            #|    }
+            #|  }
+            #|}
+        }
+
+        input_logged_out() { %text
+            #|{
+            #|  "stackOrchestrator" : "swarm",
+            #|  "experimental" : "disabled",
+            #|  "credsStore" : "desktop"
+            #|}
+        }
+
+        setup_local() {
+            docker_config_file_logged_in=$(mktemp -t "logged_in.json.XXXXXXXXX")
+            docker_config_file_logged_in=$(echo "${docker_config_file_logged_in}" | \
+                sed 's|/logged_in.json.XXXXXXXXX.|/logged_in.json.|g') # macOS/mktemp fix
+            input=$(input_logged_in)
+            echo "${input}" > "${docker_config_file_logged_in}"
+
+            docker_config_file_logged_out=$(mktemp -t "logged_out.json.XXXXXXXXX")
+            docker_config_file_logged_out=$(echo "${docker_config_file_logged_out}" | \
+                sed 's|/logged_out.json.XXXXXXXXX.|/logged_out.json.|g') # macOS/mktemp fix
+            input=$(input_logged_out)
+            echo "${input}" > "${docker_config_file_logged_out}"
+        }
+
+        cleanup_local() {
+            { [ -f "${docker_config_file_logged_in}" ] && rm -rf "docker_config_file_logged_in"; } || true
+            { [ -f "${docker_config_file_logged_out}" ] && rm -rf "docker_config_file_logged_out"; } || true
+        }
+
+        BeforeAll 'setup_local'
+        AfterAll 'cleanup_local'
+
+        Parameters
+            "${docker_config_file_logged_in}" '*' success
+            "${docker_config_file_logged_out}" '*' failure
+            "$(uuidgen)" 'ERROR: Cannot find Docker configuration file:*' failure
+        End
+
+        It 'validates user is logged into docker'
+            When call docker_is_logged_in "$1"
+            The status should be "$3"
+            The error should match pattern "$2"
+        End
+    End
 
     Describe 'get_arch()'
         is_valid() {
