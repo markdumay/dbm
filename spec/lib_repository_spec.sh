@@ -14,6 +14,7 @@ Describe 'lib/repository.sh' repository
     # shellcheck disable=SC2034
     setup() { 
         set_log_color 'false'
+        export TERM=xterm-256color # fix for macOS runner 
     }
 
     BeforeAll 'setup'
