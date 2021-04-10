@@ -227,7 +227,7 @@ _get_latest_docker_tag() {
 #   The repository returned a different version as latest (which might be newer).
 #=======================================================================================================================
 # Arguments:
-#   $2 - Normalized dependencies, e.g. '9:ALPINE hub.docker.com _ alpine 3.13.2-rc;'
+#   $1 - Normalized dependencies, e.g. '9:ALPINE hub.docker.com _ alpine 3.13.2-rc;'
 # Outputs:
 #   Writes matching key/value pairs to stdout. Returns 1 in case of potential updates, 0 otherwise.
 #=======================================================================================================================
@@ -240,7 +240,7 @@ check_upgrades() {
     remote_digest=''
     flag=0
 
-    { [ -z "${dependencies}" ] || [ "${dependencies}" = ';' ]; } && echo "No dependencies found" && return 0
+    { [ -z "${dependencies}" ] || [ "${dependencies}" = ';' ]; } && log "No dependencies found" && return 0
 
     IFS=';' # initialize dependency separator
     width=0 # initialize tab width of first output column
