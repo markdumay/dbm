@@ -54,10 +54,10 @@ The project uses the following core software components:
 
 ## Prerequisites
 ### Host Requirements
-The Docker Build Manager (**DBM**) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The tool [jq][jq_download] is required for running dependency checks. The setup has been tested on macOS (Catalina and Big Sur) and Ubuntu (16.04 LTS, 18.04 LTS, and 20.04 LTS). See the [GitHub actions][github_actions] for an overview of all the automated tests.
+The Docker Build Manager (**DBM**) can run on any Docker-capable host that supports the execution of POSIX-shell scripts. Docker Compose needs to be installed too. The tool [jq][jq_download] is required for running dependency checks. The setup has been tested on macOS (Catalina and Big Sur) and Ubuntu (16.04 LTS, 18.04 LTS, and 20.04 LTS). See the [GitHub actions][github_actions] for an overview of the automated tests.
 
 ### Repository Requirements
-**DBM** assumes your repository defines three Docker Compose configurations. Both the production and development configuration are relative to the base image. See [nginx-certbot][nginx-cerbot] and [restic-unattended][restic-unattended] for an example.
+**DBM** assumes your repository defines three Docker Compose configurations. Both the production and development configurations are relative to the base image. See [nginx-certbot][nginx-cerbot] and [restic-unattended][restic-unattended] for examples.
 1. `docker-compose.yml` - The base configuration of the Docker image using Docker Compose notation
 2. `docker-compose.prod.yml` - Production modifications to the base configuration
 3. `docker-compose.dev.yml` - Development modifications to the base configuration
@@ -105,7 +105,7 @@ $ dbm <command> [flags]
 
 
 ### Configuration
-**DBM** supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository]. The configuration files accepts [custom variables][wiki_vars] too, see the Wiki for more details. The Wiki also explains how to [define dependencies][wiki_dependencies] with version tracking.
+**DBM** supports several advanced settings through a `dbm.ini` file. An example `sample.ini` is available in the git [repository][repository]. The configuration files accept [custom variables][wiki_vars] too, see the Wiki for more details. The Wiki also explains how to [define dependencies][wiki_dependencies] with version tracking.
 
 | Variable              | Required | Example                   | Description |
 |-----------------------|----------|---------------------------|-------------|
