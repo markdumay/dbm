@@ -139,7 +139,7 @@ Describe 'lib/docker.sh' docker
         End
     End
 
-    Describe 'docker_is_logged_in()' test
+    Describe 'docker_is_logged_in()'
         input_logged_in() { %text
             #|{
             #|  "stackOrchestrator" : "swarm",
