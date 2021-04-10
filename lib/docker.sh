@@ -8,6 +8,7 @@
 #=======================================================================================================================
 # Constants
 #=======================================================================================================================
+readonly DOCKER_CONFIG_FILE="${HOME}/.docker/config.json"
 readonly DOCKER_EXEC='docker exec -it'
 readonly DOCKER_RUN='docker-compose'
 readonly DOCKER_BUILDX='docker buildx'
@@ -238,15 +239,19 @@ deploy_stack() {
 # Verify if the current user is logged in to the configured Docker registry (defaults to https://index.docker.io/v1/).
 # A user is considered to be logged in when an entry for the Docker registry is found in the Docker configuration file.
 #=======================================================================================================================
+# Arguments:
+#   $1 - Optional Docker Configuration file, defaults to '${HOME}/.docker/config.json'.
 # Outputs:
 #   Returns 0 if the user is logged in and returns 1 if the user is not logged in. Returns 2 in case of errors.
 #=======================================================================================================================
 # shellcheck disable=SC2154
 docker_is_logged_in() {
-    [ ! -f "${DOCKER_CONFIG_FILE}" ] && err "Cannot find Docker configuration file: ${DOCKER_CONFIG_FILE}" && return 2
+    file="${1:-${DOCKER_CONFIG_FILE}}"
+
+    [ ! -f "${file}" ] && err "Cannot find Docker configuration file: ${file}" && return 2
     [ -z "${config_docker_registry}" ] && err "Docker Registry not defined" && return 2
 
-    jq -e --arg url "${config_docker_registry}/" '.auths | has($url)' "${DOCKER_CONFIG_FILE}" > /dev/null
+    jq -e --arg url "${config_docker_registry}/" '.auths | has($url)' "${file}" > /dev/null
 }
 
 #=======================================================================================================================
