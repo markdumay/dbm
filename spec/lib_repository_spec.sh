@@ -11,6 +11,13 @@ Describe 'lib/repository.sh' repository
     Include lib/repository.sh
     Include lib/utils.sh
 
+    # shellcheck disable=SC2034
+    setup() { 
+        set_log_color 'false'
+    }
+
+    BeforeAll 'setup'
+
     Describe 'check_upgrades()'
         _get_docker_digest() { echo 'sha256:826f70e0ac33e99a72cf20fb0571245a8fee52d68cb26d8bc58e53bfa65dcdfa'; }
         _get_github_digest() { 
