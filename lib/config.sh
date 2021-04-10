@@ -481,7 +481,7 @@ is_valid_dependency() {
 
     # get the original input, fallback to parsed input if needed
     if [ -n "${status}" ]; then
-        if is_number "${line_no}"; then
+        if is_number "${line_no}" && [ -n "${config_file}" ]; then
             input=$(eval "awk 'NR==${line_no}' ${config_file}" 2> /dev/null)
             length=$(echo "${input}" | awk '{print length}')
             [ "${length}" -gt 80 ] && input=$(echo "${input}" | cut -c1-77) && input="${input}..."
