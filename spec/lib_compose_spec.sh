@@ -70,7 +70,7 @@ Describe 'lib/compose' docker compose
         End
     End
 
-    Describe 'list_images()' test
+    Describe 'list_images()'
         setup_local() {
             file=$(generate_compose_file "${app_docker_compose_flags}" "${docker_dir}" '' "${arg_services}" "${arg_tag}")
         }
