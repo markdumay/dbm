@@ -83,7 +83,7 @@ _get_docker_digest() {
 
     if echo "${response}" | grep -q "${DOCKER_MANIFEST_HEADER}"; then
         # Capture the repository digest for a multi-architecture image
-        digest=$(echo "${response}" | grep 'Docker-Content-Digest' | awk -F': ' '{print $2}')
+        digest=$(echo "${response}" | grep 'docker-content-digest' | awk -F': ' '{print $2}')
     else
         # Capture the repository digest for a regular image
         digest=$(curl -s "${DOCKER_API}/repositories/${owner}/${repository}/tags/${tag}" | jq -r '.images[0].digest' 2> /dev/null )
