@@ -4,8 +4,8 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 15th, 2021
-# Version       : 0.4.1
+# Date          : June 17th, 2021
+# Version       : 0.4.2
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -43,6 +43,7 @@ create_home='false'
 remove_binaries=' hexdump; chgrp; chmod; chown; ln; od; sh; strings; su;'
 allowed_binaries=' nologin; setup-proxy; sshd; start.sh;'
 allowed_users="root|sshd"
+login_shell="/bin/ash"
 
 
 #=======================================================================================================================
@@ -77,6 +78,7 @@ usage() {
     echo '  --add-shell            Adds shell access (/bin/sh) to instance'
     echo '  --create-home          Creates a home directory for the specified user'
     echo '  --read-only            Support read-only filesystem and tmpfs mounts'
+    echo '  --login-shell          Defines default shell (defaults to /bin/ash)'
     echo
 }
 
@@ -183,6 +185,7 @@ parse_args() {
             --add-shell   ) add_shell='true'; remove_binaries=$(echo "${remove_binaries}" | sed "s/ sh;//g");;
             --create-home ) create_home='true';;
             --read-only   ) enable_read_only='true';;
+            --login-shell ) shift; login_shell="$1";;
             harden        ) command="$1";;
             *             ) usage; terminate "Unrecognized parameter ($1)"
         esac
@@ -203,6 +206,12 @@ parse_args() {
     elif [ "${uid}" -lt 100 ] || [ "${uid}" -gt "${MAXID}" ]; then fatal_error="UID not in range 100 - ${MAXID}"
     # Requirement 4 - GID should be in range
     elif [ "${gid}" -lt 100 ] || [ "${gid}" -gt "${MAXID}" ]; then fatal_error="GID not in range 100 - ${MAXID}"
+    # Requirement 5 - default shell should be valid
+    elif [ "${login_shell}" != "/bin/ash" ] && \
+        [ "${login_shell}" != "/bin/bash" ] && \
+        [ "${login_shell}" != "/bin/sh" ] && \
+        [ "${login_shell}" != "/bin/zsh" ]; \
+        then fatal_error="Shell should be either /bin/ash, /bin/bash, /bin/sh, or /bin/zsh"
     # Warning 1 - user name not specified
     elif [ "${id_set}" = 'true' ] && [ "${user}" = '' ]; then warning='User name not specified, ignoring UID/GID'
     fi
@@ -234,9 +243,9 @@ execute_add_user() {
         # create group and user
         /usr/sbin/groupadd -g "${gid}" "${user}"
         if [ "${create_home}" = 'true' ]; then
-            /usr/sbin/useradd -m -s /bin/sh -g "${gid}" -u "${uid}" -d "/home/${user}" "${user}"
+            /usr/sbin/useradd -m -s "${login_shell}" -g "${gid}" -u "${uid}" -d "/home/${user}" "${user}"
         else
-            /usr/sbin/useradd -s /bin/sh -g "${gid}" -u "${uid}" "${user}"
+            /usr/sbin/useradd -s "${login_shell}" -g "${gid}" -u "${uid}" "${user}"
         fi
         sed -i -r "s/^${user}:!:/${user}:x:/" /etc/shadow
     else
