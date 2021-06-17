@@ -145,7 +145,7 @@ bring_container_up() {
         { [ "$?" != 0 ] || [ -z "${id}" ]; } && err "Container ID not found" && return 1
         count=$(echo "${id}" | wc -l)
         [ "${count}" -gt 1 ] && err "Terminal supports one container only" && return 1
-        eval "${DOCKER_EXEC} ${id} ${shell}" # start shell terminal
+        eval "${DOCKER_EXEC} ${id} ${shell} --login" # start shell terminal using profile scripts
     fi
 
     # bring container down when done and not detached or if in terminal mode
