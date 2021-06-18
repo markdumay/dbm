@@ -320,6 +320,7 @@ execute_assign_ownership() {
     # assign ownership of files to specified user
     [ -n "${files}" ] && [ -n "${username}" ] && \
         log "Assigning ownership to files" && \
+        eval "touch ${files}" && \
         eval "find ${files} -xdev -type f -exec chown ${username}:${username} {} \;"
 
     # warn if no user is specified
