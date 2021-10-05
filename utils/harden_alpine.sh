@@ -4,8 +4,8 @@
 # Title         : harden_alpine.sh
 # Description   : Hardens a Linux Alpine instance.
 # Author        : Mark Dumay
-# Date          : February 15th, 2021
-# Version       : 0.4.1
+# Date          : October 5th, 2021
+# Version       : 0.4.2
 # Usage         : ./harden_alpine.sh [OPTIONS] COMMAND
 # Repository    : https://github.com/markdumay/dbm.git
 # License       : Copyright © 2021 Mark Dumay. All rights reserved.
@@ -311,6 +311,7 @@ execute_assign_ownership() {
     # assign ownership of files to specified user
     [ -n "${files}" ] && [ -n "${username}" ] && \
         log "Assigning ownership to files" && \
+        touch "${files}" && \
         eval "find ${files} -xdev -type f -exec chown ${username}:${username} {} \;"
 
     # warn if no user is specified
